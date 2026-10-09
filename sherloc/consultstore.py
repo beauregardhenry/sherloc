@@ -9,6 +9,7 @@ they are seen, and then overwritten and removed.
 import json
 import os
 import sqlite3
+from typing import Optional, Union
 
 import config
 
@@ -21,12 +22,14 @@ TABLE_SQL = (
 
 NAMES = ("taq", "scans", "accounts", "notes")
 
+DirPath = Union[str, "os.PathLike[str]"]
 
-def db_path():
+
+def db_path() -> str:
     return config.SQL_DB_PATH.replace("sqlite:///", "", 1).strip()
 
 
-def _connect():
+def _connect() -> sqlite3.Connection:
     path = db_path()
     parent = os.path.dirname(path)
     if parent:
@@ -38,11 +41,11 @@ def _connect():
     return con
 
 
-def _legacy_file(legacy_dir, name):
+def _legacy_file(legacy_dir: DirPath, name: str) -> str:
     return os.path.join(legacy_dir, name + ".json")
 
 
-def _overwrite_and_remove(path):
+def _overwrite_and_remove(path: str) -> None:
     try:
         size = os.path.getsize(path)
         with open(path, "r+b") as f:
@@ -54,12 +57,12 @@ def _overwrite_and_remove(path):
     os.remove(path)
 
 
-def _remove_if_exists(path):
+def _remove_if_exists(path: str) -> None:
     if os.path.exists(path):
         _overwrite_and_remove(path)
 
 
-def _migrate(con, legacy_dir):
+def _migrate(con: sqlite3.Connection, legacy_dir: Optional[DirPath]) -> None:
     """Move JSON files from an earlier version into the database."""
     if not legacy_dir:
         return
@@ -82,7 +85,7 @@ def _migrate(con, legacy_dir):
         _remove_if_exists(fname + ".lock")
 
 
-def save(name, body, legacy_dir=None):
+def save(name: str, body: str, legacy_dir: Optional[DirPath] = None) -> None:
     con = _connect()
     try:
         _migrate(con, legacy_dir)
@@ -97,7 +100,7 @@ def save(name, body, legacy_dir=None):
         con.close()
 
 
-def load(name, legacy_dir=None):
+def load(name: str, legacy_dir: Optional[DirPath] = None) -> Optional[str]:
     """Return the stored JSON text, or None if nothing is stored."""
     con = _connect()
     try:
@@ -110,7 +113,7 @@ def load(name, legacy_dir=None):
         con.close()
 
 
-def count(legacy_dir=None):
+def count(legacy_dir: Optional[DirPath] = None) -> int:
     """Number of stored documents plus old JSON files not yet moved."""
     n = 0
     path = db_path()
@@ -128,7 +131,7 @@ def count(legacy_dir=None):
     return n
 
 
-def discard_legacy_files(legacy_dir):
+def discard_legacy_files(legacy_dir: Optional[DirPath]) -> None:
     """Overwrite and remove old JSON files (and lock files) without reading them."""
     if not legacy_dir:
         return

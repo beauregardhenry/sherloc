@@ -1,0 +1,5 @@
+# Tools for working on Sherloc. Runtime dependencies are in sherloc/requirements.txt.
+pytest
+pytest-cov
+ruff==0.16.7
+mypy==2.4.0

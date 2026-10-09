@@ -6,6 +6,7 @@ remove it.
 
 import sqlite3
 from pathlib import Path
+from typing import Any, Iterable, Union
 
 import config
 import consultstore
@@ -18,7 +19,7 @@ _TABLES = [
 ]
 
 
-def _count_files(directory, skip=()):
+def _count_files(directory: Union[str, Path], skip: Iterable[str] = ()) -> int:
     d = Path(directory)
     if not d.is_dir():
         return 0
@@ -29,7 +30,7 @@ def _count_files(directory, skip=()):
     )
 
 
-def _count_rows(table):
+def _count_rows(table: str) -> int:
     path = config.SQL_DB_PATH.replace("sqlite:///", "")
     if not Path(path).is_file():
         return 0
@@ -43,7 +44,7 @@ def _count_rows(table):
         return 0
 
 
-def summary():
+def summary() -> dict[str, Any]:
     """Return `{"present": bool, "items": [(label, count), ...]}`.
 
     Only kinds with at least one item are listed.
