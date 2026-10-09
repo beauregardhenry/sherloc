@@ -85,3 +85,26 @@ def test_a_hostile_note_does_not_pull_a_local_file_into_the_pdf(tmp_path):
     ).stdout if shutil.which("pdftotext") else ""
     assert "TOP-SECRET-MARKER-12345" not in text
     assert re.search(rb"%PDF", open(out, "rb").read(8))
+
+
+def test_pdf_options_do_not_run_javascript():
+    # pdfkit 1.0.0 (CVE-2025-26240) lets page script run and read local files.
+    assert "disable-javascript" in ec.printout_pdf_options()
+
+
+@pytest.mark.skipif(
+    shutil.which("wkhtmltopdf") is None or shutil.which("pdftotext") is None,
+    reason="wkhtmltopdf or pdftotext not installed",
+)
+def test_script_in_the_page_does_not_run_with_our_options(tmp_path):
+    import pdfkit
+
+    out = tmp_path / "js.pdf"
+    pdfkit.from_string(
+        "<html><body><p>plain</p><script>document.write('SCRIPT-RAN-77')</script></body></html>",
+        str(out),
+        options=ec.printout_pdf_options(),
+    )
+    text = subprocess.run(["pdftotext", str(out), "-"], capture_output=True, text=True).stdout
+    assert "plain" in text
+    assert "SCRIPT-RAN-77" not in text
