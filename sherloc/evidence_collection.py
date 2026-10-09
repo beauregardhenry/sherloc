@@ -179,7 +179,10 @@ def render_printout_html(context):
 def printout_pdf_options():
     # No 'enable-local-file-access': the page is built from user-entered text, and
     # images are fetched from the running app over http (see url_root).
+    # JavaScript is off: pdfkit 1.0.0 (CVE-2025-26240) lets page script run
+    # and read local files, and the printout needs none.
     return {
+        'disable-javascript': '',
         'margin-top': '15mm',
         'margin-bottom': '20mm',
         'margin-left': '10mm',

@@ -25,6 +25,8 @@ Security in case of vulnerabilities.
 - The stalkerware-indicators workflow uses the `sherloc/` paths and a single `token:` key (the duplicate key meant `IOC_UPDATE_KEY` was ignored), and its script exits non-zero when its requirements are missing. It no longer tries to open a PR on pull request runs
 - super-linter checks changed files for serious Python problems and executable bits only; style linters were failing on the existing code
 ### Added
+- Dependabot opens weekly updates for the GitHub Actions (their pinned hashes) and the Python packages
+- A `pip-audit` workflow checks `sherloc/requirements.txt` on changes and every Monday. It ignores only the `pdfkit` advisory, with the reason next to it
 - A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
@@ -40,6 +42,8 @@ Security in case of vulnerabilities.
 - "Close App and End Session" never worked: it relied on `werkzeug.server.shutdown`, which Werkzeug 2.1+ removed. It now stops the app after sending its response
 - `/view_results` raised a `NameError` for any existing scan. Removed unreachable or uncalled code that used undefined names (`index.py`, `android_permissions.py`, and `update_app_deleteinfo` in `db.py`, which also had an SQL typo). The lint check now fails on undefined names
 ### Security
+- `filelock` is updated from 3.17.0 to 3.20.3, which fixes two symlink race conditions that let a local user truncate or interfere with files through lock files (GHSA-w853-jp5j-5j7f, GHSA-qmgc-5h2g-mvrw)
+- The PDF printout turns JavaScript off in wkhtmltopdf. `pdfkit` 1.0.0 (CVE-2025-26240) lets page script run and read local files, and has no fixed release. User text was already escaped and local file access was already off
 - Client notes, client names, device serials and app lists are no longer printed to the terminal. Terminal output outlives "Delete client data". Run with `DEBUG=1` to see it. Fixed messages such as "Uninstall failed" still print
 - Folders that hold client data are created owner-only (`0700`), existing ones are tightened, and the app sets `umask 077`, so files made by the app or by the programs it starts are `0600`. An older database file is tightened at start. When Sherloc runs under `sudo`, those files belong to root
 - Screenshots are saved in the folder that "Delete client data" empties (`config.SCREENSHOT_DIR`), not in a second hard-coded path

@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Actions are pinned to commit hashes. Dependabot opens a pull request that
+  # moves the hash and the version comment together.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/sherloc"
+    schedule:
+      interval: "weekly"
