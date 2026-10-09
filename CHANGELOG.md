@@ -18,12 +18,16 @@ Security in case of vulnerabilities.
 - Importing `config` no longer creates key files or folders. The keys are created on first use and the reports folder when the app starts. Scripts and tests that only read a setting no longer write into `static_data`
 - Sherloc listens on 127.0.0.1 by default. Set `SHERLOC_HOST` and `SHERLOC_ALLOWED_HOSTS` to serve it elsewhere
 - `pytest` runs from the repository root
+- `config.ADB_PATH` is the plain path of `adb`, not a shell-quoted string
 - Scanner tests run against fake `adb`, `pymobiledevice3` and `ideviceinstaller` programs (`tests/fakebin.py`), so they check the exact commands sent and the parsed results without a phone. Coverage of `sherloc/` rose from 41% to 52%, and CI fails below 50%. The canned tool output follows the documented formats; it is not recorded from a real device
 - `evidence_collection.py` (1,900 lines) is split into `evidence_choices.py`, `evidence_model.py` and `evidence_forms.py`. It re-exports every name it had, so existing imports work, and `tests/test_evidence_collection_api.py` fails if one goes missing
 - CI runs the test suite on pushes and pull requests. A lint ratchet (`tests/test_lint_ratchet.py`) fails on any new undefined name, invalid escape, mutable default argument, bare `except`, `shell=True` or `eval`; existing findings are recorded in `tests/lint_baseline.json`
 - The stalkerware-indicators workflow uses the `sherloc/` paths and a single `token:` key (the duplicate key meant `IOC_UPDATE_KEY` was ignored), and its script exits non-zero when its requirements are missing. It no longer tries to open a PR on pull request runs
 - super-linter checks changed files for serious Python problems and executable bits only; style linters were failing on the existing code
 ### Fixed
+- A failed uninstall was reported as a success, and the app was recorded as deleted in the database even though it was still on the phone. `uninstall` now returns False when the tool exits non-zero, prints `Failure`/`ERROR`, is missing or times out
+- A failed `adb` app listing was read as a list of apps (the error text). It now restarts the adb server and returns no apps
+- Android device descriptions no longer keep the newline that `getprop` prints
 - "Delete client data" stopped at the first missing folder (for example before any scan) and never reached the database. Each folder is now handled independently
 - `python main.py test` did nothing: the call to `set_test_mode` discarded its result, and by then the paths had already been read. The `test` argument is now applied before `config` is imported
 - A missing blocklist file made the app exit with status 0 and a one-line message. It now exits with an error
@@ -33,6 +37,8 @@ Security in case of vulnerabilities.
 - "Close App and End Session" never worked: it relied on `werkzeug.server.shutdown`, which Werkzeug 2.1+ removed. It now stops the app after sending its response
 - `/view_results` raised a `NameError` for any existing scan. Removed unreachable or uncalled code that used undefined names (`index.py`, `android_permissions.py`, and `update_app_deleteinfo` in `db.py`, which also had an SQL typo). The lint check now fails on undefined names
 ### Security
+- No command runs through a shell any more. Every `adb`, `ideviceinstaller`, `pymobiledevice3` and script call is an argument list, so no value can be read as a command. `run_command` rejects a string. The package lookup (`sed` on the dump) and the pipes (`grep`, `sort`, `awk`, `tail`) are done in Python. The lint baseline is now empty
+- App ids are validated before the package lookup and the recent-permissions lookup
 - Request log lines show the route pattern instead of the URL, so device serials and app ids no longer appear in the terminal output
 - Deleting client data, deleting a scan or account, and closing the app now require POST. A GET (an image tag, a link prefetch) could trigger them. The buttons are now forms
 - App descriptions from the app-store crawls are reduced to a few formatting tags before rendering. They were inserted unescaped, so a published app could run script in the consultant's browser

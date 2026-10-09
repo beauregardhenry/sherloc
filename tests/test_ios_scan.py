@@ -89,10 +89,6 @@ def test_uninstall_refuses_unsafe_input_before_running_anything(fake_bin, serial
     assert tool.calls == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="uninstall() reports success whatever ideviceinstaller returned",
-)
 def test_uninstall_reports_failure_when_the_tool_fails(fake_bin):
     fake_bin("ideviceinstaller", [{"match": "--uninstall", "stderr": "ERROR: Uninstall failed", "rc": 1}])
     assert IosScan().uninstall(UDID, "com.example.tracker") is False
