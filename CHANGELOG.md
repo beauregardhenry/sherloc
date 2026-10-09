@@ -15,6 +15,8 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Changed
+- `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
+- Four stale TODO/FIXME comments were removed or corrected. The rest are collected in issues #17 to #21
 - Consultation answers (TAQ, scans, accounts, notes) are stored in the SQLite database, in the new `consult_documents` table, instead of four JSON files with lock files. One place to protect, count and wipe. JSON files from an earlier version are moved into the database the first time they are read, then overwritten and removed; an answer already in the database is never replaced by an old file, and a file that cannot be parsed is left alone. The `filelock` package is no longer used by the code
 - The database tables are created from `schema.sql` on every start (it only uses `IF NOT EXISTS`), so a database from an earlier version gets the new table. Before, the schema ran only when the file did not exist
 - Importing `config` no longer creates key files or folders. The keys are created on first use and the reports folder when the app starts. Scripts and tests that only read a setting no longer write into `static_data`

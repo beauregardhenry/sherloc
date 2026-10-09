@@ -371,7 +371,6 @@ class AndroidScan(AppScan):
         return offstore
 
     def devices(self):
-        # FIXME: check for errors related to err in runcmd.py.
         # cmd = '{cli} devices | tail -n +2 | cut -f2'
         # runcmd = catch_err(run_command(cmd), cmd=cmd).strip()
         # cmd = '{cli} kill-server; {cli} start-server'
