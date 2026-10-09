@@ -89,7 +89,7 @@ IOC_FILE = os.path.join(IOC_PATH, "ioc.yaml")
 
 # we will resolve the database path using an absolute path to __FILE__ because
 # there are a couple of sources of truth that may disagree with their "path
-# relavitity". Needless to say, FIXME
+# relavitity".
 SQL_DB_PATH = f"sqlite:///{str(THIS_DIR / 'data/fieldstudy.db')}"
 # SQL_DB_CONSULT_PATH = 'sqlite:///data/consultnotes.db' + ("~test" if TEST else "")
 

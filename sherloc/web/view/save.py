@@ -57,7 +57,6 @@ def delete_app(scanid):
     sc = get_device(device)
     remark = request.form.get("remark")
     action = "delete"
-    # TODO: Record the uninstall and note
     r = sc.uninstall(serial=serial, appid=appid)
     if r:
         r = update_appinfo(scanid=scanid, appid=appid, remark=remark, action=action)

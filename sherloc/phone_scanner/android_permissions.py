@@ -164,8 +164,8 @@ def package_info(dumpf, appid):
         #
         # FIXME: TypeError: list indices must be integers or slices, not str
         # FIXME: don't rely on rsonlite to parse correctly? Seems to miss the
-        # Packages:.  for now, using sed to filter out potential hazards in
-        # parsing output.
+        # Packages: section. _package_section() cuts out the one package that
+        # is parsed.
         if isinstance(sp, list) and len(sp) > 1:
             sp = sp[0]
         _, pkg = sp.popitem()
