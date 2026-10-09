@@ -15,6 +15,8 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Changed
+- Consultation answers (TAQ, scans, accounts, notes) are stored in the SQLite database, in the new `consult_documents` table, instead of four JSON files with lock files. One place to protect, count and wipe. JSON files from an earlier version are moved into the database the first time they are read, then overwritten and removed; an answer already in the database is never replaced by an old file, and a file that cannot be parsed is left alone. The `filelock` package is no longer used by the code
+- The database tables are created from `schema.sql` on every start (it only uses `IF NOT EXISTS`), so a database from an earlier version gets the new table. Before, the schema ran only when the file did not exist
 - Importing `config` no longer creates key files or folders. The keys are created on first use and the reports folder when the app starts. Scripts and tests that only read a setting no longer write into `static_data`
 - Sherloc listens on 127.0.0.1 by default. Set `SHERLOC_HOST` and `SHERLOC_ALLOWED_HOSTS` to serve it elsewhere
 - `pytest` runs from the repository root

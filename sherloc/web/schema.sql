@@ -95,6 +95,12 @@ CREATE TABLE IF NOT EXISTS app_info (
 );
 -- see also, how battery usage is measured on phone app itself in settings. percent of battery used by app.E
 -- https://stackoverflow.com/questions/45751387/how-do-i-calculate-the-battery-drain-for-a-particular-app-using-dumpsys-batterys
+-- Consultation answers (TAQ, scans, accounts, notes): one JSON document each.
+CREATE TABLE IF NOT EXISTS consult_documents (
+  name TEXT PRIMARY KEY,
+  body TEXT NOT NULL,
+  updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+);
 CREATE INDEX IF NOT EXISTS idx_clients_notes_clientid on clients_notes  (clientid);
 CREATE INDEX IF NOT EXISTS idx_scan_res_clientid on scan_res  (clientid);
 CREATE INDEX IF NOT EXISTS idx_app_info_scanid on app_info  (scanid);

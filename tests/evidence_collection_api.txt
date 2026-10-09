@@ -22,7 +22,6 @@ DualUseForm class
 EMPTY_CHOICE value
 Enum class
 EvidenceDataEncoder class
-FileLock class
 HomepageNoteForm class
 InstallForm class
 InstallInfo class

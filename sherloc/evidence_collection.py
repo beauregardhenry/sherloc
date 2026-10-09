@@ -19,10 +19,10 @@ import sqlite3
 from enum import Enum
 
 import config
+import consultstore
 import jinja2
 import pdfkit
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION
-from filelock import FileLock
 from phone_scanner.db import create_mult_appinfo, create_scan
 from phone_scanner.privacy_scan_android import take_screenshot
 from web.view.index import get_device
@@ -455,36 +455,24 @@ def get_scan_data(device, device_owner):
         raise e
 
 
-# Save data to the right tmp file as JSON
-# Overwrites it always, assume any previous data has been incorporated
+def _store_name(datatype):
+    return get_data_filename(datatype)[: -len(".json")]
+
+
+# Save the consultation answers in the database.
+# Overwrites them always, assume any previous data has been incorporated
 def save_data_as_json(data, datatype: ConsultDataTypes):
-
     json_object = json.dumps(data, cls=EvidenceDataEncoder)
+    consultstore.save(_store_name(datatype), json_object, TMP_CONSULT_DATA_DIR)
 
-    fname = os.path.join(TMP_CONSULT_DATA_DIR, get_data_filename(datatype))
-
-    lock = FileLock(fname + ".lock")
-    with lock:
-        with open(fname, 'w') as outfile:
-            outfile.write(json_object)
-
-    return
 
 def load_json_data(datatype: ConsultDataTypes):
-
-    fname = os.path.join(TMP_CONSULT_DATA_DIR, get_data_filename(datatype))
-
-    lock = FileLock(fname + ".lock")
-    with lock:
-        if not os.path.exists(fname):
-            if datatype in [ConsultDataTypes.NOTES.value, ConsultDataTypes.TAQ.value]:
-                return dict()
-            else:
-                return list()
-
-        with open(fname, 'r') as openfile:
-            json_object = json.load(openfile)
-            return json_object
+    body = consultstore.load(_store_name(datatype), TMP_CONSULT_DATA_DIR)
+    if body is None:
+        if datatype in [ConsultDataTypes.NOTES.value, ConsultDataTypes.TAQ.value]:
+            return dict()
+        return list()
+    return json.loads(body)
 
 def load_object_from_json(datatype: ConsultDataTypes):
     json_data = load_json_data(datatype)
@@ -540,12 +528,10 @@ def wipe_client_database():
 
 def delete_client_data():
 
-    # Delete the consult data stored as json
+    # Answers from an earlier version that are still stored as json files.
+    # The ones in the database are removed with the rest of it, below.
     debug("Deleting consultation data...")
-    for datatype in ConsultDataTypes:
-        fname = os.path.join(TMP_CONSULT_DATA_DIR, get_data_filename(datatype.value))
-        if os.path.exists(fname):
-            os.remove(fname)
+    consultstore.discard_legacy_files(TMP_CONSULT_DATA_DIR)
 
     # Delete phone dumps
     debug("Deleting phone dumps...")

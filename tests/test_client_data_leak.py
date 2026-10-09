@@ -36,7 +36,6 @@ def tree(tmp_path, monkeypatch, fake_adb):
     db = dirs["data"] / "fieldstudy.db"
     monkeypatch.setattr(config, "DB_DIR", dirs["data"])
     monkeypatch.setattr(config, "SQL_DB_PATH", f"sqlite:///{db}")
-    monkeypatch.setattr(phone_db, "DATABASE", str(db))
     return tmp_path, dirs, db
 
 

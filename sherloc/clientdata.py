@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 import config
+import consultstore
 
 # (label, table) pairs counted in the database.
 _TABLES = [
@@ -48,7 +49,7 @@ def summary():
     Only kinds with at least one item are listed.
     """
     counts = [
-        ("Saved consultation answers", _count_files(config.CONSULT_DATA_DIR, skip=(".lock",))),
+        ("Saved consultation answers", consultstore.count(config.CONSULT_DATA_DIR)),
         ("Phone dumps", _count_files(config.DUMP_DIR)),
         ("Screenshots", _count_files(config.SCREENSHOT_DIR)),
         ("Reports", _count_files(config.REPORT_DIR)),

@@ -49,3 +49,15 @@ def fake_adb(fake_bin, monkeypatch):
     tool = fake_bin("adb")
     monkeypatch.setattr(config, "ADB_PATH", str(tool.path))
     return tool
+
+
+@pytest.fixture(autouse=True)
+def isolated_database(tmp_path, monkeypatch):
+    """Point the app's database at a temporary file for every test.
+
+    Consultation answers are stored in the database, so a test that saves
+    them must never write to the developer's own `fieldstudy.db`.
+    """
+    import config
+
+    monkeypatch.setattr(config, "SQL_DB_PATH", f"sqlite:///{tmp_path / 'isolated-fieldstudy.db'}")
