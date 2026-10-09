@@ -3,12 +3,13 @@ import io
 import re
 import shlex
 import subprocess
+from debuglog import debug
 
 """
 def add_to_error(*args):
     global ERROR_LOG
     m = '\n'.join(str(e) for e in args)
-    print(m)
+    debug(m)
     ERROR_LOG.append(m)
 
 def error():
@@ -17,7 +18,7 @@ def error():
     if len(ERROR_LOG)>0:
         e, ERROR_LOG = ERROR_LOG[0], ERROR_LOG[1:]
 
-        print("ERROR: {}".format(e))
+        debug("ERROR: {}".format(e))
     return e.replace("\n", "<br/>")
 """
 
@@ -47,10 +48,10 @@ def catch_err(
             m = "[{}]: Error running {!r}. Error ({}): {}\n{}".format(
                 "android", cmd, p.returncode, err_msg, msg
             )
-            print(cmd, p.returncode, err_msg, msg)
+            debug(cmd, p.returncode, err_msg, msg)
             if "insufficient permissions for device: user in plugdev group" in err_msg:
                 e = 'Error: Please set "USB For File Transfers" mode on your Android device.'
-                print(e)
+                debug(e)
                 return ""
             # config.add_to_error(m)
             return m
@@ -74,14 +75,14 @@ def catch_err(
                 "insufficient permissions for device: user in plugdev group; are your udev rules wrong?"
                 in s
             ):
-                print("Need USB for Charging.")
+                debug("Need USB for Charging.")
                 return ""
             else:
-                print(s)
+                debug(s)
                 return s
     except Exception as ex:
         # config.add_to_error(ex)
-        print("Exception>>>", ex)
+        debug("Exception>>>", ex)
         return ""
 
 
@@ -117,7 +118,7 @@ def run_command(args, nowait=False):
     if isinstance(args, (str, bytes)):
         raise TypeError("run_command takes a list of arguments, not a string")
     args = [str(a) for a in args]
-    print(" ".join(shlex.quote(a) for a in args))
+    debug(" ".join(shlex.quote(a) for a in args))
     try:
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError as ex:
@@ -144,7 +145,7 @@ def run_checked(args, timeout=30):
             args, capture_output=True, text=True, timeout=timeout, check=False
         )
     except (OSError, subprocess.TimeoutExpired) as ex:
-        print("Could not run", args[0], "->", ex)
+        debug("Could not run", args[0], "->", ex)
         return False, ""
     output = done.stdout + done.stderr
     return done.returncode == 0 and not _TOOL_SAID_NO.search(output), done.stdout

@@ -6,11 +6,12 @@ from phone_scanner.db import (
     get_app_info_from_db,
     first_element_or_none,
 )
+from debuglog import debug
 
 
 @app.route("/view_results", methods=["POST", "GET"])
 def view_results():
-    print("WORK IN PROGRESS")
+    debug("WORK IN PROGRESS")
     # clientid = request.form.get('clientid', request.args.get('clientid'))
     # hmac'ed serial of results we want to view
     scan_res_pk = request.form.get("scan_res", request.args.get("scan_res"))

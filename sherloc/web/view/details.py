@@ -3,6 +3,7 @@ from web import app
 from web.view import get_device
 import config
 from inputcheck import validate_appid, validate_serial
+from debuglog import debug
 
 
 @app.route("/details/app/<device>", methods=["GET"])
@@ -26,7 +27,7 @@ def app_details(device):
     # else:
     #    print(type(sc))
 
-    print(d.keys())
+    debug(d.keys())
     return render_template(
         "main.html",
         task="app",

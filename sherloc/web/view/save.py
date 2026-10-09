@@ -11,6 +11,7 @@ from phone_scanner.db import (
     get_device_from_db,
 )
 from web.view.index import get_device
+from debuglog import debug, warn
 
 
 @app.route("/saveapps/<scanid>", methods=["POST"])
@@ -60,9 +61,9 @@ def delete_app(scanid):
     r = sc.uninstall(serial=serial, appid=appid)
     if r:
         r = update_appinfo(scanid=scanid, appid=appid, remark=remark, action=action)
-        print("Update appinfo failed! r={}".format(r))
+        debug("Update appinfo failed! r={}".format(r))
     else:
-        print("Uninstall failed. r={}".format(r))
+        warn("Uninstall failed.")
     return is_success(r, "Success!", config.error())
 
 

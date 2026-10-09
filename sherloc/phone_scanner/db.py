@@ -6,6 +6,7 @@ from datetime import datetime as dt
 import config
 import os
 import pandas as pd
+from debuglog import debug
 
 DATABASE = config.SQL_DB_PATH.replace("sqlite:///", "").strip()
 # CONSULTS_DATABASE = config.SQL_DB_CONSULT_PATH.replace('sqlite:///', '')
@@ -29,7 +30,7 @@ def new_client_id():
     if last_client_id:
         d, t = last_client_id.rsplit("_", 1)
     cid = "{}_{:03d}".format(d, int(t) + 1)
-    print("new_client_id >>>> {}".format(cid))
+    debug("new_client_id >>>> {}".format(cid))
     return cid
 
 
@@ -40,7 +41,7 @@ def make_dicts(cursor, row):
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        print("Creating new db connection {}".format(DATABASE))
+        debug("Creating new db connection {}".format(DATABASE))
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = make_dicts
     return db
@@ -98,7 +99,7 @@ def create_scan(scan_d):
     """
     @scanr must have following fields.
     """
-    print(scan_d)
+    debug(scan_d)
     return insert(
         "insert into scan_res "
         "(clientid, serial, device, device_model, device_version, device_manufacturer, last_full_charge, device_primary_user, is_rooted, rooted_reasons) "
@@ -189,7 +190,7 @@ def get_client_devices_from_db(clientid: str) -> list:
         # args=(clientid,),
         one=False,
     )
-    print("<>get_client_devices_from_db<>", d)
+    debug("<>get_client_devices_from_db<>", d)
     if d:
         return d
     else:
@@ -200,7 +201,7 @@ def get_most_recent_scan_id(ser: str) -> int:
     d = query_db(
         "select max(id) as scanid from scan_res where serial=?", args=(ser,), one=True
     )
-    print(f"Get_most_recent_scanid: {d}")
+    debug(f"Get_most_recent_scanid: {d}")
     return d["scanid"]
 
 

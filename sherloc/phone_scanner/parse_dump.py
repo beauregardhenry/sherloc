@@ -11,6 +11,7 @@ import pandas as pd
 from rsonlite import simpleparse
 
 import config
+from debuglog import debug, pdebug
 
 
 def count_lspaces(lspaces):
@@ -83,7 +84,7 @@ class AndroidDump(PhoneDump):
     def new_parse_dump_file(self, fname):
         """Not used working using simple parse to parse the files."""
         if not Path(fname).exists():
-            print("File: {!r} does not exists".format(fname))
+            debug("File: {!r} does not exists".format(fname))
         data = open(fname)
         d = {}
         service = ""
@@ -97,7 +98,7 @@ class AndroidDump(PhoneDump):
                 else:
                     return simpleparse("\n".join(join_lines))
             except Exception as ex:
-                print(
+                debug(
                     "Could not parse for {} service={}. Exception={}".format(
                         fname, service, ex
                     )
@@ -184,7 +185,7 @@ class AndroidDump(PhoneDump):
             if line.startswith("DUMP OF SERVICE"):  # Service
                 service = line.strip().rsplit(" ", 1)[1]
                 content = self._extract_info_lines(fp)
-                print(f"Content: {service!r}", content[:10])
+                debug(f"Content: {service!r}", content[:10])
                 d[service] = self._parse_dump_service_info_lines(content)
 
             elif line.startswith("DUMP OF SETTINGS"):  # Setting
@@ -195,7 +196,7 @@ class AndroidDump(PhoneDump):
             else:
                 if not line:
                     break
-                print(f"Something wrong! --> {line!r}")
+                debug(f"Something wrong! --> {line!r}")
         return d
 
     def load_file(self, failed_before=False):
@@ -207,7 +208,7 @@ class AndroidDump(PhoneDump):
                 try:
                     d = json.load(f)
                 except Exception as ex:
-                    print(f">> AndroidDump.load_file(): {ex}", file=sys.stderr)
+                    debug(f">> AndroidDump.load_file(): {ex}", file=sys.stderr)
                     if not failed_before:
                         os.unlink(json_fname)
                         return self.load_file(failed_before=True)
@@ -217,8 +218,8 @@ class AndroidDump(PhoneDump):
                     d = self.parse_dump_file(fname)
                     json.dump(d, f, indent=2)
                 except Exception as ex:
-                    print("File ({!r}) could not be opened or parsed.".format(fname))
-                    print("Exception: {}".format(ex))
+                    debug("File ({!r}) could not be opened or parsed.".format(fname))
+                    debug("Exception: {}".format(ex))
                     raise (ex)
                     return {}
         return d
@@ -275,7 +276,7 @@ class AndroidDump(PhoneDump):
         TODO: Would be great to return a list of dicts {name=x, id=y}
         """
         if not self.df:
-            pprint("JSON dump not loaded. Cannot get list of apps.")
+            pdebug("JSON dump not loaded. Cannot get list of apps.")
             return {}
         
         # Structure of the dump:
@@ -297,7 +298,7 @@ class AndroidDump(PhoneDump):
             except IndexError as e:
                 # Weren't able to extract appid or name correctly
                 # Insert appid if it was collected though
-                pprint(f"IndexError: {e}")
+                pdebug(f"IndexError: {e}")
                 all_package_keys.append( (appid, "Unavailable") )
 
         # Remove duplicates and sort
@@ -314,7 +315,7 @@ class AndroidDump(PhoneDump):
         """
 
         if not self.df:
-            pprint("JSON dump not loaded. Cannot get info for appid={}".format(appid))
+            pdebug("JSON dump not loaded. Cannot get info for appid={}".format(appid))
             return {}
 
         # Get the package information for the appid.
@@ -393,7 +394,7 @@ class AndroidDump(PhoneDump):
             return relevant_package_info
 
         except KeyError as e:
-            print(f"KeyError: {e}.")
+            debug(f"KeyError: {e}.")
             return {}
 
 
@@ -446,7 +447,7 @@ class IosDump(PhoneDump):
             return device_info
 
         except Exception as ex:
-            print("Load_deviceinfo in parse_dump failed with exception {!r}".format(ex))
+            debug("Load_deviceinfo in parse_dump failed with exception {!r}".format(ex))
             return {
                 "DeviceClass": "",
                 "ProductType": "",
@@ -468,26 +469,26 @@ class IosDump(PhoneDump):
             d["appId"] = d["CFBundleIdentifier"]
             return d
         except Exception as ex:
-            print(ex)
-            print("Could not load the json file: {}".format(self.fname))
+            debug(ex)
+            debug("Could not load the json file: {}".format(self.fname))
             return pd.DataFrame([], columns=["appId"])
 
     def check_unseen_permissions(self, permissions):
         # flatten the permissions list
-        pprint(permissions)
+        pdebug(permissions)
 
         for permission in permissions:
             if not permission:
                 continue  # Empty permission, skip
             if permission not in list(self.permissions_map.keys()):
-                print(f"Have not seen {permission} before. Making note of this...")
+                debug(f"Have not seen {permission} before. Making note of this...")
                 permission_human_readable = permission.replace("kTCCService", "")
                 with open(
                     os.path.join(config.THIS_DIR, "ios_permissions.json"), "w"
                 ) as fh:
                     self.permissions_map[permission] = permission_human_readable
                     fh.write(json.dumps(self.permissions_map))
-                print("Noted.")
+                debug("Noted.")
             # print('\t'+msg+": "+str(PERMISSIONS_MAP[permission])+"\tReason: "+app.get(permission,'system app'))
 
     def get_permissions(self, app: str) -> list:
@@ -585,7 +586,7 @@ class IosDump(PhoneDump):
         party = app.ApplicationType.lower()
         permissions = []
         if party in ["system", "user", "hidden"]:
-            print(
+            debug(
                 f"{app['CFBundleName']} ({app['CFBundleIdentifier']}) is a {party} app and has permissions:"
             )
             # permissions are an array that returns the permission id and an explanation.
@@ -645,7 +646,7 @@ class IosDump(PhoneDump):
         # return self.df.index
         if self.df is None:
             return []
-        print("parse_dump (installed_apps): >>", self.df.columns, len(self.df))
+        debug("parse_dump (installed_apps): >>", self.df.columns, len(self.df))
         return self.df["appId"].to_list()
 
 

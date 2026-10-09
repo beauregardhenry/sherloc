@@ -19,6 +19,7 @@ from inputcheck import validate_path_part, validate_serial
 from phone_scanner.privacy_scan_android import do_privacy_check, take_screenshot
 from web import app
 from web.view.index import get_device
+from debuglog import debug
 
 
 @app.route("/privacy", methods=["GET"])
@@ -42,12 +43,12 @@ def privacy_scan(device, cmd, context, ser):
         validate_path_part(context.replace(" ", ""), "screenshot context")
     except ValueError:
         return "Invalid request.", 400
-    print(ser)
+    debug(ser)
     if device == "ios":
         res = iosScreenshot(ser, context, nocache=True)
     else:
         res = do_privacy_check(ser, cmd, context)
-    print("Screenshot Taken")
+    debug("Screenshot Taken")
     return res
 
 def _read_rsd(lines):
@@ -55,7 +56,7 @@ def _read_rsd(lines):
     address = port = ""
     for raw in lines:
         line = raw.decode("utf-8", errors="replace").strip()
-        print(line)
+        debug(line)
         if line.startswith("RSD Address:"):
             address = line.split(":", 1)[1].strip()
         elif line.startswith("RSD Port:"):
@@ -80,10 +81,10 @@ def iosScreenshot(ser, context, nocache = False):
         try:
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Command failed with exit code {e.returncode}: {e.output}")
+            debug(f"Command failed with exit code {e.returncode}: {e.output}")
             return "<div class='screenshotfail'>Screenshot failed with exit code {}</div>".format(e.returncode)
         except Exception as e:
-            print(e)
+            debug(e)
             return "<div class='screenshotfail'>Screenshot failed with exception {}</div>".format(e)
     finally:
         # The tunnel keeps running until it is stopped.

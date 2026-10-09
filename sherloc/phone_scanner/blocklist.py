@@ -15,6 +15,7 @@ Flags added to them are from the following four classes
 import re
 import config
 import pandas as pd
+from debuglog import debug
 
 try:
     APP_FLAGS = pd.read_csv(
@@ -140,7 +141,7 @@ def app_title_and_flag(apps, offstore_apps=None, system_apps=None):
     if system_apps is None:
         system_apps = []
     # print(apps)
-    print("Size of app-flags: {}".format(len(APP_FLAGS)))
+    debug("Size of app-flags: {}".format(len(APP_FLAGS)))
     _td = dedup_app_flags(apps.merge(APP_FLAGS, on="appId", how="left")).set_index(
         "appId"
     )

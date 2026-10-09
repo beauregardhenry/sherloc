@@ -12,6 +12,7 @@ from rsonlite import simpleparse
 from inputcheck import validate_appid
 
 from .runcmd import catch_err, run_command
+from debuglog import debug
 
 # MAP = config.ANDROID_PERMISSIONS
 DUMPPKG = "dumppkg"
@@ -62,7 +63,7 @@ def recent_permissions_used(appid):
 
     record = {"appId": appid}
     now = datetime.datetime.now()
-    print(recently_used)
+    debug(recently_used)
     for permission in recently_used.split("\n")[:-1]:
         permission_attrs = permission.split(";")
         t = permission_attrs[0].split(":")
@@ -155,7 +156,7 @@ def package_info(dumpf, appid):
         sp = simpleparse(package_dump)
 
     except AttributeError:
-        print(package_dump)
+        debug(package_dump)
         return []
 
     try:
@@ -199,8 +200,8 @@ def package_info(dumpf, appid):
         return all_perms, pkg_info
 
     except (IndexError, AttributeError) as e:
-        print(e)
-        print(f"Didn't parse correctly. Not sure why.\nsp={sp}")
+        debug(e)
+        debug(f"Didn't parse correctly. Not sure why.\nsp={sp}")
         return [], {}
 
 

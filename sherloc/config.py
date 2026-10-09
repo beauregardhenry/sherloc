@@ -154,6 +154,9 @@ APPROVED_INSTALLERS = {"com.android.vending",
                        "com.sec.android.app.samsungapps"}
 
 REPORT_PATH = THIS_DIR / "reports"
+# Where the consultation answers are saved as JSON, and where the database lives.
+CONSULT_DATA_DIR = THIS_DIR / "tmp-consult-data"
+DB_DIR = THIS_DIR / "data"
 PII_KEY_PATH = STATIC_DATA / "pii.key"
 
 # SHA-256 of key files that were committed to the public repository before
@@ -217,9 +220,25 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def client_data_dirs():
+    """The folders that hold client data. "Delete client data" empties them."""
+    return [DUMP_DIR, SCREENSHOT_DIR, REPORT_DIR, CONSULT_DATA_DIR, DB_DIR]
+
+
 def ensure_dirs():
-    """Create the folders the app writes to. Called when the app starts."""
-    REPORT_PATH.mkdir(exist_ok=True)
+    """Create the folders the app writes to, readable by their owner only.
+
+    Called when the app starts. Everything the app (and the programs it
+    starts) creates afterwards is owner-only too, because of the umask.
+    """
+    os.umask(0o077)
+    for d in client_data_dirs():
+        Path(d).mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(d, 0o700)
+    # A database made by an earlier version may be world readable.
+    for f in Path(DB_DIR).iterdir():
+        if f.is_file():
+            os.chmod(f, 0o600)
 
 
 def hmac_serial(ser: str) -> str:
@@ -256,7 +275,7 @@ def create_screenshot_fname(context, serial="misc"):
     subfolder = validate_path_part(context.replace(" ", ""), "screenshot context")
     serial = validate_path_part(serial, "serial")
 
-    root = os.path.realpath(os.path.join(THIS_DIR, "webstatic", "images", "screenshots"))
+    root = os.path.realpath(SCREENSHOT_DIR)
     dir_path = os.path.realpath(os.path.join(root, serial, subfolder))
     if os.path.commonpath([root, dir_path]) != root:
         raise ValueError("Invalid screenshot location.")
