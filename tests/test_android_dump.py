@@ -119,3 +119,30 @@ def test_package_info_reads_only_the_requested_package(tmp_path):
     _, stats = out
     assert stats["firstInstallTime"] == "2024-01-02 03:04:05"
     assert stats["versionName"] == "1.2.3"
+
+
+HOSTILE_APPIDS = ["x' ; touch {marker} ; '", "$(touch {marker})", "`touch {marker}`", "a b", "a;b"]
+
+
+@pytest.mark.parametrize("appid", HOSTILE_APPIDS)
+def test_package_info_never_runs_text_from_the_app_id(tmp_path, appid):
+    marker = tmp_path / "pwned"
+    (tmp_path / "abc_android.txt").write_text(DUMP)
+    with pytest.raises(ValueError):
+        perms.package_info(str(tmp_path / "abc_android.json"), appid.format(marker=marker))
+    assert not marker.exists()
+
+
+@pytest.mark.parametrize("appid", HOSTILE_APPIDS)
+def test_recent_permissions_never_run_text_from_the_app_id(fake_bin, tmp_path, appid):
+    marker = tmp_path / "pwned"
+    adb = fake_bin("adb")
+    with pytest.raises(ValueError):
+        perms.recent_permissions_used(appid.format(marker=marker))
+    assert not marker.exists()
+    assert adb.calls == []
+
+
+def test_package_info_for_an_app_missing_from_the_dump_is_empty(tmp_path):
+    (tmp_path / "abc_android.txt").write_text(DUMP)
+    assert perms.package_info(str(tmp_path / "abc_android.json"), "com.nothere") == ([], {})

@@ -83,9 +83,6 @@ def test_offstore_apps_are_those_not_from_an_approved_installer(scan, adb, monke
     assert scan.get_offstore_apps(SERIAL) == ["com.sideloaded"]
 
 
-@pytest.mark.xfail(
-    strict=True, reason="brand and model keep the newline that getprop prints"
-)
 def test_device_info_reads_brand_model_and_version(scan, adb):
     adb.respond([
         {"match": "ro.product.brand", "stdout": "samsung\n"},
@@ -128,10 +125,31 @@ def test_uninstall_refuses_unsafe_input_before_running_anything(scan, adb, seria
     assert adb.calls == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="uninstall() reports success whatever adb returned: catch_err never returns -1",
-)
 def test_uninstall_reports_failure_when_adb_fails(scan, adb):
     adb.respond([{"match": "uninstall", "stderr": "Failure [DELETE_FAILED_DEVICE_POLICY_MANAGER]", "rc": 1}])
     assert scan.uninstall(SERIAL, "com.spy.app") is False
+
+
+def test_uninstall_reports_failure_when_adb_says_failure_but_exits_zero(scan, adb):
+    adb.respond([{"match": "uninstall", "stdout": "Failure [DELETE_FAILED_DEVICE_POLICY_MANAGER]\n"}])
+    assert scan.uninstall(SERIAL, "com.spy.app") is False
+
+
+def test_uninstall_reports_failure_when_adb_is_missing(monkeypatch):
+    monkeypatch.setattr(config, "ADB_PATH", "/no/such/adb")
+    assert AndroidScan().uninstall(SERIAL, "com.spy.app") is False
+
+
+def test_the_scan_script_gets_the_serial_as_one_argument(scan, monkeypatch):
+    seen = []
+    monkeypatch.setattr("phone_scanner.run_command", lambda args, **kw: seen.append((args, kw)))
+    monkeypatch.setattr("phone_scanner.AndroidScan._get_apps_from_device", lambda s, ser, f: ["com.a"])
+    scan.get_apps(SERIAL)
+    (args, kw), = seen
+    assert args == ["bash", "scripts/android_scan.sh", "scan", SERIAL, config.hmac_serial(SERIAL)]
+    assert kw == {"nowait": True}
+
+
+def test_server_restart_runs_kill_then_start(scan, adb):
+    scan.setup()
+    assert [c[0] for c in adb.calls] == ["kill-server", "start-server"]

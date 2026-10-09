@@ -129,7 +129,8 @@ PLATFORM = (
     )
 )
 
-ADB_PATH = shlex.quote(os.path.join(ANDROID_HOME, "adb"))
+# The path of the adb program. It is passed as one argument, never through a shell.
+ADB_PATH = os.path.join(ANDROID_HOME, "adb")
 
 # LIBIMOBILEDEVICE_PATH = shlex.quote(str(STATIC_DATA / ("libimobiledevice-" + PLATFORM)))
 LIBIMOBILEDEVICE_PATH = ""

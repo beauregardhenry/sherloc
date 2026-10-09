@@ -4,7 +4,6 @@ Serials come from HTTP requests and from the connected device itself, and
 app ids come from HTTP requests. Both end up in shell command lines.
 """
 
-import subprocess
 
 import pytest
 
@@ -88,22 +87,24 @@ class _Proc:
 
 @pytest.fixture
 def shell(monkeypatch):
-    """Run formatted commands in a real shell, with `adb` replaced by a
-    function that prints each argument it receives. Nothing real is run.
+    """Record the argument list of every command the scanners start.
+
+    Nothing real is run. Each entry is the exact list the program would get,
+    so a test can show a value arrives as one argument and is never split or
+    interpreted.
     """
     runs = []
 
-    def fake_run_command(cmd, **kwargs):
-        kwargs.setdefault("cli", "adb")
-        formatted = cmd.format(**kwargs)
-        script = 'adb() { for a in "$@"; do printf "ARG:%s\\n" "$a"; done; }\n' + formatted
-        out = subprocess.run(
-            ["sh", "-c", script], capture_output=True, text=True, check=False
-        ).stdout
-        runs.append(out.split())
-        return _Proc(out)
+    def fake_run_command(args, **kwargs):
+        runs.append(list(args))
+        return _Proc("")
+
+    def fake_run_checked(args, **kwargs):
+        runs.append(list(args))
+        return True, ""
 
     monkeypatch.setattr("phone_scanner.run_command", fake_run_command)
+    monkeypatch.setattr("phone_scanner.run_checked", fake_run_checked)
     monkeypatch.setattr("phone_scanner.catch_err", lambda p, *a, **k: p.out)
     return runs
 
@@ -124,13 +125,13 @@ def test_ios_uninstall_rejects_hostile_appid(shell, appid):
 
 def test_android_uninstall_passes_appid_as_one_argument(shell):
     AndroidScan().uninstall(serial="ZY224F8TKG", appid="com.example.app")
-    assert shell[0][-2:] == ["ARG:uninstall", "ARG:com.example.app"]
+    assert shell[0][-2:] == ["uninstall", "com.example.app"]
 
 
 def test_android_uninstall_targets_the_given_device(shell):
     AndroidScan().uninstall(serial="192.168.1.5:5555", appid="com.example.app")
-    assert shell == [
-        ["ARG:-s", "ARG:192.168.1.5:5555", "ARG:uninstall", "ARG:com.example.app"]
+    assert [c[1:] for c in shell] == [
+        ["-s", "192.168.1.5:5555", "uninstall", "com.example.app"]
     ]
 
 
@@ -141,23 +142,24 @@ def test_android_uninstall_rejects_hostile_serial(shell, serial):
     assert shell == []
 
 
-def test_ios_uninstall_targets_the_given_device(monkeypatch):
-    seen = []
-    monkeypatch.setattr("phone_scanner.run_command", lambda cmd, **kw: seen.append(cmd))
-    monkeypatch.setattr("phone_scanner.catch_err", lambda p, *a, **k: "")
+def test_ios_uninstall_targets_the_given_device(shell):
     IosScan().uninstall(serial="00008030-001234567890802E", appid="com.example.app")
-    assert len(seen) == 1
-    assert "--udid 00008030-001234567890802E" in seen[0]
-    assert seen[0].rstrip().endswith("--uninstall com.example.app")
+    assert shell == [
+        [
+            "ideviceinstaller",
+            "--udid",
+            "00008030-001234567890802E",
+            "--uninstall",
+            "com.example.app",
+        ]
+    ]
 
 
 @pytest.mark.parametrize("serial", HOSTILE)
-def test_ios_uninstall_rejects_hostile_serial(monkeypatch, serial):
-    seen = []
-    monkeypatch.setattr("phone_scanner.run_command", lambda cmd, **kw: seen.append(cmd))
+def test_ios_uninstall_rejects_hostile_serial(shell, serial):
     with pytest.raises(ValueError):
         IosScan().uninstall(serial=serial, appid="com.example.app")
-    assert seen == []
+    assert shell == []
 
 
 @pytest.mark.parametrize("serial", HOSTILE)
@@ -184,7 +186,7 @@ def test_android_rooted_check_rejects_hostile_serial(shell, serial):
 def test_android_device_info_passes_serial_as_one_argument(shell):
     AndroidScan().device_info(serial="192.168.1.5:5555")
     first = shell[0]
-    assert first[:3] == ["ARG:-s", "ARG:192.168.1.5:5555", "ARG:shell"]
+    assert first[1:4] == ["-s", "192.168.1.5:5555", "shell"]
 
 
 @pytest.mark.parametrize("serial", HOSTILE)
@@ -199,4 +201,4 @@ def test_privacy_cli_without_serial_targets_the_default_device():
     import config
     from phone_scanner.privacy_scan_android import thiscli
 
-    assert thiscli(None) == config.ADB_PATH
+    assert thiscli(None) == [config.ADB_PATH]

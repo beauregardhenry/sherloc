@@ -9,6 +9,8 @@ import config
 import pandas as pd
 from rsonlite import simpleparse
 
+from inputcheck import validate_appid
+
 from .runcmd import catch_err, run_command
 
 # MAP = config.ANDROID_PERMISSIONS
@@ -50,8 +52,9 @@ RUN_IN_BACKGROUND: allow; time=+15m2s867ms ago"""
 def recent_permissions_used(appid):
     cols = ["appId", "op", "mode", "timestamp", "time_ago", "duration"]
     df = pd.DataFrame([], columns=cols)
-    cmd = "{cli} shell appops get {app}"
-    recently_used = run_command(cmd, app=appid).stdout.read().decode("utf-8")
+    validate_appid(appid)
+    cmd = [config.ADB_PATH, "shell", "appops", "get", appid]
+    recently_used = run_command(cmd).stdout.read().decode("utf-8")
     #recently_used = catch_err(run_command(cmd, app=appid))
 
     if "No operations." in recently_used:
@@ -87,6 +90,28 @@ def recent_permissions_used(appid):
     return df.sort_values(by=["time_ago"]).reset_index(drop=True)
 
 
+def _package_section(dump_txt, appid):
+    """The lines of `Package [appid]` in the dump, up to the next package.
+
+    Same lines as `sed -n -e '/Package \\[appid\\]/,/Package \\[/p'` would
+    print, read in Python so the app id is never part of a command.
+    """
+    start = "Package [{}]".format(appid)
+    lines = []
+    inside = False
+    with open(dump_txt, errors="replace") as fh:
+        for line in fh:
+            if not inside:
+                if start in line:
+                    inside = True
+                    lines.append(line)
+            else:
+                lines.append(line)
+                if "Package [" in line:
+                    inside = False
+    return "".join(lines)
+
+
 def package_info(dumpf, appid):
     """
     For a specified app, captures lots of package info using sed.
@@ -98,11 +123,8 @@ def package_info(dumpf, appid):
     # install permissions:
     # runtime permissions:
     # This just uses bash to parse something we already have in the dump?
-    cmd = "sed -n -e '/Package \\[{appid}\\]/,/Package \\[/p' '{dumpf}'".format(
-        appid=appid, dumpf=dumpf.replace(".json", ".txt")
-    )
-    # TODO: Need to udpate it once the catch_err function is fixed.
-    package_dump = run_command(cmd).stdout.read().decode('utf-8')
+    validate_appid(appid)
+    package_dump = _package_section(dumpf.replace(".json", ".txt"), appid)
 
     # Edge case: Where "Hidden system packages" comes right after a package
     # We need to remove it, otherwise the parsing will fail.

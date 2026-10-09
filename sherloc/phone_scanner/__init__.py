@@ -3,8 +3,8 @@
 
 import os
 import re
-import shlex
 import sqlite3
+import subprocess
 import sys
 from collections import defaultdict
 from datetime import datetime
@@ -16,7 +16,7 @@ import pandas as pd
 
 from . import blocklist, parse_dump
 from .android_permissions import all_permissions
-from .runcmd import catch_err, run_command
+from .runcmd import catch_err, run_checked, run_command
 from inputcheck import validate_appid, validate_serial
 
 
@@ -258,14 +258,27 @@ class AndroidScan(AppScan):
         # self.setup()
 
     def setup(self):
-        p = run_command("{cli} kill-server; {cli} start-server")
-        if p != 0:
-            print(
-                ">> Setup failed with returncode={}. ~~ ex={!r}".format(
-                    p.returncode, p.stderr.read() + p.stdout.read()
-                ),
-                file=sys.stderr,
-            )
+        """Restart the adb server."""
+        for action in ("kill-server", "start-server"):
+            # The server keeps running after `start-server` returns, so its
+            # output is not captured: a pipe it holds open would block us.
+            try:
+                done = subprocess.run(
+                    [self.cli, action],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=15,
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired) as ex:
+                print(f">> adb {action} failed: {ex!r}", file=sys.stderr)
+                continue
+            if done.returncode != 0:
+                print(
+                    f">> adb {action} failed with returncode={done.returncode}",
+                    file=sys.stderr,
+                )
 
     def _get_apps_from_device(self, serialno, flag) -> list:
         """
@@ -274,18 +287,17 @@ class AndroidScan(AppScan):
         """
 
         validate_serial(serialno)
-        cmd = "{cli} -s {serial} shell pm list packages {flag} | sed 's/^package://g' | sort"
-        s = catch_err(
-            run_command(cmd, serial=shlex.quote(serialno), flag=flag),
-            msg="App search failed",
-            cmd=cmd,
-        )
-        if not s:
+        cmd = [self.cli, "-s", serialno, "shell", "pm", "list", "packages", *flag.split()]
+        p = run_command(cmd)
+        s = catch_err(p, msg="App search failed", cmd=" ".join(cmd))
+        # catch_err returns an error message when the command fails, so the
+        # exit status decides whether `s` is a package list.
+        if p.returncode != 0 or not s:
             self.setup()
             return []
         else:
-            installed_apps = [x for x in s.splitlines() if x]
-            return installed_apps
+            lines = (re.sub(r"^package:", "", x) for x in s.splitlines())
+            return sorted(x for x in lines if x)
 
     def _get_apps_from_dump(self, hmac_serial):
         """Parses the dump file to get the list of installed apps."""
@@ -313,13 +325,10 @@ class AndroidScan(AppScan):
             # If the list is non-empty, run a full scan 
             # (TODO: When would this be empty?)
             if installed_apps:
-                q = run_command(
-                    "bash scripts/android_scan.sh scan {ser} {hmac_serial}",
-                    ser=shlex.quote(serialno),
-                    hmac_serial=hmac_serial,
+                run_command(
+                    ["bash", "scripts/android_scan.sh", "scan", serialno, hmac_serial],
                     nowait=True,
                 )
-                pass
         else:
             # Try loading from the dump
             installed_apps = self._get_apps_from_dump(hmac_serial)
@@ -366,8 +375,13 @@ class AndroidScan(AppScan):
         # runcmd = catch_err(run_command(cmd), cmd=cmd).strip()
         # cmd = '{cli} kill-server; {cli} start-server'
         # s = catch_err(run_command(cmd), time=30, msg="ADB connection failed", cmd=cmd)
-        cmd = "{cli} devices | tail -n +2"
-        runcmd = catch_err(run_command(cmd), cmd=cmd).strip().split("\n")
+        cmd = [self.cli, "devices"]
+        p = run_command(cmd)
+        output = catch_err(p, cmd=" ".join(cmd))
+        if p.returncode != 0:
+            return []
+        # The first line is the "List of devices attached" header.
+        runcmd = output.strip().split("\n")[1:]
         conn_devices = []
         for rc in runcmd:
             d = rc.split()
@@ -390,26 +404,16 @@ class AndroidScan(AppScan):
     #     cmd = '{cli} devices -l'
     #     return run_command(cmd).stdout.read().decode('utf-8')
 
+    def _getprop(self, serial, prop):
+        p = run_command([self.cli, "-s", serial, "shell", "getprop", prop])
+        return p.stdout.read().decode("utf-8").strip()
+
     def device_info(self, serial):
         validate_serial(serial)
-        serial = shlex.quote(serial)
         m = {}
-        cmd = "{cli} -s {serial} shell getprop ro.product.brand"
-        m["brand"] = (
-            run_command(cmd, serial=serial).stdout.read().decode("utf-8").title()
-        )
-
-        cmd = "{cli} -s {serial} shell getprop ro.product.model"
-        m["model"] = run_command(cmd, serial=serial).stdout.read().decode("utf-8")
-
-        cmd = "{cli} -s {serial} shell getprop ro.build.version.release"
-        m["version"] = (
-            run_command(cmd, serial=serial).stdout.read().decode("utf-8").strip()
-        )
-
-        cmd = '{cli} -s {serial} shell dumpsys batterystats | grep -i "Start clock time:" | head -n1'
-        # runcmd = catch_err(run_command(cmd, serial=serial), cmd=cmd)
-        # m['last_full_charge'] = datetime.strptime(runcmd.split(':')[1].strip(), '%Y-%m-%d-%H-%M-%S')
+        m["brand"] = self._getprop(serial, "ro.product.brand").title()
+        m["model"] = self._getprop(serial, "ro.product.model")
+        m["version"] = self._getprop(serial, "ro.build.version.release")
         m["last_full_charge"] = datetime.now()
         return "{brand} {model} (running Android {version})".format(**m), m
 
@@ -429,17 +433,10 @@ class AndroidScan(AppScan):
     def uninstall(self, serial, appid):
         validate_appid(appid)
         validate_serial(serial)
-        # `{appid!r}` here would wrap the quoted value in double quotes, which
-        # re-enables $(...) expansion. Use the shlex-quoted value as is.
         # `-s` targets the device that was scanned; without it adb refuses to
         # run when more than one device is attached.
-        cmd = "{cli} -s {serial} uninstall {appid}"
-        s = catch_err(
-            run_command(cmd, serial=shlex.quote(serial), appid=shlex.quote(appid)),
-            cmd=cmd,
-            msg="Could not uninstall",
-        )
-        return s != -1
+        ok, _ = run_checked([self.cli, "-s", serial, "uninstall", appid])
+        return ok
 
     def app_details(self, serialno, appid) -> tuple[dict, dict]:
 
@@ -537,8 +534,9 @@ class AndroidScan(AppScan):
             "root_pkgs": (f"pm list packages | grep {root_pkgs_check_str}", "0"),
         }
         for k, v in root_checks.items():
-            cmd = "{cli} -s {serial} shell '{v[0]}'"
-            s = catch_err(run_command(cmd, serial=shlex.quote(serial), v=v))
+            # The check runs in the device's shell, so it is one argument.
+            cmd = [self.cli, "-s", serial, "shell", v[0]]
+            s = catch_err(run_command(cmd), cmd=" ".join(cmd))
             if s.strip() == v[1]:
                 return (True, f"The device is rooted: Found:  {k!r}.")
         return (False, "Automated checks were run to check: su binaries, OEM unlock, Frida, and the presence of various root packages. There were no indicators that the device is rooted.")
@@ -626,10 +624,19 @@ class IosScan(AppScan):
             return re.match(r"[a-f0-9]+", x) is not None
 
         # cmd = '{cli} --detect -t1 | tail -n 1'
-        cmd = "pymobiledevice3 usbmux list | awk -F'\"' '/Identifier/ {{print $4}}'"
+        cmd = ["pymobiledevice3", "usbmux", "list"]
 
         self.serialno = None
-        s = catch_err(run_command(cmd), cmd=cmd, msg="")
+        p = run_command(cmd)
+        listing = catch_err(p, cmd=" ".join(cmd), msg="")
+        if p.returncode != 0:
+            return []
+        # The value of each "Identifier" line: `"Identifier": "<udid>",`
+        s = "\n".join(
+            line.split('"')[3]
+            for line in listing.splitlines()
+            if "Identifier" in line and line.count('"') >= 4
+        )
 
         d = [
             line.strip()
@@ -665,13 +672,16 @@ class IosScan(AppScan):
             print(connected_reason)
             return False
         hmac_serial = config.hmac_serial(serial)
-        cmd = (
-            "'{}/ios_dump.sh' {} {Apps} {Info} {Jailbroken-FS} {Jailbroken-SSH}".format(
-                config.SCRIPT_DIR, hmac_serial, **config.IOS_DUMPFILES
-            )
-        )
-        print(cmd)
-        dumped = catch_err(run_command(cmd), cmd).strip()
+        files = config.IOS_DUMPFILES
+        cmd = [
+            os.path.join(config.SCRIPT_DIR, "ios_dump.sh"),
+            hmac_serial,
+            files["Apps"],
+            files["Info"],
+            files["Jailbroken-FS"],
+            files["Jailbroken-SSH"],
+        ]
+        dumped = catch_err(run_command(cmd), " ".join(cmd)).strip()
         if dumped:
             print("iOS DUMP RESULTS for {}:".format(hmac_serial))
             print(dumped)
@@ -687,15 +697,11 @@ class IosScan(AppScan):
         # cmd = 'ideviceinstaller --udid {} --uninstall {appid!r}'.format(serial, appid)
         validate_appid(appid)
         validate_serial(serial)
-        # The command is built here and not formatted again, so no braces in
-        # the template can be interpreted by run_command. `--udid` targets
-        # the device that was scanned.
-        cmd = (
-            f"{self.cli}ideviceinstaller --udid {shlex.quote(serial)} "
-            f"--uninstall {shlex.quote(appid)}"
+        # `--udid` targets the device that was scanned.
+        ok, _ = run_checked(
+            [f"{self.cli}ideviceinstaller", "--udid", serial, "--uninstall", appid]
         )
-        s = catch_err(run_command(cmd), cmd=cmd, msg="Could not uninstall")
-        return s != -1
+        return ok
 
     def isrooted(self, serial):
         # dict with 'True' and 'False' mapping to a list of reasons for root/no root

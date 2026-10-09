@@ -3,6 +3,8 @@
 import subprocess
 import sys
 
+import pytest
+
 from phone_scanner import runcmd
 
 
@@ -52,11 +54,48 @@ def test_a_command_that_outlives_the_timeout_gives_an_empty_result():
         p.kill()
 
 
-def test_run_command_fills_in_the_cli_name():
-    p = runcmd.run_command("echo {cli}")
-    assert p.stdout.read().decode().strip() == "adb"
+def test_run_command_takes_an_argument_list_and_does_not_use_a_shell():
+    p = runcmd.run_command(["echo", "a;b $(id) `id` |c"])
+    assert p.stdout.read().decode().strip() == "a;b $(id) `id` |c"
+
+
+def test_run_command_rejects_a_string():
+    with pytest.raises(TypeError):
+        runcmd.run_command("echo hi")
 
 
 def test_run_command_with_nowait_returns_a_pid():
-    pid = runcmd.run_command("true", nowait=True)
+    pid = runcmd.run_command(["true"], nowait=True)
     assert isinstance(pid, int)
+
+
+def test_a_missing_program_looks_like_a_failed_process():
+    p = runcmd.run_command(["definitely-not-installed-xyz", "--flag"])
+    assert runcmd.catch_err(p, cmd="x") != ""
+    assert p.returncode != 0
+
+
+def test_run_checked_reports_success_and_output():
+    ok, out = runcmd.run_checked([sys.executable, "-c", "print('Success')"])
+    assert ok is True and out.strip() == "Success"
+
+
+def test_run_checked_fails_on_a_nonzero_exit():
+    ok, _ = runcmd.run_checked([sys.executable, "-c", "import sys; sys.exit(1)"])
+    assert ok is False
+
+
+@pytest.mark.parametrize("text", ["Failure [DELETE_FAILED_INTERNAL_ERROR]", "ERROR: Uninstall failed"])
+def test_run_checked_fails_when_the_tool_says_so_but_exits_zero(text):
+    ok, _ = runcmd.run_checked([sys.executable, "-c", f"print({text!r})"])
+    assert ok is False
+
+
+def test_run_checked_fails_for_a_missing_program():
+    ok, _ = runcmd.run_checked(["definitely-not-installed-xyz"])
+    assert ok is False
+
+
+def test_run_checked_gives_up_after_the_timeout():
+    ok, _ = runcmd.run_checked([sys.executable, "-c", "import time; time.sleep(5)"], timeout=0.3)
+    assert ok is False

@@ -43,18 +43,22 @@ from flask import url_for
 import config
 from inputcheck import validate_serial
 
-adb = config.ADB_PATH
+# Activity names look like `com.example/.Settings\$Inner`. The backslash is for
+# the shell on the device, which turns `\$` into `$`. Names come from this
+# file, but they are checked anyway because the device shell will read them.
+_ACTIVITY = re.compile(r"[A-Za-z0-9_./\\$]+")
 
-def run_capture(cmd, **kwargs):
-    """Run a command and return (stdout, stderr) as text.
 
-    Not the same as `runcmd.run_command`, which returns the process.
+def run_capture(args, timeout=4):
+    """Run a program and return (stdout, stderr) as text.
+
+    `args` is a list; no shell is involved. Not the same as
+    `runcmd.run_command`, which returns the process.
     """
-    _cmd = cmd.format(**kwargs)
-    print(_cmd)
+    print(" ".join(shlex.quote(a) for a in args))
     try:
-        p = Popen(_cmd, stdout=PIPE, stderr=PIPE, shell=True)
-        p.wait(4)
+        p = Popen(args, stdout=PIPE, stderr=PIPE)
+        p.wait(timeout)
         return p.stdout.read().decode("utf-8"), p.stderr.read().decode("utf-8")
     except FileNotFoundError as e:
         return "", f"Command not found: {e}"
@@ -65,30 +69,31 @@ def run_capture(cmd, **kwargs):
         return "", f"Error: {e}"
 
 
-
 def thiscli(ser):
-    """Return the adb command prefix. `None` means the default device."""
+    """Return the adb command as a list. `None` means the default device."""
     if ser is None:
-        return "{adb}".format(adb=adb)
-    return "{adb} -s {ser}".format(adb=adb, ser=shlex.quote(validate_serial(ser)))
+        return [config.ADB_PATH]
+    return [config.ADB_PATH, "-s", validate_serial(ser)]
 
 
 def get_screen_res(ser):
-    cmd = "{cli} shell dumpsys window | grep 'mUnrestrictedScreen'"
-    out, err = run_capture(cmd, cli=thiscli(ser))
-    m = re.match(r"mUnrestrictedScreen=\(0,0\) (?P<w>\d+)x(?P<h>\d+)", out.strip())
-    if m:
-        return int(m.group("w")), int(m.group("h"))
-    else:
-        return -1, -1
+    out, err = run_capture(thiscli(ser) + ["shell", "dumpsys", "window"])
+    for line in out.splitlines():
+        if "mUnrestrictedScreen" in line:
+            m = re.match(r"mUnrestrictedScreen=\(0,0\) (?P<w>\d+)x(?P<h>\d+)", line.strip())
+            if m:
+                return int(m.group("w")), int(m.group("h"))
+            break
+    return -1, -1
 
 
 def open_activity(ser, activity_name):
     """
     Opens an activity
     """
-    cmd = "{cli} shell am start '{act}'"
-    out, err = run_capture(cmd, cli=thiscli(ser), act=activity_name)
+    if not _ACTIVITY.fullmatch(activity_name):
+        raise ValueError("Unsupported activity name.")
+    out, err = run_capture(thiscli(ser) + ["shell", "am", "start", activity_name])
     if err:
         print("ERROR (open_activity): {!r}".format(err))
         return False
@@ -105,8 +110,7 @@ def tap(ser, xpercent, ypercent):
     w, h = get_screen_res(ser)
     x = int(xpercent * w / 100)
     y = int(ypercent * h / 100)
-    cmd = "{cli} shell input tap {x} {y}"
-    out, err = run_capture(cmd, cli=thiscli(ser), x=x, y=y)
+    out, err = run_capture(thiscli(ser) + ["shell", "input", "tap", str(x), str(y)])
     if err:
         print("ERROR (tap): {!r}".format(err))
 
@@ -117,19 +121,19 @@ def keycode(ser, evt):
         print("ERROR (keycode): No support for {}".format(evt))
 
     key = cmds.get(evt)
-    run_capture("{cli} shell input keyevent {key}", cli=thiscli(ser), key=key)
+    run_capture(thiscli(ser) + ["shell", "input", "keyevent", str(key)])
 
 
 def is_screen_on(ser):
-    cmd = "{cli} shell dumpsys input_method | grep 'mInteractive' | sed 's/.*mInteractive=//g'"
-    out, err = run_capture(cmd, cli=thiscli(ser))
+    out, err = run_capture(thiscli(ser) + ["shell", "dumpsys", "input_method"])
     if err:
         print("ERROR (is_screen_on): {!r}".format(err))
-    out = out.strip()
-    if out == "true":
-        return True
-    else:
-        return False
+    states = [
+        re.sub(r".*mInteractive=", "", line).strip()
+        for line in out.splitlines()
+        if "mInteractive" in line
+    ]
+    return bool(states) and states[0] == "true"
 
 
 def take_screenshot(ser, fname=None):
@@ -141,17 +145,17 @@ def take_screenshot(ser, fname=None):
     if not fname:
         fname = "tmp_screencap.png"
 
-    cli = thiscli(ser)
-    cmd = "{} exec-out screencap -p | perl -pe 's/\\x0D\\x0A/\\x0A/g'".format(cli)
-    if os.name == 'posix':  # Formatting for posix systems
-        cmd = "{} exec-out screencap -p".format(cli)
+    cmd = thiscli(ser) + ["exec-out", "screencap", "-p"]
 
     try:
         # This command spits out the screenshot to stdout, which we capture
         # and write to the file.
-        result = subprocess.run(shlex.split(cmd), check=True, stdout=subprocess.PIPE)
+        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE)
+        data = result.stdout
+        if os.name != "posix":
+            data = data.replace(b"\r\n", b"\n")  # Windows adb translates line ends
         with open(fname, 'wb') as f:
-            f.write(result.stdout)
+            f.write(data)
 
         # Return the image that will be inserted into the HTML.
         return add_image(fname.split("webstatic/", 1)[-1], nocache=True)
