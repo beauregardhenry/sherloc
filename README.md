@@ -89,6 +89,9 @@ To turn on developer mode:
 
 Please see this article for more details on how to turn on developer mode using XCode: https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device.
 
+### Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md). `./dev.sh` sets up a development environment and runs the tests without root. Report security problems as described in [SECURITY.md](SECURITY.md).
+
 ### Debugging tips
 If you encounter errors, please file a [GitHub issue](../../issues/) with the server error output.
 Pull requests are welcome.

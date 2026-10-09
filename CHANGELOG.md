@@ -14,6 +14,11 @@ Security in case of vulnerabilities.
 
 ## [Unreleased]
 
+### Added
+- `CONTRIBUTING.md`, `SECURITY.md` and a pull request template
+- `./dev.sh` sets up a virtual environment and runs the tests without root; `requirements-dev.txt` lists the development tools
+- Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)
+
 ### Changed
 - `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
 - Four stale TODO/FIXME comments were removed or corrected. The rest are collected in issues #17 to #21

@@ -9,6 +9,7 @@ shown in a page.
 """
 
 import re
+from typing import Any
 
 # Android serials, iOS UDIDs, adb network targets (host:port), and the
 # HSN_<hmac> form that Sherloc uses for stored serials.
@@ -19,7 +20,7 @@ _APPID = re.compile(r"[A-Za-z0-9._-]{1,255}")
 _PATH_PART = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 
-def _check(value, pattern, what):
+def _check(value: Any, pattern: re.Pattern[str], what: str) -> str:
     if (
         not isinstance(value, str)
         or pattern.fullmatch(value) is None
@@ -29,17 +30,17 @@ def _check(value, pattern, what):
     return value
 
 
-def validate_serial(value):
+def validate_serial(value: Any) -> str:
     """Return `value` if it is a plausible device serial, else raise ValueError."""
     return _check(value, _SERIAL, "device serial")
 
 
-def validate_appid(value):
+def validate_appid(value: Any) -> str:
     """Return `value` if it is a plausible app id, else raise ValueError."""
     return _check(value, _APPID, "app id")
 
 
-def validate_path_part(value, what="path component"):
+def validate_path_part(value: Any, what: str = "path component") -> str:
     """Return `value` if it is safe as one path component, else raise ValueError.
 
     Rejects separators, quotes, whitespace, and the names "." and "..".
