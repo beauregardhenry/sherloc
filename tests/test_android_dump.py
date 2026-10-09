@@ -98,8 +98,9 @@ APPOPS = (
 )
 
 
-def test_recent_permissions_used_reads_appops_output(fake_bin):
-    adb = fake_bin("adb", [{"match": "appops get com.spy.app", "stdout": APPOPS}])
+def test_recent_permissions_used_reads_appops_output(fake_adb):
+    adb = fake_adb
+    adb.respond([{"match": "appops get com.spy.app", "stdout": APPOPS}])
     df = perms.recent_permissions_used("com.spy.app")
     assert set(df["op"]) == {"CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE"}
     assert set(df["mode"]) == {"allow"}
@@ -107,8 +108,8 @@ def test_recent_permissions_used_reads_appops_output(fake_bin):
     assert ["shell", "appops", "get", "com.spy.app"] in adb.calls
 
 
-def test_recent_permissions_used_is_empty_when_the_app_has_none(fake_bin):
-    fake_bin("adb", [{"match": "appops", "stdout": "No operations.\n"}])
+def test_recent_permissions_used_is_empty_when_the_app_has_none(fake_adb):
+    fake_adb.respond([{"match": "appops", "stdout": "No operations.\n"}])
     assert perms.recent_permissions_used("com.spy.app").empty
 
 
@@ -134,9 +135,9 @@ def test_package_info_never_runs_text_from_the_app_id(tmp_path, appid):
 
 
 @pytest.mark.parametrize("appid", HOSTILE_APPIDS)
-def test_recent_permissions_never_run_text_from_the_app_id(fake_bin, tmp_path, appid):
+def test_recent_permissions_never_run_text_from_the_app_id(fake_adb, tmp_path, appid):
     marker = tmp_path / "pwned"
-    adb = fake_bin("adb")
+    adb = fake_adb
     with pytest.raises(ValueError):
         perms.recent_permissions_used(appid.format(marker=marker))
     assert not marker.exists()

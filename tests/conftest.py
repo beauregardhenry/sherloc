@@ -39,3 +39,13 @@ def fake_bin(tmp_path, monkeypatch):
         return FakeTool(d, name, responses)
 
     return make
+
+
+@pytest.fixture
+def fake_adb(fake_bin, monkeypatch):
+    """A fake `adb` that the scanners use, whatever ANDROID_HOME says."""
+    import config
+
+    tool = fake_bin("adb")
+    monkeypatch.setattr(config, "ADB_PATH", str(tool.path))
+    return tool
