@@ -21,3 +21,21 @@ _DUMP_FIXTURE = (
 collect_ignore = []
 if not _DUMP_FIXTURE.exists():
     collect_ignore.append("test_parse_dump.py")
+
+
+import pytest  # noqa: E402
+
+from tests.fakebin import FakeTool  # noqa: E402
+
+
+@pytest.fixture
+def fake_bin(tmp_path, monkeypatch):
+    """Return `make(name, responses)`; the tools are found first on PATH."""
+    d = tmp_path / "fakebin"
+    d.mkdir()
+    monkeypatch.setenv("PATH", f"{d}:" + __import__("os").environ["PATH"])
+
+    def make(name, responses=None):
+        return FakeTool(d, name, responses)
+
+    return make
