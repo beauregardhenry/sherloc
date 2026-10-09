@@ -84,10 +84,11 @@ def test_delete_app_rejects_hostile_appid(client):
 
 
 def test_screenshot_path_stays_inside_screenshot_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr(config, "THIS_DIR", tmp_path)
+    # The same folder "Delete client data" empties.
+    root = tmp_path / "shots"
+    monkeypatch.setattr(config, "SCREENSHOT_DIR", root)
     fname = config.create_screenshot_fname("Account 3", "ZY224F8TKG")
-    root = (tmp_path / "webstatic" / "images" / "screenshots").resolve()
-    assert str(fname).startswith(str(root))
+    assert str(fname).startswith(str(root.resolve()))
 
 
 @pytest.mark.parametrize(
@@ -95,7 +96,7 @@ def test_screenshot_path_stays_inside_screenshot_dir(tmp_path, monkeypatch):
     [("..", "x"), ("x", ".."), ("../../etc", "x"), ("x", "a/b"), ("", "x")],
 )
 def test_screenshot_path_rejects_traversal(tmp_path, monkeypatch, context, serial):
-    monkeypatch.setattr(config, "THIS_DIR", tmp_path)
+    monkeypatch.setattr(config, "SCREENSHOT_DIR", tmp_path / "shots")
     with pytest.raises(ValueError):
         config.create_screenshot_fname(context, serial)
 

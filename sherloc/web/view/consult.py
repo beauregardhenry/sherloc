@@ -6,6 +6,7 @@ from web.forms import ClientForm
 from flask import render_template, request, session, redirect, url_for
 from phone_scanner import AndroidScan, IosScan, TestScan
 from phone_scanner.db import get_client_devices_from_db, new_client_id
+from debuglog import debug
 
 
 @app.route("/form/", methods=["GET", "POST"])
@@ -24,7 +25,7 @@ def client_forms():
     if request.method == "POST":
         try:
             if form.validate():
-                print("VALIDATED")
+                debug("VALIDATED")
                 # convert checkbox lists to json-friendly strings
                 for field in form:
                     if field.type == "SelectMultipleField":
@@ -37,8 +38,8 @@ def client_forms():
                     "main.html", task="form", formdone="yes", title=config.TITLE
                 )
         except Exception as e:
-            print("NOT VALIDATED")
-            print(e)
+            debug("NOT VALIDATED")
+            debug(e)
             sa.session.rollback()
 
     # clients_list = Client.query.all()
@@ -75,7 +76,7 @@ def edit_forms():
             cid = form_obj.clientid  # preserve before populate_obj
             form = ClientForm(request.form)
             if form.validate():
-                print("VALIDATED")
+                debug("VALIDATED")
                 # convert checkbox lists to json-friendly strings
                 for field in form:
                     if field.type == "SelectMultipleField":

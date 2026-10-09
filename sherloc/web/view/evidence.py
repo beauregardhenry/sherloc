@@ -50,6 +50,7 @@ from flask import (
 from flask_bootstrap import Bootstrap
 from phone_scanner import AndroidScan, IosScan
 from web import app
+from debuglog import debug, pdebug
 
 bootstrap = Bootstrap(app)
 
@@ -61,7 +62,7 @@ USE_FAKE_DATA = True
 def evidence_home():
 
     notes = load_json_data(ConsultDataTypes.NOTES.value)
-    pprint(notes)
+    pdebug(notes)
 
     consult_data = ConsultationData(
         taq=load_json_data(ConsultDataTypes.TAQ.value),
@@ -86,7 +87,7 @@ def evidence_home():
 
     if request.method == 'POST':
 
-        pprint(form.data)
+        pdebug(form.data)
 
         if form.is_submitted() and form.validate():
 
@@ -177,11 +178,11 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
     )
 
     if request.method == "GET":
-        pprint(form.data)
+        pdebug(form.data)
         return render_template('main.html', **context)
 
     if request.method == "POST":
-        pprint(form.data)
+        pdebug(form.data)
         if form.is_submitted() and form.validate():
 
             if form.manualadd.data:
@@ -204,7 +205,7 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
                 # If so, just load the next page for that device
                 ser = get_serial(clean_data["device_type"], clean_data["device_nickname"])
                 hmac_ser = config.hmac_serial(ser)
-                print("SERIAL NUMBER: " + hmac_ser)
+                debug("SERIAL NUMBER: " + hmac_ser)
                 if not force_rescan:
                     for scan in all_scan_data:
                         if scan.serial == hmac_ser:
@@ -239,7 +240,7 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
                 return redirect(url_for('evidence_scan_select', ser=current_scan.serial))
 
             except Exception as e:
-                print(traceback.format_exc())
+                debug(traceback.format_exc())
                 flash("Scan error: " + str(e))
                 return redirect(url_for('evidence_scan_start',
                                         device_type=form.data["device_type"],
@@ -263,7 +264,7 @@ def evidence_scan_select(ser, show_rescan):
     current_scan = get_scan_by_ser(ser, all_scan_data)
     assert current_scan.serial == ser
 
-    pprint(current_scan.all_apps[0].permission_info.__dict__)
+    pdebug(current_scan.all_apps[0].permission_info.__dict__)
 
     # fill form
     form = AppSelectPageForm(apps=[app.to_dict() for app in current_scan.all_apps])
@@ -287,15 +288,15 @@ def evidence_scan_select(ser, show_rescan):
             serial=current_scan.serial,
             serial_or_udid=current_scan.serial_or_udid
         )
-        print("-"*80)
-        print(context['device'])
-        print("-"*80)
+        debug("-"*80)
+        debug(context['device'])
+        debug("-"*80)
 
         return render_template('main.html', **context)
 
     # Submit the form if it's a POST
     if request.method == 'POST':
-        pprint(form.data)
+        pdebug(form.data)
         if form.is_submitted() and form.validate():
 
             # clean up the submitted data
@@ -453,8 +454,8 @@ def evidence_scan_investigate(ser):
 
     for a in current_scan.selected_apps:
         a = a.to_dict()
-        pprint("App: {}  Flags: {}".format(a["title"], a["flags"]))
-    pprint("INFO GIVEN TO INVESTIGATION FORM")
+        pdebug("App: {}  Flags: {}".format(a["title"], a["flags"]))
+    pdebug("INFO GIVEN TO INVESTIGATION FORM")
 
     form = AppInvestigationForm(selected_apps=[a.to_dict() for a in current_scan.selected_apps])
 
@@ -475,7 +476,7 @@ def evidence_scan_investigate(ser):
 
     # Submit the form if it's a POST
     if request.method == 'POST':
-        pprint(form.data)
+        pdebug(form.data)
         if form.is_submitted() and form.validate():
 
             # clean up the submitted data
@@ -578,22 +579,22 @@ def evidence_account(id):
 
         if not form.validate():
             flash("Form validation error. Raw error: {}".format(form.errors), 'error')
-            pprint(form.errors)
+            pdebug(form.errors)
 
 @app.route("/evidence/screenshots", methods=['GET', 'POST'])
 def evidence_screenshots():
 
-    pprint("Gathering consult data...")
+    pdebug("Gathering consult data...")
     consult_data = ConsultationData(
         accounts=load_json_data(ConsultDataTypes.ACCOUNTS.value),
         scans=load_json_data(ConsultDataTypes.SCANS.value),
         screenshot_dir = config.SCREENSHOT_DIR,
     )
 
-    pprint("Gathering screenshots...")
+    pdebug("Gathering screenshots...")
     consult_data.prepare_screenshots(get_metadata=False)
 
-    pprint("Reformatting screenshot info...")
+    pdebug("Reformatting screenshot info...")
     root_screenshots = list()
     app_screenshots = list()
     acct_screenshots = list()
@@ -651,7 +652,7 @@ def evidence_printout():
 
     start_time = time.perf_counter()
 
-    pprint("Gathering consult data...")
+    pdebug("Gathering consult data...")
     consult_data = ConsultationData(
         setup=dict(
             client=client,
@@ -664,10 +665,10 @@ def evidence_printout():
         notes=load_json_data(ConsultDataTypes.NOTES.value)
     )
 
-    pprint("Preparing reports...")
+    pdebug("Preparing reports...")
     consult_data.prepare_reports()
 
-    pprint("Gathering screenshots...")
+    pdebug("Gathering screenshots...")
     consult_data.prepare_screenshots()
 
     context = consult_data.to_dict()
@@ -692,13 +693,13 @@ def evidence_printout():
 
     # create the printout document
 
-    pprint("Creating the printout...")
+    pdebug("Creating the printout...")
     filename = create_printout(context)
     workingdir = os.path.abspath(os.getcwd())
 
     end_time = time.perf_counter()
     elapsed_time = end_time - start_time
-    print(f"Function executed in {elapsed_time:.6f} seconds")
+    debug(f"Function executed in {elapsed_time:.6f} seconds")
 
     return send_from_directory(workingdir, filename)
 

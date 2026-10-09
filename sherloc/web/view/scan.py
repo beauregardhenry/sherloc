@@ -13,6 +13,7 @@ from phone_scanner.db import (
     create_mult_appinfo,
     first_element_or_none,
 )
+from debuglog import debug, warn
 
 def get_param(key):
     return request.form.get(key, request.args.get(key))
@@ -63,15 +64,15 @@ def scan():
     )
     # lookup devices scanned so far here. need to add this by model rather
     # than by serial.
-    print("CURRENTLY SCANNED: {}".format(currently_scanned))
-    print("DEVICE OWNER IS: {}".format(device_owner))
-    print("PRIMARY USER IS: {}".format(device_primary_user))
-    print("SERIAL NO: {}".format(ser))
-    print("FROM DUMP: {}".format(from_dump))
-    print("-" * 80)
-    print("CLIENT ID IS: {}".format(session["clientid"]))
-    print("-" * 80)
-    print("--> Action = ", action)
+    debug("CURRENTLY SCANNED: {}".format(currently_scanned))
+    debug("DEVICE OWNER IS: {}".format(device_owner))
+    debug("PRIMARY USER IS: {}".format(device_primary_user))
+    debug("SERIAL NO: {}".format(ser))
+    debug("FROM DUMP: {}".format(from_dump))
+    debug("-" * 80)
+    debug("CLIENT ID IS: {}".format(session["clientid"]))
+    debug("-" * 80)
+    debug("--> Action = ", action)
 
     sc = get_device(device)
     if not sc:
@@ -90,7 +91,7 @@ def scan():
             template_d["error"] = "The device reported a serial number that Sherloc cannot use."
             return render_template("main.html", **template_d), 201
 
-    print("Devices: {}".format(ser))
+    debug("Devices: {}".format(ser))
     if not ser:
         # FIXME: add pkexec scripts/ios_mount_linux.sh workflow for iOS if
         # needed.
@@ -103,7 +104,7 @@ def scan():
         return render_template("main.html", **template_d), 201
 
     # clientid = new_client_id()
-    print(">>>scanning_device", device, ser, "<<<<<")
+    debug(">>>scanning_device", device, ser, "<<<<<")
 
     if device == "ios":
         error = (
@@ -136,11 +137,11 @@ def scan():
     if from_dump:
         d = db.get_device_info(ser)
         if d:
-            print(d)
+            debug(d)
             device_name_print = f"{d['device_model']} ({d['device_primary_user']})"
             device_name_map = d
         else:
-            print("ERROR: Could not find device info:", d)
+            debug("ERROR: Could not find device info:", d)
     else:
         device_name_print, device_name_map = sc.device_info(serial=ser)
 
@@ -152,7 +153,7 @@ def scan():
         .to_dict(orient="index")
     )
     if len(apps) <= 0:
-        print("The scanning failed for some reason.")
+        warn("The scanning failed for some reason.")
         error = (
             "The scanning failed. This could be due to many reasons. Try"
             " rerunning the scan from the beginning. If the problem persists,"
@@ -183,7 +184,7 @@ def scan():
             "last_full_charge", "<Unknown>"
         )
 
-    print(f"Getting from dump: {from_dump}")
+    debug(f"Getting from dump: {from_dump}")
     if from_dump:
         rooted, rooted_reason = db.get_is_rooted(ser)
     else:
@@ -205,13 +206,13 @@ def scan():
 
     if device == "ios":
         pii_fpath = sc.dump_path(ser, "Device_Info")
-        print("Revelant info saved to db. Deleting {} now.".format(pii_fpath))
+        debug("Revelant info saved to db. Deleting {} now.".format(pii_fpath))
         if os.path.exists(pii_fpath):
             cmd = os.unlink(pii_fpath)
         # s = catch_err(run_command(cmd), msg="Delete pii failed", cmd=cmd)
-        print("iOS PII deleted.")
+        debug("iOS PII deleted.")
 
-    print("Creating appinfo...")
+    debug("Creating appinfo...")
     create_mult_appinfo(
         [
             (scanid, appid, json.dumps(info["flags"]), "", "<new>")

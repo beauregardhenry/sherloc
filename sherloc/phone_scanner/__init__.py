@@ -18,6 +18,7 @@ from . import blocklist, parse_dump
 from .android_permissions import all_permissions
 from .runcmd import catch_err, run_checked, run_command
 from inputcheck import validate_appid, validate_serial
+from debuglog import debug, warn
 
 
 class AppScan(object):
@@ -163,7 +164,7 @@ class AppScan(object):
             return d, info
         
         except KeyError as ex:
-            print(">>> Exception:::", ex, file=sys.stderr)
+            debug(">>> Exception:::", ex, file=sys.stderr)
             return dict(), dict()
 
     def find_spyapps(self, serialno, from_dump=False):
@@ -272,10 +273,10 @@ class AndroidScan(AppScan):
                     check=False,
                 )
             except (OSError, subprocess.TimeoutExpired) as ex:
-                print(f">> adb {action} failed: {ex!r}", file=sys.stderr)
+                warn(f">> adb {action} failed: {ex!r}")
                 continue
             if done.returncode != 0:
-                print(
+                debug(
                     f">> adb {action} failed with returncode={done.returncode}",
                     file=sys.stderr,
                 )
@@ -316,7 +317,7 @@ class AndroidScan(AppScan):
         """Returns the list of installed apps on the device."""
 
         validate_serial(serialno)
-        print(f"Getting Android apps: {serialno} from_dump={from_dump}")
+        debug(f"Getting Android apps: {serialno} from_dump={from_dump}")
         hmac_serial = config.hmac_serial(serialno)
         if not from_dump:
             # Get list of installed packages using adb
@@ -357,7 +358,7 @@ class AndroidScan(AppScan):
                     if installer not in approved and installer != "null":
                         # if system is rooted, won't make any difference spoofing wise
                         approved.add(installer)
-        print(f"Approved Installers:{approved}")
+        debug(f"Approved Installers:{approved}")
         for line in self._get_apps_from_device(serialno, "-i -u -3"):
             line = line.split()
             if len(line) == 2:
@@ -366,7 +367,7 @@ class AndroidScan(AppScan):
                 if installer not in approved:
                     offstore.append(apps)
             else:
-                print(">>>>>> ERROR: {}".format(line), file=sys.stderr)
+                debug(">>>>>> ERROR: {}".format(line), file=sys.stderr)
         return offstore
 
     def devices(self):
@@ -395,7 +396,7 @@ class AndroidScan(AppScan):
                 except ValueError:
                     # The serial is reported by the device. Do not use one
                     # that could not be passed safely to a command.
-                    print("Ignoring a device with an unusable serial number.")
+                    debug("Ignoring a device with an unusable serial number.")
                     continue
                 conn_devices.append(device)
         return conn_devices
@@ -595,17 +596,17 @@ class IosScan(AppScan):
 
     def get_apps(self, serialno: str, from_dump: bool) -> list:
         """iOS always read everything from dump, so nothing to change."""
-        print("inside get_apps()")
+        debug("inside get_apps()")
         self.serialno = serialno
         if not from_dump:
             if not self._dump_phone(serialno):
-                print("Failed to dump the phone. Check error on the terminal")
+                warn("Failed to dump the phone.")
                 return []
-        print("before _load_dump()")
+        debug("before _load_dump()")
         self._load_dump(serialno)
-        print("after _load_dump()")
+        debug("after _load_dump()")
         self.installed_apps = self.parse_dump.installed_apps()
-        print("iOS INFO DUMPED.")
+        debug("iOS INFO DUMPED.")
         return self.installed_apps
 
     def get_system_apps(self, serialno: str, from_dump: bool) -> list:
@@ -665,11 +666,11 @@ class IosScan(AppScan):
         return self.parse_dump
 
     def _dump_phone(self, serial: str) -> bool:
-        print("DUMPING iOS INFO...")
+        debug("DUMPING iOS INFO...")
         connected, connected_reason = self.setup()
         if not connected:
-            print("Couldn't connect to the device. Trying to reconnect. Over here.")
-            print(connected_reason)
+            warn("Couldn't connect to the device.")
+            debug(connected_reason)
             return False
         hmac_serial = config.hmac_serial(serial)
         files = config.IOS_DUMPFILES
@@ -683,11 +684,11 @@ class IosScan(AppScan):
         ]
         dumped = catch_err(run_command(cmd), " ".join(cmd)).strip()
         if dumped:
-            print("iOS DUMP RESULTS for {}:".format(hmac_serial))
-            print(dumped)
+            debug("iOS DUMP RESULTS for {}:".format(hmac_serial))
+            debug(dumped)
             return True
         else:
-            print(
+            debug(
                 ">> The iOS dumping failed for some reason. Check above for more information"
             )
             return False
@@ -726,7 +727,7 @@ class IosScan(AppScan):
                     "Filesystem *might* be rooted. Conduct additional checks."
                 )
         except FileNotFoundError:
-            print("Couldn't find Jailbroken FS check log.")
+            debug("Couldn't find Jailbroken FS check log.")
             # TODO: trigger error message? like
             # TODO: show a try again, maybe it's not plugged in properly. still not working?
             # this could be due to many many many reasons.
@@ -741,7 +742,7 @@ class IosScan(AppScan):
             # TODO: trigger error message? like
             # TODO: show a try again, maybe it's not plugged in properly. still not working?
             #  this could be due to many many many reasons.
-            print("Couldn't find Jailbroken SSH check log.")
+            debug("Couldn't find Jailbroken SSH check log.")
 
         # if app["Path"].split("/")[-1] in ["Cydia.app"]
         """ Summary of jailbroken detection: checks for commonly installed jailbreak apps,

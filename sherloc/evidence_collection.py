@@ -81,6 +81,7 @@ from evidence_model import (  # noqa: F401
     ScreenshotInfo,
     get_all_screenshot_files,
 )
+from debuglog import debug, warn
 from evidence_forms import (  # noqa: F401
     NotesForm,
     PermissionForm,
@@ -201,7 +202,7 @@ def create_printout(context, out_file=None):
 
     pdfkit.from_string(html_string, out_file, options=printout_pdf_options(), configuration=config, css=css_path, verbose=True)
 
-    print("Printout created. Filename is", out_file)
+    debug("Printout created. Filename is", out_file)
 
     return out_file
 
@@ -308,7 +309,7 @@ def get_ser_from_scan_obj(sc):
     """Get the serial number of the device, if it exists."""
     ser = sc.devices()
 
-    print("Devices: {}".format(ser))
+    debug("Devices: {}".format(ser))
     if not ser:
         # FIXME: add pkexec scripts/ios_mount_linux.sh workflow for iOS if
         # needed.
@@ -339,7 +340,7 @@ def get_scan_data(device, device_owner):
         sc = get_scan_obj(device, device_owner)
         ser = get_ser_from_scan_obj(sc)
 
-        print(">>>scanning_device", device, ser, "<<<<<")
+        debug(">>>scanning_device", device, ser, "<<<<<")
 
         if device == 'ios':
             # go through pairing process and do not scan until it is successful.
@@ -359,7 +360,7 @@ def get_scan_data(device, device_owner):
         # @apps have appid, title, flags, TODO: add icon
         apps = sc.find_spyapps(serialno=ser).fillna('').to_dict(orient='index')
         if len(apps) <= 0:
-            print("The scanning failed for some reason.")
+            warn("The scanning failed for some reason.")
             error = "The scanning failed. This could be due to many reasons. Try"\
                 " rerunning the scan from the beginning. If the problem persists,"\
                 " please report it in the file. Check the phone manually. Sorry for"\
@@ -540,32 +541,32 @@ def wipe_client_database():
 def delete_client_data():
 
     # Delete the consult data stored as json
-    print("Deleting consultation data...")
+    debug("Deleting consultation data...")
     for datatype in ConsultDataTypes:
         fname = os.path.join(TMP_CONSULT_DATA_DIR, get_data_filename(datatype.value))
         if os.path.exists(fname):
             os.remove(fname)
 
     # Delete phone dumps
-    print("Deleting phone dumps...")
-    print(DUMP_DIR)
+    debug("Deleting phone dumps...")
+    debug(DUMP_DIR)
     shutil.rmtree(DUMP_DIR, ignore_errors=True)
-    os.makedirs(DUMP_DIR, exist_ok=True)
+    os.makedirs(DUMP_DIR, mode=0o700, exist_ok=True)
 
     # Delete screenshots
-    print("Deleting screenshots...")
-    print(SCREENSHOT_DIR)
+    debug("Deleting screenshots...")
+    debug(SCREENSHOT_DIR)
     shutil.rmtree(SCREENSHOT_DIR, ignore_errors=True)
-    os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+    os.makedirs(SCREENSHOT_DIR, mode=0o700, exist_ok=True)
 
     # Delete report
-    print("Deleting report...")
-    print(REPORT_DIR)
+    debug("Deleting report...")
+    debug(REPORT_DIR)
     shutil.rmtree(REPORT_DIR, ignore_errors=True)
-    os.makedirs(REPORT_DIR, exist_ok=True)
+    os.makedirs(REPORT_DIR, mode=0o700, exist_ok=True)
 
     # Delete everything stored in the database
-    print("Deleting database records...")
+    debug("Deleting database records...")
     wipe_client_database()
 
-    print("Client data deleted.")
+    debug("Client data deleted.")

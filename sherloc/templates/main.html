@@ -92,6 +92,13 @@
         <div class="header">
             <h3><a href="/evidence/home">Sherloc</a></h3>
         </div>
+        {% if client_data and client_data.present %}
+        <div class="alert alert-warning" id="client-data-notice" role="status">
+            <strong>Client data is stored on this computer</strong>
+            ({% for label, n in client_data["items"] %}{{ label|lower }}: {{ n }}{% if not loop.last %}; {% endif %}{% endfor %}).
+            Delete it when the consultation is over: <a href="{{ url_for('evidence_home') }}">Evidence home</a>, <em>Delete Client Data</em>.
+        </div>
+        {% endif %}
       {% block content %}
         {% if task == 'home' %}
           {% include 'home.html' %}

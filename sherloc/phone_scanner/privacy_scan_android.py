@@ -42,6 +42,7 @@ from flask import url_for
 
 import config
 from inputcheck import validate_serial
+from debuglog import debug
 
 # Activity names look like `com.example/.Settings\$Inner`. The backslash is for
 # the shell on the device, which turns `\$` into `$`. Names come from this
@@ -55,7 +56,7 @@ def run_capture(args, timeout=4):
     `args` is a list; no shell is involved. Not the same as
     `runcmd.run_command`, which returns the process.
     """
-    print(" ".join(shlex.quote(a) for a in args))
+    debug(" ".join(shlex.quote(a) for a in args))
     try:
         p = Popen(args, stdout=PIPE, stderr=PIPE)
         p.wait(timeout)
@@ -95,10 +96,10 @@ def open_activity(ser, activity_name):
         raise ValueError("Unsupported activity name.")
     out, err = run_capture(thiscli(ser) + ["shell", "am", "start", activity_name])
     if err:
-        print("ERROR (open_activity): {!r}".format(err))
+        debug("ERROR (open_activity): {!r}".format(err))
         return False
     if "error" in out.lower():
-        print("ERROR (open_activity) stdout=: {!r}".format(out))
+        debug("ERROR (open_activity) stdout=: {!r}".format(out))
         return False
     return True
 
@@ -112,13 +113,13 @@ def tap(ser, xpercent, ypercent):
     y = int(ypercent * h / 100)
     out, err = run_capture(thiscli(ser) + ["shell", "input", "tap", str(x), str(y)])
     if err:
-        print("ERROR (tap): {!r}".format(err))
+        debug("ERROR (tap): {!r}".format(err))
 
 
 def keycode(ser, evt):
     cmds = {"home": "3", "back": "4", "menu": "82", "power": "26"}
     if evt not in cmds:
-        print("ERROR (keycode): No support for {}".format(evt))
+        debug("ERROR (keycode): No support for {}".format(evt))
 
     key = cmds.get(evt)
     run_capture(thiscli(ser) + ["shell", "input", "keyevent", str(key)])
@@ -127,7 +128,7 @@ def keycode(ser, evt):
 def is_screen_on(ser):
     out, err = run_capture(thiscli(ser) + ["shell", "dumpsys", "input_method"])
     if err:
-        print("ERROR (is_screen_on): {!r}".format(err))
+        debug("ERROR (is_screen_on): {!r}".format(err))
     states = [
         re.sub(r".*mInteractive=", "", line).strip()
         for line in out.splitlines()
@@ -161,11 +162,11 @@ def take_screenshot(ser, fname=None):
         return add_image(fname.split("webstatic/", 1)[-1], nocache=True)
 
     except subprocess.CalledProcessError as e:
-        print(f"Command failed with exit code {e.returncode}: {e.output}")
+        debug(f"Command failed with exit code {e.returncode}: {e.output}")
         return "<div class='screenshotfail'>Screenshot failed with exit code {}</div>".format(e.returncode)
 
     except Exception as e:
-        print(e)
+        debug(e)
         return "<div class='screenshotfail'>Screenshot failed with exception {}</div>".format(e)
 
 

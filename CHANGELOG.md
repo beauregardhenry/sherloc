@@ -24,6 +24,9 @@ Security in case of vulnerabilities.
 - CI runs the test suite on pushes and pull requests. A lint ratchet (`tests/test_lint_ratchet.py`) fails on any new undefined name, invalid escape, mutable default argument, bare `except`, `shell=True` or `eval`; existing findings are recorded in `tests/lint_baseline.json`
 - The stalkerware-indicators workflow uses the `sherloc/` paths and a single `token:` key (the duplicate key meant `IOC_UPDATE_KEY` was ignored), and its script exits non-zero when its requirements are missing. It no longer tries to open a PR on pull request runs
 - super-linter checks changed files for serious Python problems and executable bits only; style linters were failing on the existing code
+### Added
+- A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
+- `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
 - A failed uninstall was reported as a success, and the app was recorded as deleted in the database even though it was still on the phone. `uninstall` now returns False when the tool exits non-zero, prints `Failure`/`ERROR`, is missing or times out
 - A failed `adb` app listing was read as a list of apps (the error text). It now restarts the adb server and returns no apps
@@ -37,6 +40,9 @@ Security in case of vulnerabilities.
 - "Close App and End Session" never worked: it relied on `werkzeug.server.shutdown`, which Werkzeug 2.1+ removed. It now stops the app after sending its response
 - `/view_results` raised a `NameError` for any existing scan. Removed unreachable or uncalled code that used undefined names (`index.py`, `android_permissions.py`, and `update_app_deleteinfo` in `db.py`, which also had an SQL typo). The lint check now fails on undefined names
 ### Security
+- Client notes, client names, device serials and app lists are no longer printed to the terminal. Terminal output outlives "Delete client data". Run with `DEBUG=1` to see it. Fixed messages such as "Uninstall failed" still print
+- Folders that hold client data are created owner-only (`0700`), existing ones are tightened, and the app sets `umask 077`, so files made by the app or by the programs it starts are `0600`. An older database file is tightened at start. When Sherloc runs under `sudo`, those files belong to root
+- Screenshots are saved in the folder that "Delete client data" empties (`config.SCREENSHOT_DIR`), not in a second hard-coded path
 - No command runs through a shell any more. Every `adb`, `ideviceinstaller`, `pymobiledevice3` and script call is an argument list, so no value can be read as a command. `run_command` rejects a string. The package lookup (`sed` on the dump) and the pipes (`grep`, `sort`, `awk`, `tail`) are done in Python. The lint baseline is now empty
 - App ids are validated before the package lookup and the recent-permissions lookup
 - Request log lines show the route pattern instead of the URL, so device serials and app ids no longer appear in the terminal output

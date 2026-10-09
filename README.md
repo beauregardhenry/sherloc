@@ -93,6 +93,10 @@ Please see this article for more details on how to turn on developer mode using 
 If you encounter errors, please file a [GitHub issue](../../issues/) with the server error output.
 Pull requests are welcome.
 
+Sherloc prints no client data to the terminal (notes, names, device serials,
+app lists), because terminal output outlives "Delete Client Data". Start it
+with `DEBUG=1` to see that output while you debug, and clear it afterwards.
+
 #### Cast iOS Screens or Mirror Android Screens
 It is possible to view your
 device screen(s) in real time on the macOS computer in a new window. This may
@@ -105,6 +109,27 @@ You can mirror Android device screens in a new window using
 [scrcpy](https://github.com/Genymobile/scrcpy), and cast iOS device screens on
 macOS with QuickTime 10 (launch it and click File --> New Movie Recording -->
 (on dropdown by red button) the iPhone/iPad name).
+
+### Where client data is stored
+All of it is under the `sherloc/` folder and is owner-only (folders `0700`,
+files `0600`):
+
+| Folder | Holds |
+| --- | --- |
+| `tmp-consult-data/` | the consultation answers (JSON) |
+| `phone_dumps/` | phone dumps and their parsed copies |
+| `webstatic/images/screenshots/` | screenshots |
+| `reports/` | printouts and CSV reports |
+| `data/` | the SQLite database (client notes, scans, app remarks) |
+
+**Delete Client Data** on the evidence home page empties all of them and
+overwrites the deleted database content. A notice at the top of every page
+shows when any of this data is stored.
+
+Sherloc does not encrypt this data. Run it on a computer with full-disk
+encryption (FileVault, BitLocker or LUKS) and delete the data when the
+consultation ends. Deleting overwrites the database content, but it cannot
+promise that other copies are gone from a flash drive or a backup.
 
 ### Downloaded data
 The data downloaded and stored in the study are the

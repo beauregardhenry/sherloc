@@ -29,6 +29,13 @@ logger = logging.getLogger(__name__)
 
 import web.view
 
+import clientdata
+
+
+@app.context_processor
+def inject_client_data():
+    return {"client_data": clientdata.summary()}
+
 
 @app.before_request
 def make_session_permanent():
