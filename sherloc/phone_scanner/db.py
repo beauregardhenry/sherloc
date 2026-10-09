@@ -8,7 +8,12 @@ import os
 import pandas as pd
 from debuglog import debug
 
-DATABASE = config.SQL_DB_PATH.replace("sqlite:///", "").strip()
+
+
+def database_path():
+    return config.SQL_DB_PATH.replace("sqlite:///", "").strip()
+
+
 # CONSULTS_DATABASE = config.SQL_DB_CONSULT_PATH.replace('sqlite:///', '')
 
 
@@ -41,27 +46,22 @@ def make_dicts(cursor, row):
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        debug("Creating new db connection {}".format(DATABASE))
-        db = g._database = sqlite3.connect(DATABASE)
+        debug("Creating new db connection {}".format(database_path()))
+        db = g._database = sqlite3.connect(database_path())
         db.row_factory = make_dicts
     return db
 
 
 def init_db(app, sa, force=False):
+    """Create the tables. schema.sql only uses IF NOT EXISTS, so it is safe to
+    run on every start, and it adds tables that a database from an earlier
+    version does not have yet."""
     with app.app_context():
-        if force or not os.path.exists(DATABASE):
-            db = get_db()
-            with app.open_resource("schema.sql", mode="r") as f:
-                db.cursor().executescript(f.read())
-            db.commit()
-            # sa.create_all() # TODO replace in schema.sql
-            # TODO how to repopulate?
-        # if not os.path.exists(CONSULTS_DATABASE):
-        #    sa.create_all()
-        # add with sqlachemy the new models stuff
-        # can it get the schema sql // make a table
-        else:
-            db = get_db()
+        os.makedirs(os.path.dirname(database_path()), mode=0o700, exist_ok=True)
+        db = get_db()
+        with app.open_resource("schema.sql", mode="r") as f:
+            db.cursor().executescript(f.read())
+        db.commit()
 
 
 def insert(query, args):

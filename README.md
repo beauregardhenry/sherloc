@@ -116,11 +116,11 @@ files `0600`):
 
 | Folder | Holds |
 | --- | --- |
-| `tmp-consult-data/` | the consultation answers (JSON) |
+| `tmp-consult-data/` | only answers saved by an earlier version (JSON); they are moved into the database and removed on first use |
 | `phone_dumps/` | phone dumps and their parsed copies |
 | `webstatic/images/screenshots/` | screenshots |
 | `reports/` | printouts and CSV reports |
-| `data/` | the SQLite database (client notes, scans, app remarks) |
+| `data/` | the SQLite database (consultation answers, client notes, scans, app remarks) |
 
 **Delete Client Data** on the evidence home page empties all of them and
 overwrites the deleted database content. A notice at the top of every page
