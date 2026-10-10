@@ -27,7 +27,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
-- CI fails when test coverage of `sherloc/` drops below 60% (it was 50%). Coverage is 74% without the browser test, as CI's main job runs it
+- CI fails when test coverage of `sherloc/` drops below 60% (it was 50%). Coverage is 75%
 - The scan record, the root-check label and the suspicious/other app split are built in one place, `scanrecord.py`, for both the classic scan page and the evidence workflow. The root-check reason is now stored as plain text by both (the classic page stored it as JSON text)
 - The indicator update script reads `ioc.yaml` with `yaml.safe_load` (it used `FullLoader`), adds an app listed twice only once, and the weekly pull request is titled "Update stalkerware indicators" (it was "[Example] Update stalkware indicators")
 - `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
