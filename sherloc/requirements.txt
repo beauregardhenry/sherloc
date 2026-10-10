@@ -1,6 +1,6 @@
 dataset==1.6.2
 Flask-Bootstrap==3.3.7.1
-Flask-Migrate==4.0.7
+Flask-Migrate==4.1.0
 Flask-WTF==1.2.2
 pypdf==6.20.0
 pandas==2.2.3
