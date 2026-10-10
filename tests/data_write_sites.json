@@ -4,6 +4,7 @@
   "config.py::ensure_dirs::mkdir": "app-data",
   "config.py::open_or_create_random_key::fdopen": "app-data",
   "config.py::setup_logger::RotatingFileHandler": "app-data",
+  "config.py::setup_logger::mkdir": "app-data",
   "consultstore.py::_connect::connect": "client-data",
   "consultstore.py::_connect::makedirs": "client-data",
   "consultstore.py::_overwrite_and_remove::open": "client-data",

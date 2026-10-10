@@ -37,7 +37,7 @@
                         {{ subform.hidden_tag() }}
                         <tr>
                             <th class="screenshot-delete">{{subform.delete}} {{subform.delete.label}}</th>
-                            <th><img height='200px' src="{{url_root}}{{screenshot.fname}}"/></th>
+                            <th><img height='200px' src="{{url_root}}{{screenshot.fname|screenshot_path}}"/></th>
                             <td>
                                 <ul>
                                     <li><i>Device nickname:</i> {{screenshot.device_nickname}}</li>
@@ -71,7 +71,7 @@
                         {{ subform.hidden_tag() }}
                         <tr>
                             <th class="screenshot-delete">{{subform.delete}} {{subform.delete.label}}</th>
-                            <th><img height='200px' src="{{url_root}}{{app.fname}}"/></th>
+                            <th><img height='200px' src="{{url_root}}{{app.fname|screenshot_path}}"/></th>
                             <td>
                                 <ul>
                                     <li><i>App ID:</i> {{app.app_id}}</li>
@@ -106,7 +106,7 @@
                             {{ subform.hidden_tag() }}
                             <tr>
                                 <th>{{subform.delete}} {{subform.delete.label}}</th>
-                                <th><img height='200px' src="{{url_root}}{{acct.fname}}"/></th>
+                                <th><img height='200px' src="{{url_root}}{{acct.fname|screenshot_path}}"/></th>
                                 <td>
                                     <ul>
                                         <li><i>Username:</i> {{acct.username}}</li>

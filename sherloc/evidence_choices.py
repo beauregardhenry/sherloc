@@ -1,9 +1,9 @@
 """Choice lists and defaults shared by the consultation forms and data model."""
-import os
+import config
 
-TMP_CONSULT_DATA_DIR = "tmp-consult-data"
-
-SCREENSHOT_FOLDER = os.path.join("tmp", "isdi-screenshots/")
+# Both are under config.DATA_ROOT, with the rest of the client data.
+TMP_CONSULT_DATA_DIR = config.CONSULT_DATA_DIR
+SCREENSHOT_FOLDER = config.SCREENSHOT_DIR / "misc"
 CONTEXT_PKL_FNAME = "context.pkl"
 
 YES_NO_DEFAULT = ""

@@ -17,14 +17,15 @@ def setup_logger():
     """
     Set up a logger with a rotating file handler.
 
-    The logger will write in a file named 'app.log' in the 'logs' directory.
+    The logger writes to 'app.log' in LOG_DIR.
     The log file will rotate when it reaches 100,000 bytes, keeps a maximum of 30 files.
 
     Returns:
         logging.Logger: The configured logger object.
     """
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     handler = handlers.RotatingFileHandler(
-        "../logs/app.log", maxBytes=100000, backupCount=30
+        LOG_DIR / "app.log", maxBytes=100000, backupCount=30
     )
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -34,6 +35,20 @@ def setup_logger():
 
 DEV_SUPPRTED = ["android", "ios"]  # 'windows', 'mobileos', later
 THIS_DIR = Path(__file__).absolute().parent
+
+# Every file about a client (phone dumps, screenshots, reports, the database
+# of consultation answers) is kept under one folder. Point SHERLOC_DATA_DIR at
+# a RAM disk and none of it reaches the hard drive. Without the setting the
+# folders stay where earlier versions put them, inside this directory.
+DATA_ROOT = Path(os.getenv("SHERLOC_DATA_DIR") or THIS_DIR).absolute()
+DUMP_DIR = DATA_ROOT / "phone_dumps"
+REPORT_DIR = DATA_ROOT / "reports"
+SCREENSHOT_DIR = DATA_ROOT / "webstatic" / "images" / "screenshots"
+# Where the consultation answers were saved as JSON before they moved to the
+# database. Only read to migrate old files.
+CONSULT_DATA_DIR = DATA_ROOT / "tmp-consult-data"
+DB_DIR = DATA_ROOT / "data"
+LOG_DIR = DATA_ROOT / "logs"
 
 # Used by data_process only.
 source_files = {
@@ -89,10 +104,8 @@ IOC_FILE = os.path.join(IOC_PATH, "ioc.yaml")
 # Where the update script records the source and date of the app list.
 IOC_SOURCE_FILE = "static_data/app-flags-source.json"
 
-# we will resolve the database path using an absolute path to __FILE__ because
-# there are a couple of sources of truth that may disagree with their "path
-# relavitity".
-SQL_DB_PATH = f"sqlite:///{str(THIS_DIR / 'data/fieldstudy.db')}"
+# An absolute path, so it does not depend on the working directory.
+SQL_DB_PATH = f"sqlite:///{DB_DIR / 'fieldstudy.db'}"
 # SQL_DB_CONSULT_PATH = 'sqlite:///data/consultnotes.db' + ("~test" if TEST else "")
 
 
@@ -143,10 +156,7 @@ if PLATFORM:
 else:
     MOBILEDEVICE_PATH = shlex.quote(str(STATIC_DATA / ("ios-deploy-none")))
 
-DUMP_DIR = THIS_DIR / "phone_dumps"
 SCRIPT_DIR = THIS_DIR / "scripts"
-REPORT_DIR = THIS_DIR / "reports"
-SCREENSHOT_DIR = THIS_DIR / "webstatic" / "images" / "screenshots"
 
 DATE_STR = "%Y-%m-%d %I:%M %p"
 ERROR_LOG = []
@@ -155,10 +165,7 @@ APPROVED_INSTALLERS = {"com.android.vending",
                        "com.sec.android.preloadinstaller", 
                        "com.sec.android.app.samsungapps"}
 
-REPORT_PATH = THIS_DIR / "reports"
-# Where the consultation answers are saved as JSON, and where the database lives.
-CONSULT_DATA_DIR = THIS_DIR / "tmp-consult-data"
-DB_DIR = THIS_DIR / "data"
+REPORT_PATH = REPORT_DIR
 PII_KEY_PATH = STATIC_DATA / "pii.key"
 
 # SHA-256 of key files that were committed to the public repository before
@@ -290,3 +297,25 @@ def create_screenshot_fname(context, serial="misc"):
     print("This is the filename: {}".format(fname))
 
     return fname
+
+
+def inside_screenshot_dir(fname):
+    """The real path of `fname` if it is inside SCREENSHOT_DIR, else None.
+    Names can come from a submitted form, so they are not trusted."""
+    root = os.path.realpath(SCREENSHOT_DIR)
+    path = os.path.realpath(fname or "")
+    if path != root and os.path.commonpath([root, path]) == root:
+        return path
+    return None
+
+
+def screenshot_path(fname):
+    """The URL path (no leading slash) that serves a screenshot file.
+
+    Screenshots live under DATA_ROOT, which may be outside the static folder,
+    so the app serves them itself (/client-screenshots/...)."""
+    path = inside_screenshot_dir(fname)
+    if path is None:
+        return ""
+    rel = os.path.relpath(path, os.path.realpath(SCREENSHOT_DIR))
+    return "client-screenshots/" + rel.replace(os.sep, "/")

@@ -228,6 +228,14 @@ def evidence_account(id):
             flash("Form validation error. Raw error: {}".format(form.errors), 'error')
             pdebug(form.errors)
 
+app.add_template_filter(config.screenshot_path, "screenshot_path")
+
+
+@app.route("/client-screenshots/<path:relpath>")
+def client_screenshot(relpath):
+    return send_from_directory(config.SCREENSHOT_DIR, relpath)
+
+
 @app.route("/evidence/screenshots", methods=['GET', 'POST'])
 def evidence_screenshots():
 
@@ -281,8 +289,9 @@ def evidence_screenshots():
     if request.method == 'POST' and form.is_submitted():
         # Delete all screenshots that were selected for deletion
         for a in form.data["app_screenshots"] + form.data["acct_screenshots"] + form.data["root_screenshots"]:
-            if a["delete"] and os.path.exists(a["fname"]):
-                os.remove(a["fname"])
+            path = config.inside_screenshot_dir(a["fname"]) if a["delete"] else None
+            if path and os.path.isfile(path):
+                os.remove(path)
 
         # Reload the screenshot page
         return redirect(url_for('evidence_screenshots'))
