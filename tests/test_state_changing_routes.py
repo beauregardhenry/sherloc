@@ -27,7 +27,7 @@ def _no_real_side_effects(monkeypatch):
 
 @pytest.fixture
 def client():
-    app.config.update(TESTING=True)
+    app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     return app.test_client()
 
 

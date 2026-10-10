@@ -20,7 +20,7 @@ class _Scan:
 
 @pytest.fixture
 def setup(monkeypatch):
-    app.config.update(TESTING=True)
+    app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     scan = _Scan()
     monkeypatch.setattr("web.view.save.get_device", lambda d: scan)
     monkeypatch.setattr("web.view.save.get_device_from_db", lambda scanid: "android")
