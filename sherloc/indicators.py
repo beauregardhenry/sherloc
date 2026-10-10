@@ -134,6 +134,11 @@ def update_list(ioc_path: str, flags_path: str, repo_dir: str, source_path: str)
     rows = new_rows(ioc, known)
     info: Optional[dict[str, str]] = upstream_info(repo_dir)
     if rows:
+        with open(flags_path, "rb+") as f:
+            # Start on a new line if the file does not end with one.
+            f.seek(0, 2)
+            if f.tell() and (f.seek(-1, 2), f.read(1))[1] != b"\n":
+                f.write(b"\n")
         with open(flags_path, "a", newline="") as f:
             csv.writer(f, lineterminator="\n").writerows(rows)
     if rows and info:

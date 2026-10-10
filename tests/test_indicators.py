@@ -212,3 +212,15 @@ def test_the_full_report_states_the_list_version_and_the_take_home_copy_does_not
     assert "Last changed 2026-10-04 from AssoEchap/stalkerware-indicators" in full
     home = ec.render_printout_html(_context(indicator_list=line, takehome=True))
     assert "AssoEchap" not in home
+
+
+def test_update_keeps_rows_apart_when_the_file_has_no_final_newline(update_env):
+    # app-flags.csv in the repository ends without a newline. The first added
+    # row used to be glued onto the last existing row, damaging both.
+    repo, flags, src = update_env
+    flags.write_text(flags.read_text().rstrip("\n"))
+    indicators.update_list(str(repo / "ioc.yaml"), str(flags), str(repo), str(src))
+    rows = list(csv.reader(flags.read_text().splitlines()))
+    assert ["com.known", "playstore", "spyware", "Known"] in rows
+    assert ["com.alpha", "playstore", "spyware", "Alpha"] in rows
+    assert all(len(r) == 4 for r in rows)
