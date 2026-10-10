@@ -159,3 +159,6 @@ sherloc/reports
 
 ## Generated at runtime
 sherloc/static_data/app-info.db
+
+# App log (config.LOG_DIR)
+sherloc/logs/

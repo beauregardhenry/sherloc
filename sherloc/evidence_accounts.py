@@ -1,6 +1,8 @@
 """Account investigation sections (logins, password, recovery, 2FA, security questions)."""
 import os
 import re
+
+import config
 from evidence_base import DictInitClass, Dictable, Notes, Risk, RiskReport, ScreenshotInfo
 
 
@@ -305,7 +307,7 @@ def get_all_screenshot_files():
 
     account_pattern = re.compile(r"account\d+_[a-zA-Z_]+")
 
-    overall_screenshot_dir = os.path.join("webstatic", "images", "screenshots")
+    overall_screenshot_dir = str(config.SCREENSHOT_DIR)
     if os.path.exists(overall_screenshot_dir):
 
         # go into all device dirs and subdirs

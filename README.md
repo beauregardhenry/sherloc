@@ -73,6 +73,8 @@ Sherloc should open `http://localhost:6200` in the browser.
 
 Sherloc has no login and handles sensitive evidence, so it only listens on `127.0.0.1`. Requests whose `Host` header is not `localhost`, `127.0.0.1`, or `::1` are rejected. To serve it on another address, set `SHERLOC_HOST` (for example `0.0.0.0`) and list the host names clients will use in `SHERLOC_ALLOWED_HOSTS` (comma separated). Only do this on a network you trust.
 
+Everything Sherloc saves about a client (phone dumps, screenshots, reports, the consultation answers) goes in one folder. By default that is the `sherloc/` folder itself, with the subfolders `phone_dumps`, `reports`, `data`, `tmp-consult-data` and `webstatic/images/screenshots`; the app log goes in `logs`. To keep all of it somewhere else, for example on a RAM disk, set `SHERLOC_DATA_DIR` to that folder before starting Sherloc. `./sherloc.sh` passes it through `sudo`. Sherloc prints the folder it uses when it starts.
+
 ### Requirements for taking screenshots with iOS devices
 
 iOS devices have two requirements if you want to take screenshots.

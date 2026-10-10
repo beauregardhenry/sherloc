@@ -173,7 +173,9 @@ def screenshot_tree(tmp_path, monkeypatch):
         d = root / f"account{account}_{section}"
         d.mkdir(parents=True, exist_ok=True)
         (d / f"shot-account{account}.png").write_bytes(b"png")
-    monkeypatch.chdir(tmp_path)
+    import config
+
+    monkeypatch.setattr(config, "SCREENSHOT_DIR", root.parent)
     return root
 
 

@@ -1,4 +1,5 @@
 / ['GET', 'HEAD', 'OPTIONS'] index
+/client-screenshots/<path:relpath> ['GET', 'HEAD', 'OPTIONS'] client_screenshot
 /delete/app/<scanid> ['OPTIONS', 'POST'] delete_app
 /details/app/<device> ['GET', 'HEAD', 'OPTIONS'] app_details
 /error ['GET', 'HEAD', 'OPTIONS'] get_nothing

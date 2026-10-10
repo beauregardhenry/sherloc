@@ -11,6 +11,15 @@ PYTHON=python${PYTHON_VERSION:='3.12'}
 : ${VENV:='sherloc-venv'}
 NORMAL_USER=$USER
 
+# sudo clears the environment. Pass Sherloc's own settings through, above all
+# SHERLOC_DATA_DIR: without it client data would go to the default folders.
+SHERLOC_ENV=()
+for var in SHERLOC_DATA_DIR SHERLOC_HOST SHERLOC_ALLOWED_HOSTS SHERLOC_SQL_ECHO DEBUG TEST; do
+    if [ -n "${!var+x}" ]; then
+        SHERLOC_ENV+=("$var=${!var}")
+    fi
+done
+
 # Check for --install and --notsudo arguments
 INSTALL_REQS=false
 USE_SUDO=true
@@ -20,7 +29,11 @@ for arg in "$@"; do
         break
     elif  [[ "$arg" == "--nosudo" ]]; then
         USE_SUDO=false
-        sudo chown -R $NORMAL_USER reports ../logs
+        # Folders an earlier run with sudo may have left owned by root.
+        DATA="${SHERLOC_DATA_DIR:-.}"
+        for d in reports logs data phone_dumps tmp-consult-data webstatic/images/screenshots; do
+            [ -e "$DATA/$d" ] && sudo chown -R "$NORMAL_USER" "$DATA/$d"
+        done
         break
     fi
 done
@@ -65,7 +78,7 @@ fi
 
 if $USE_SUDO; then
     echo "🚀 Launching Sherloc with sudo..."
-    sudo $PYTHON main.py
+    sudo env ${SHERLOC_ENV[@]+"${SHERLOC_ENV[@]}"} $PYTHON main.py
     EXIT_CODE=$?
     echo "=================================================="
 else
@@ -82,7 +95,7 @@ if [ $EXIT_CODE -ne 0 ]; then
     $PYTHON -m pip install -r requirements.txt
     echo "🔁 Retrying launch..."
     if $USE_SUDO; then
-        sudo $PYTHON main.py
+        sudo env ${SHERLOC_ENV[@]+"${SHERLOC_ENV[@]}"} $PYTHON main.py
         EXIT_CODE=$?
         echo "=================================================="
     else

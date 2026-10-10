@@ -22,7 +22,7 @@ import config
 import consultstore
 import jinja2
 import pdfkit
-from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION
+from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION, screenshot_path
 from phone_scanner.db import create_mult_appinfo, create_scan
 from scanrecord import build_scan_record, rooted_label, split_suspicious
 from phone_scanner.privacy_scan_android import take_screenshot
@@ -173,6 +173,7 @@ def render_printout_html(context):
     # Notes, nicknames and app names are free text and wkhtmltopdf renders the
     # result, so everything is HTML-escaped.
     template_env = jinja2.Environment(loader=template_loader, autoescape=True)
+    template_env.filters["screenshot_path"] = screenshot_path
     template = template_env.get_template(os.path.join('templates', 'printout.html'))
     return template.render(context)
 
@@ -201,7 +202,7 @@ def printout_pdf_options(takehome=False):
 
 
 def create_printout(context, out_file=None):
-    out_file = out_file or os.path.join('reports', 'test_report.pdf')
+    out_file = out_file or os.path.join(REPORT_DIR, 'test_report.pdf')
     css_path = os.path.join('webstatic', 'style.css')
 
     html_string = render_printout_html(context)

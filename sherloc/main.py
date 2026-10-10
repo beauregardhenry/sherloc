@@ -37,6 +37,7 @@ if __name__ == "__main__":
               f"SQL_DB: {config.SQL_DB_PATH}")
 
     print(f"TEST={config.TEST}")
+    print(f"Client data folder: {config.DATA_ROOT}")
     db.init_db(app, sa, force=config.TEST)
     config.setup_logger()
     Timer(1, open_browser).start()
