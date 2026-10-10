@@ -91,25 +91,30 @@ def recent_permissions_used(appid):
     return df.sort_values(by=["time_ago"]).reset_index(drop=True)
 
 
-def _package_section(dump_txt, appid):
-    """The lines of `Package [appid]` in the dump, up to the next package.
+def _indent(line):
+    return len(line) - len(line.lstrip(" \t"))
 
-    Same lines as `sed -n -e '/Package \\[appid\\]/,/Package \\[/p'` would
-    print, read in Python so the app id is never part of a command.
+
+def _package_section(dump_txt, appid):
+    """The lines of `Package [appid]` in the dump.
+
+    The section ends at the next line indented no deeper than the
+    `Package [` header: the next package, or whatever section follows the
+    last package. Read in Python so the app id is never part of a command.
     """
     start = "Package [{}]".format(appid)
     lines = []
-    inside = False
+    header_indent = None
     with open(dump_txt, errors="replace") as fh:
         for line in fh:
-            if not inside:
+            if header_indent is None:
                 if start in line:
-                    inside = True
+                    header_indent = _indent(line)
                     lines.append(line)
+            elif line.strip() and _indent(line) <= header_indent:
+                break
             else:
                 lines.append(line)
-                if "Package [" in line:
-                    inside = False
     return "".join(lines)
 
 

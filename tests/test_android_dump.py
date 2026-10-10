@@ -147,3 +147,65 @@ def test_recent_permissions_never_run_text_from_the_app_id(fake_adb, tmp_path, a
 def test_package_info_for_an_app_missing_from_the_dump_is_empty(tmp_path):
     (tmp_path / "abc_android.txt").write_text(DUMP)
     assert perms.package_info(str(tmp_path / "abc_android.json"), "com.nothere") == ([], {})
+
+
+# --- the last package, and sections that follow a package ---------------------
+# A package's section used to run to the next "Package [" line or the end of
+# the file. For the last package that took in the next section at a lower
+# indent, and rsonlite raised IndentationError.
+
+
+def test_package_info_for_the_last_package_in_the_dump(tmp_path):
+    (tmp_path / "abc_android.txt").write_text(DUMP)
+    _, stats = perms.package_info(str(tmp_path / "abc_android.json"), "com.other")
+    assert stats["firstInstallTime"] == "2023-05-06 07:08:09"
+
+
+def test_package_info_stops_at_a_section_that_follows_the_package(tmp_path):
+    dump = DUMP.replace(
+        "DUMP OF SETTINGS secure",
+        "Queries:\n  system apps queryable: false\nDUMP OF SETTINGS secure",
+    )
+    (tmp_path / "abc_android.txt").write_text(dump)
+    _, stats = perms.package_info(str(tmp_path / "abc_android.json"), "com.other")
+    assert stats["firstInstallTime"] == "2023-05-06 07:08:09"
+    assert "system apps queryable" not in stats
+
+
+# --- data usage ----------------------------------------------------------------
+# Columns of /proc/net/xt_qtaguid/stats, with spaces turned into commas as the
+# old scan script did. Not recorded from a device; follows the kernel's header.
+QTAGUID_HEADER = (
+    "idx,iface,acct_tag_hex,uid_tag_int,cnt_set,rx_bytes,rx_packets,tx_bytes,tx_packets,"
+    "rx_tcp_bytes,rx_tcp_packets,rx_udp_bytes,rx_udp_packets,rx_other_bytes,rx_other_packets,"
+    "tx_tcp_bytes,tx_tcp_packets,tx_udp_bytes,tx_udp_packets,tx_other_bytes,tx_other_packets"
+)
+
+
+def _row(idx, uid, cnt_set, rx, tx):
+    return f"{idx},wlan0,0x0,{uid},{cnt_set},{rx},1,{tx},1" + ",0" * 12
+
+
+def test_data_usage_adds_up_foreground_and_background_for_the_uid():
+    mb = 1024 * 1024
+    d = {"net_stats": [QTAGUID_HEADER, _row(2, 10150, 1, mb, mb), _row(3, 10150, 0, mb, 0), _row(4, 999, 1, 50 * mb, 0)]}
+    assert parse_dump.AndroidDump.get_data_usage(d, "10150") == {"foreground": "2.00 MB", "background": "1.00 MB"}
+
+
+def test_data_usage_skips_a_line_with_an_extra_field():
+    # "Expected 21 fields in line 556, saw 22" was seen on a real device.
+    mb = 1024 * 1024
+    d = {"net_stats": [QTAGUID_HEADER, _row(2, 10150, 1, mb, 0), _row(3, 10150, 1, mb, 0) + ",9"]}
+    assert parse_dump.AndroidDump.get_data_usage(d, "10150")["foreground"] == "1.00 MB"
+
+
+def test_data_usage_with_empty_net_stats_is_unknown():
+    assert parse_dump.AndroidDump.get_data_usage({"net_stats": []}, "10150") == {
+        "foreground": "unknown",
+        "background": "unknown",
+    }
+
+
+def test_data_usage_with_unexpected_columns_is_unknown():
+    d = {"net_stats": ["a,b,c", "1,2,3"]}
+    assert parse_dump.AndroidDump.get_data_usage(d, "10150")["foreground"] == "unknown"

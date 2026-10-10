@@ -226,29 +226,34 @@ class AndroidDump(PhoneDump):
 
     @staticmethod
     def get_data_usage(d, process_uid):
-        # TODO: Fix this!
-        # Currently, net_stats is not in d (for what I'm testing)
+        """Foreground and background traffic of one app uid, in MB.
 
-        if "net_stats" not in d:
-            return {"foreground": "unknown", "background": "unknown"}
-        # FIXME: pandas.errors.ParserError: Error tokenizing data. C error: Expected 21 fields in line 556, saw 22
-        # parser error (tested on SM-G965U,Samsung,8.0.0)
+        `net_stats` holds /proc/net/xt_qtaguid/stats with commas for spaces.
+        Current scans no longer collect it (newer Android denies access), so
+        this mostly answers "unknown".
+        """
+        unknown = {"foreground": "unknown", "background": "unknown"}
+        lines = d.get("net_stats") if isinstance(d, dict) else None
+        if not lines:
+            return unknown
+        # A line with an extra field ("Expected 21 fields, saw 22") is skipped.
         try:
-            net_stats = pd.read_csv(
-                io.StringIO("\n".join(d["net_stats"])), on_bad_lines="warn"
-            )
-        except pd.errors.EmptyDataError:
-            config.logging.warning(
-                f"No net_stats for {d['appId']} is empty and has been skipped."
-            )
-            net_stats = pd.DataFrame()
-
-        d = net_stats.query('uid_tag_int == "{}"'.format(process_uid))[
-            ["uid_tag_int", "cnt_set", "rx_bytes", "tx_bytes"]
-        ].astype(int)
+            net_stats = pd.read_csv(io.StringIO("\n".join(lines)), on_bad_lines="skip")
+        except (pd.errors.EmptyDataError, pd.errors.ParserError):
+            return unknown
+        needed = ["uid_tag_int", "cnt_set", "rx_bytes", "tx_bytes"]
+        if net_stats.empty or not set(needed) <= set(net_stats.columns):
+            return unknown
+        rows = net_stats[needed].apply(pd.to_numeric, errors="coerce").dropna()
+        try:
+            uid = int(process_uid)
+        except (TypeError, ValueError):
+            return unknown
+        rows = rows[rows["uid_tag_int"] == uid]
 
         def s(c):
-            return d[d["cnt_set"] == c].eval("rx_bytes+tx_bytes").sum() / (1024 * 1024)
+            sel = rows[rows["cnt_set"] == c]
+            return (sel["rx_bytes"] + sel["tx_bytes"]).sum() / (1024 * 1024)
 
         return {
             "foreground": "{:.2f} MB".format(s(1)),
