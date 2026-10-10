@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from flask_sqlalchemy import SQLAlchemy
 import config
@@ -25,16 +26,23 @@ def today():
 
 
 def new_client_id():
-    last_client_id = query_db(
-        "select max(clientid) as cid from clients_notes "
-        'where created_at > datetime("now", "localtime", "start of day")',
-        one=True,
-    )["cid"]
-    d, t = today(), 0
-    # FIXME: won't parse if different ClientID.
-    if last_client_id:
-        d, t = last_client_id.rsplit("_", 1)
-    cid = "{}_{:03d}".format(d, int(t) + 1)
+    """The next client ID for today: YYYYMMDD_NNN.
+
+    Counts today's IDs from intake forms and from scans, so a client who
+    was scanned without an intake form still uses up a number. It goes by the
+    date in the ID, not by timestamps, and skips IDs in any other format.
+    """
+    d = today()
+    rows = query_db(
+        "select clientid from clients_notes where clientid like ? "
+        "union select clientid from scan_res where clientid like ?",
+        args=(d + "%", d + "%"),
+    )
+    pattern = re.compile(re.escape(d) + r"_(\d{3,})")
+    numbers = [
+        int(m.group(1)) for r in rows or [] if (m := pattern.fullmatch(r["clientid"] or ""))
+    ]
+    cid = "{}_{:03d}".format(d, max(numbers, default=0) + 1)
     debug("new_client_id >>>> {}".format(cid))
     return cid
 
@@ -183,18 +191,15 @@ def get_device_info(ser: str) -> dict:
 
 
 def get_client_devices_from_db(clientid: str) -> list:
-    # TODO: change 'select serial ...' to 'select device_model ...' (setup
-    # first)
+    """The devices scanned for this client, one row per device."""
     d = query_db(
-        'select id,device,device_model,serial,device_primary_user from scan_res where serial like "HSN_%" group by serial',
-        # args=(clientid,),
+        "select id,device,device_model,serial,device_primary_user from scan_res "
+        "where clientid=? and serial like 'HSN_%' group by serial",
+        args=(clientid,),
         one=False,
     )
     debug("<>get_client_devices_from_db<>", d)
-    if d:
-        return d
-    else:
-        return [{}]
+    return d or []
 
 
 def get_most_recent_scan_id(ser: str) -> int:

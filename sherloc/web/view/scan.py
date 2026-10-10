@@ -5,7 +5,7 @@ from inputcheck import validate_serial
 from web import app
 from web.view.index import get_device
 from flask import render_template, request, session, redirect, url_for
-from phone_scanner import db
+from phone_scanner import blocklist, db
 from phone_scanner.db import (
     get_client_devices_from_db,
     new_client_id,
@@ -15,6 +15,14 @@ from phone_scanner.db import (
 )
 from debuglog import debug, warn
 from scanrecord import build_scan_record, rooted_label
+
+@app.template_filter("flag_class")
+def flag_class(flags):
+    """The Bootstrap alert class for an app's row, from its flags' weight."""
+    w = blocklist.score(flags or [])
+    norm_w = 0 if w <= 0 else 1 if w <= 0.3 else 2 if w <= 0.8 else 3
+    return ["", "alert-info", "alert-warning", "alert-primary"][norm_w]
+
 
 def get_param(key):
     return request.form.get(key, request.args.get(key))

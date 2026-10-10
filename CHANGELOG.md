@@ -28,6 +28,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- The colour of an app row on the scan page is chosen by a template filter (`flag_class`) in the web layer. `blocklist.assign_class` and the scanner's `class_` column are gone
 - Sherloc needs Python 3.12 or newer. Python 3.10 stopped receiving security fixes on 2026-10-01. CI runs the tests on 3.12 and, in a second job, on 3.13; `sherloc.sh`, the Brewfile, `dev.sh` and mypy use 3.12, and `main.py` refuses to start on an older Python. `tests/test_python_version.py` keeps these in step. The Dependabot rule that held back pandas 3 is removed, since pandas 3 needs 3.11
 - CI fails when test coverage of `sherloc/` drops below 60% (it was 50%). Coverage is 75%
 - The scan record, the root-check label and the suspicious/other app split are built in one place, `scanrecord.py`, for both the classic scan page and the evidence workflow. The root-check reason is now stored as plain text by both (the classic page stored it as JSON text)
@@ -51,6 +52,9 @@ Security in case of vulnerabilities.
 - A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
+- The scan page's "Devices scanned for this client" listed every device ever scanned on the computer, with its model and owner, not only this client's. It now lists this client's devices, and nothing when there are none (it showed the heading with an empty link)
+- Client IDs could repeat or carry the wrong date. `new_client_id` compared UTC timestamps with local midnight, so after midnight east of UTC the first IDs of the day were handed out again, and west of UTC the evening's clients counted for the next day. It now reads today's IDs themselves, counts clients who were scanned without an intake form, and skips IDs in other formats (it crashed on them)
+- Intake forms are stamped in local time like the other tables. They used UTC, the "off by 4 hours" in the code. Forms saved before this change keep their UTC time
 - The intake form (`/form/`) did not enforce its required questions (labels ending in `*`). Column defaults made `wtforms_alchemy` add `Optional()`, which ends validation on a blank answer before `InputRequired()` runs, so a form with no consultant names or FJC was saved. "Chief concerns" and "Vulnerabilities discovered" had no check at all. All are now required
 - Editing a saved intake form with an invalid answer still wrote it to the database. It now shows the errors and keeps the saved form. Opening an old form whose checkbox answers were empty no longer crashes, and submitting edits without choosing a form goes back to the list instead of a 400 error
 - `phone_scanner/data_process.py`, the script that rebuilds the app list and app-info database from crawls, had stopped working: it read `config.SPYWARE_LIST_FILE`, which does not exist, and pandas no longer writes through the SQLAlchemy 1.4 engine it used. It now runs, writes the database through `sqlite3`, and has tests

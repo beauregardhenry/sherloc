@@ -18,13 +18,11 @@ class Client(sa.Model):
         "validators": InputRequired() if req == "r" else "",
     }
     id = sa.Column(sa.Integer, primary_key=True)
+    # Local time, like the other tables. CURRENT_TIMESTAMP is UTC in SQLite,
+    # which is why the intake forms were "off by 4 hours" (New York in summer).
     created_at = sa.Column(
         sa.DateTime,
-        # default=datetime.now()
-        # TODO: timestamp off by 4 hours? investigate.
-        default=sa.func.current_timestamp(),
-        # server_default=sa.func.current_timestamp()
-        # server_default=str(datetime.now()),
+        default=sa.func.datetime("now", "localtime"),
     )
 
     # TODO: link to session ClientID for scans, with foreignkey? across different db?
