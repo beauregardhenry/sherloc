@@ -5,6 +5,10 @@ The mainfile of ISDi repo.
 import os
 import sys
 import webbrowser
+
+if sys.version_info < (3, 12):
+    # Python 3.10 and older no longer get security fixes.
+    sys.exit("Sherloc needs Python 3.12 or newer. Check with: python3 -V")
 from threading import Timer
 
 from runmode import apply_cli_mode

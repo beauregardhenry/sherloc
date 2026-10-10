@@ -27,6 +27,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- Sherloc needs Python 3.12 or newer. Python 3.10 stopped receiving security fixes on 2026-10-01. CI runs the tests on 3.12 and, in a second job, on 3.13; `sherloc.sh`, the Brewfile, `dev.sh` and mypy use 3.12, and `main.py` refuses to start on an older Python. `tests/test_python_version.py` keeps these in step. The Dependabot rule that held back pandas 3 is removed, since pandas 3 needs 3.11
 - CI fails when test coverage of `sherloc/` drops below 60% (it was 50%). Coverage is 75%
 - The scan record, the root-check label and the suspicious/other app split are built in one place, `scanrecord.py`, for both the classic scan page and the evidence workflow. The root-check reason is now stored as plain text by both (the classic page stored it as JSON text)
 - The indicator update script reads `ioc.yaml` with `yaml.safe_load` (it used `FullLoader`), adds an app listed twice only once, and the weekly pull request is titled "Update stalkerware indicators" (it was "[Example] Update stalkware indicators")

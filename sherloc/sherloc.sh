@@ -7,7 +7,7 @@
 # Then, runs Sherloc.
 # Deactivates afterward.
 
-PYTHON=python${PYTHON_VERSION:='3.10'}
+PYTHON=python${PYTHON_VERSION:='3.12'}
 : ${VENV:='sherloc-venv'}
 NORMAL_USER=$USER
 

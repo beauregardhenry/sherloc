@@ -14,7 +14,7 @@ Right now, Sherloc only natively supports **macOS and Linux**. If you are using 
 
 These are written and tested for macOS users. We trust power (Linux) users know how to make the script work.
 
-- Python 3.10 (check your version with `python3 -V`)
+- Python 3.12 or newer (check your version with `python3 -V`)
 - [adb](https://developer.android.com/studio/releases/platform-tools.html)
 - expect
 - ideviceinstaller
