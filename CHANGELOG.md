@@ -63,6 +63,8 @@ Security in case of vulnerabilities.
 - "Close App and End Session" never worked: it relied on `werkzeug.server.shutdown`, which Werkzeug 2.1+ removed. It now stops the app after sending its response
 - `/view_results` raised a `NameError` for any existing scan. Removed unreachable or uncalled code that used undefined names (`index.py`, `android_permissions.py`, and `update_app_deleteinfo` in `db.py`, which also had an SQL typo). The lint check now fails on undefined names
 ### Security
+- The client's name is no longer kept in the session cookie. Flask signs that cookie but does not encrypt it, and Sherloc kept it for a day, so the name sat readable in the browser profile. It is now stored with the consultation in the database and removed by "Delete client data"; a name left in an older cookie is dropped on the next request
+- Every response is sent with `Cache-Control: no-store`, so browsers do not keep pages, screenshots or reports in their disk cache
 - `filelock` is updated from 3.17.0 to 3.20.3, which fixes two symlink race conditions that let a local user truncate or interfere with files through lock files (GHSA-w853-jp5j-5j7f, GHSA-qmgc-5h2g-mvrw)
 - The PDF printout turns JavaScript off in wkhtmltopdf. `pdfkit` 1.0.0 (CVE-2025-26240) lets page script run and read local files, and has no fixed release. User text was already escaped and local file access was already off
 - Client notes, client names, device serials and app lists are no longer printed to the terminal. Terminal output outlives "Delete client data". Run with `DEBUG=1` to see it. Fixed messages such as "Uninstall failed" still print

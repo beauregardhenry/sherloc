@@ -45,6 +45,8 @@ def inject_indicator_list():
 
 @app.before_request
 def make_session_permanent():
+    # Cookies from earlier versions carried the client's name; drop it.
+    session.pop("client", None)
     session.permanent = True
     # expires at midnight of new day
     app.permanent_session_lifetime = (datetime.now() + timedelta(days=1)).replace(
@@ -57,6 +59,14 @@ def close_connection(exception):
     db = getattr(g, "_database", None)
     if db is not None:
         db.close()
+
+
+@app.after_request
+def do_not_store(response):
+    """Pages, screenshots and reports hold client data: keep them out of the
+    browser's disk cache."""
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.after_request
