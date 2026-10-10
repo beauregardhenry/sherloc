@@ -332,7 +332,8 @@ def get_all_screenshot_files():
 
                     elif account_pattern.match(screenshot_dir.name):
                         fname_parts = screenshot_dir.name.split("_", 1)
-                        account_id_str = fname_parts[0][-1]
+                        # "account12" -> "12" (the whole number, not its last digit)
+                        account_id_str = fname_parts[0][len("account"):]
                         account_section = fname_parts[1]
 
                         if account_id_str not in list(screenshot_files["account_sections"].keys()):
