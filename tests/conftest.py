@@ -83,3 +83,17 @@ def isolated_database(tmp_path, monkeypatch):
         with web.app.app_context():
             web.sa.session.remove()
         engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def restore_csrf_setting():
+    """Tests switch CSRF off on the shared app for convenience. Put the app's
+    setting back afterwards, so no test depends on another having run."""
+    import sys
+
+    web = sys.modules.get("web")
+    saved = web.app.config.get("WTF_CSRF_ENABLED", True) if web is not None and hasattr(web, "app") else True
+    yield
+    web = sys.modules.get("web")
+    if web is not None and hasattr(web, "app"):
+        web.app.config["WTF_CSRF_ENABLED"] = saved

@@ -20,7 +20,7 @@ class _Scan:
 
 @pytest.fixture
 def client(monkeypatch):
-    app.config.update(TESTING=True)
+    app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     monkeypatch.setattr("web.view.details.get_device", lambda d: _Scan())
     monkeypatch.setattr("web.view.evidence.load_object_from_json", lambda *_: [])
     monkeypatch.setattr("web.view.evidence.save_data_as_json", lambda *_: None)

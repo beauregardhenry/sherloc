@@ -47,6 +47,8 @@ def app_url(tmp_path, monkeypatch):
     from werkzeug.serving import make_server
 
     phone_db.init_db(web.app, None)
+    # The real app checks CSRF tokens, so the clicks here must pass that check.
+    web.app.config["WTF_CSRF_ENABLED"] = True
     consultstore.save("notes", json.dumps({"consultant_notes": NOTE, "client_notes": "", "client_name": ""}))
     server = make_server("127.0.0.1", 0, web.app, threaded=True)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -117,3 +119,17 @@ def test_every_button_on_the_home_page_belongs_to_a_form_that_reaches_a_route(ap
     assert targets, "no submit buttons found"
     for t in targets:
         assert t == "" or t.startswith("/"), t
+
+
+def test_a_script_post_from_the_page_passes_the_csrf_check(app_url, page):
+    # Whichever jQuery the page ends up with must send the token.
+    page.goto(app_url + "/evidence/home")
+    page.wait_for_load_state("load")
+    text = page.evaluate(
+        """() => new Promise(done => {
+            $.post('/delete/app/1', {appid: 'com.x'})
+             .always((a, _s, b) => done((b && b.responseText) || (a && a.responseText) || a));
+        })"""
+    )
+    # The route's own answer, so the CSRF check let the request through.
+    assert text == "Invalid device serial."

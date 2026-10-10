@@ -1,3 +1,15 @@
+// Every jQuery POST sends the session's CSRF token (see web/security.py).
+// Run again once the page is parsed: some pages load another jQuery after
+// this file, and that copy would not have the setting.
+function sherlocCsrfSetup() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && window.jQuery) {
+        jQuery.ajaxSetup({headers: {"X-CSRFToken": meta.content}});
+    }
+}
+sherlocCsrfSetup();
+document.addEventListener("DOMContentLoaded", sherlocCsrfSetup);
+
 function updateProgress(percentage) {
     if (percentage >= 99) {
         $('#scan-prog').animate({

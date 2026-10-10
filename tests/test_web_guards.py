@@ -15,7 +15,7 @@ from web import app
 
 @pytest.fixture
 def client(monkeypatch):
-    app.config.update(TESTING=True)
+    app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
     spawned = []
 
     def fake_spawn(*args, **kwargs):
