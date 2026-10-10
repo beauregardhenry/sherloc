@@ -24,7 +24,7 @@ jobs:
           pip install -r sherloc/requirements.txt
           pip install -r requirements-dev.txt
       - name: Run tests (includes the lint ratchet and a coverage floor)
-        run: python -m pytest -q --cov=sherloc --cov-fail-under=50
+        run: python -m pytest -q --cov=sherloc --cov-fail-under=60
 
   browser-smoke:
     # Clicks through the evidence home page in Chromium (tests/test_browser_smoke.py).
