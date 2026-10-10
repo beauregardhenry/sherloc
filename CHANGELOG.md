@@ -49,6 +49,11 @@ Security in case of vulnerabilities.
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
 - `phone_scanner/data_process.py`, the script that rebuilds the app list and app-info database from crawls, had stopped working: it read `config.SPYWARE_LIST_FILE`, which does not exist, and pandas no longer writes through the SQLAlchemy 1.4 engine it used. It now runs, writes the database through `sqlite3`, and has tests
+- Investigation answers for apps added by hand were all overwritten with the answers for the last app: apps were matched by app id, and hand-added apps have none. Answers are now paired with apps by position
+- The manual-add form could not be saved unless "Is the device rooted?" was answered; its default, "none", was not one of the choices, and the error read "Not a valid choice"
+- The app selection page failed with an error for a scan that found no apps, and an unknown device serial in a scan URL gave a server error instead of "not found"
+- After a failed validation on the app selection page, the redirect itself failed (`url_for` was missing the serial)
+- Scanning "from dump" on the classic scan page never found the earlier scan: it looked the device up by the raw serial, while the database stores the pseudonymized one. With no earlier scan it carried on with an empty scan id instead of saying so
 - Screenshots of the eleventh and later accounts were filed under the wrong account: only the last digit of the account number was read, so account 12's screenshots appeared in account 2's section of the report
 - App details failed with `IndentationError` for the last package in an Android dump, and for any package followed by another section: the package's text ran on into the next section. It now ends at the next line indented no deeper than the package header
 - Data usage from an old dump's `net_stats` compared the app uid as text with a numeric column, so it always showed 0.00 MB; with empty or unexpected `net_stats` it crashed. It now matches the uid as a number and answers "unknown" when it cannot tell. Current scans do not collect `net_stats`

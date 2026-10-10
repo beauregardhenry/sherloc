@@ -18,6 +18,7 @@ from evidence_collection import (
     update_scan_by_ser,
 )
 from flask import (
+    abort,
     flash,
     redirect,
     render_template,
@@ -139,9 +140,8 @@ def evidence_scan_select(ser, show_rescan):
 
     # get the right scan by serial number
     current_scan = get_scan_by_ser(ser, all_scan_data)
-    assert current_scan.serial == ser
-
-    pdebug(current_scan.all_apps[0].permission_info.__dict__)
+    if current_scan.serial != ser:
+        abort(404)
 
     # fill form
     form = AppSelectPageForm(apps=[app.to_dict() for app in current_scan.all_apps])
@@ -216,7 +216,7 @@ def evidence_scan_select(ser, show_rescan):
         if not form.validate():
             flash("Form validation error. Raw error: {}".format(form.errors), 'error')
 
-        return redirect(url_for('evidence_scan_select'), ser=ser)
+        return redirect(url_for('evidence_scan_select', ser=ser))
 
 @app.route("/evidence/scan/manualadd/", methods={'GET', 'POST'}, defaults={'ser': None})
 @app.route("/evidence/scan/manualadd/<string:ser>", methods={'GET', 'POST'})
@@ -228,7 +228,8 @@ def evidence_scan_manualadd(ser):
     if ser:
         all_scan_data = load_object_from_json(ConsultDataTypes.SCANS.value)
         current_scan = get_scan_by_ser(ser, all_scan_data)
-        assert current_scan.serial == ser
+        if current_scan.serial != ser:
+            abort(404)
     else:
         current_scan.manual = True
 
@@ -241,7 +242,9 @@ def evidence_scan_manualadd(ser):
                              device_model=current_scan.device_model,
                              device_version=current_scan.device_version,
                              device_serial=current_scan.serial,
-                             is_rooted="yes" if current_scan.is_rooted else "none",
+                             # "none" was not one of the choices, so the form
+                             # could not be saved until this was answered.
+                             is_rooted={True: "yes", False: "no"}.get(current_scan.is_rooted, ""),
                              rooted_reasons=current_scan.rooted_reasons)
 
     ### IF IT'S A GET:
@@ -327,7 +330,8 @@ def evidence_scan_investigate(ser):
 
     # get the right scan by serial number
     current_scan = get_scan_by_ser(ser, all_scan_data)
-    assert current_scan.serial == ser
+    if current_scan.serial != ser:
+        abort(404)
 
     for a in current_scan.selected_apps:
         a = a.to_dict()
@@ -360,13 +364,15 @@ def evidence_scan_investigate(ser):
             clean_data = remove_unwanted_data(form.data)
 
             # Update app info in selected_apps based on what was provided in the form
-            for a in current_scan.selected_apps:
-                for form_app in clean_data["selected_apps"]:
-                    if a.appId == form_app["appId"]:
-                        a.install_info = form_app["install_info"]
-                        a.permission_info.access = form_app["permission_info"]["access"]
-                        a.permission_info.describe = form_app["permission_info"]["describe"]
-                        a.notes = form_app["notes"]
+            # The form lists the apps in the order of selected_apps. Pair them
+            # by position: apps added by hand have no app id to match on.
+            for a, form_app in zip(current_scan.selected_apps, clean_data["selected_apps"]):
+                if a.appId and form_app.get("appId") and a.appId != form_app["appId"]:
+                    continue
+                a.install_info = form_app["install_info"]
+                a.permission_info.access = form_app["permission_info"]["access"]
+                a.permission_info.describe = form_app["permission_info"]["describe"]
+                a.notes = form_app["notes"]
 
             all_scan_data = update_scan_by_ser(current_scan, all_scan_data)
 
