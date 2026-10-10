@@ -23,6 +23,7 @@ Security in case of vulnerabilities.
 - Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)
 
 ### Removed
+- The `dataset` package. Only `data_process.py` used it, to open a database connection
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
@@ -47,6 +48,7 @@ Security in case of vulnerabilities.
 - A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
+- `phone_scanner/data_process.py`, the script that rebuilds the app list and app-info database from crawls, had stopped working: it read `config.SPYWARE_LIST_FILE`, which does not exist, and pandas no longer writes through the SQLAlchemy 1.4 engine it used. It now runs, writes the database through `sqlite3`, and has tests
 - Screenshots of the eleventh and later accounts were filed under the wrong account: only the last digit of the account number was read, so account 12's screenshots appeared in account 2's section of the report
 - App details failed with `IndentationError` for the last package in an Android dump, and for any package followed by another section: the package's text ran on into the next section. It now ends at the next line indented no deeper than the package header
 - Data usage from an old dump's `net_stats` compared the app uid as text with a numeric column, so it always showed 0.00 MB; with empty or unexpected `net_stats` it crashed. It now matches the uid as a number and answers "unknown" when it cannot tell. Current scans do not collect `net_stats`
