@@ -25,3 +25,24 @@ jobs:
           pip install -r requirements-dev.txt
       - name: Run tests (includes the lint ratchet and a coverage floor)
         run: python -m pytest -q --cov=sherloc --cov-fail-under=50
+
+  browser-smoke:
+    # Clicks through the evidence home page in Chromium (tests/test_browser_smoke.py).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.10"
+      - name: System packages (the report needs wkhtmltopdf)
+        run: sudo apt-get update && sudo apt-get install -y wkhtmltopdf
+      - name: Install dependencies and Chromium
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r sherloc/requirements.txt
+          pip install -r requirements-dev.txt
+          pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Run the browser tests
+        run: python -m pytest -q tests/test_browser_smoke.py -p no:cacheprovider
+
