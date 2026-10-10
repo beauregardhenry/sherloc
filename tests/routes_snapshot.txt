@@ -18,6 +18,7 @@
 /evidence/scan/select/<string:ser> ['GET', 'HEAD', 'OPTIONS', 'POST'] evidence_scan_select
 /evidence/scan/select/<string:ser>/show-rescan-<show_rescan> ['GET', 'HEAD', 'OPTIONS', 'POST'] evidence_scan_select
 /evidence/screenshots ['GET', 'HEAD', 'OPTIONS', 'POST'] evidence_screenshots
+/evidence/takehome ['OPTIONS', 'POST'] evidence_takehome
 /evidence/taq ['GET', 'HEAD', 'OPTIONS', 'POST'] evidence_taq
 /form/ ['GET', 'HEAD', 'OPTIONS', 'POST'] client_forms
 /form/edit/ ['GET', 'HEAD', 'OPTIONS', 'POST'] edit_forms

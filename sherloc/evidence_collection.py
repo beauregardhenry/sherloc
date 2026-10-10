@@ -176,12 +176,12 @@ def render_printout_html(context):
     return template.render(context)
 
 
-def printout_pdf_options():
+def printout_pdf_options(takehome=False):
     # No 'enable-local-file-access': the page is built from user-entered text, and
     # images are fetched from the running app over http (see url_root).
     # JavaScript is off: pdfkit 1.0.0 (CVE-2025-26240) lets page script run
     # and read local files, and the printout needs none.
-    return {
+    opts = {
         'disable-javascript': '',
         'margin-top': '15mm',
         'margin-bottom': '20mm',
@@ -192,6 +192,11 @@ def printout_pdf_options():
         'footer-font-name': 'Georgia',
         'footer-font-size': '8',
     }
+    if takehome:
+        # Nothing that names the clinic or the tool. The file's own metadata is
+        # replaced in takehome.protect_pdf.
+        opts['footer-center'] = 'Page [page] of [toPage]'
+    return opts
 
 
 def create_printout(context, out_file=None):
