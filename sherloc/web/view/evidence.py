@@ -1,10 +1,12 @@
 import io
+import json
 import os
 import time
 from datetime import datetime
 
 import config
 from evidence_collection import (
+    TMP_CONSULT_DATA_DIR,
     DEVICE_TYPE_CHOICES,
     LEGAL_CHOICES,
     PERSON_CHOICES,
@@ -40,6 +42,7 @@ from flask import (
 )
 from flask_bootstrap import Bootstrap
 from phone_scanner import AndroidScan, IosScan
+import consultstore
 import indicators
 from takehome import create_takehome_pdf, neutral_filename
 from web import app
@@ -90,7 +93,9 @@ def evidence_home():
                     flash("Client name not entered. Please provide a name to put in the report.")
                     return redirect(url_for('evidence_home'))
 
-                session["client"] = client
+                # Kept in the database, not the session cookie: the cookie is
+                # signed but readable, and lives in the browser profile.
+                save_report_client(client)
                 return redirect(url_for('evidence_printout'))
 
             if form.submit:
@@ -282,6 +287,16 @@ def evidence_screenshots():
         # Reload the screenshot page
         return redirect(url_for('evidence_screenshots'))
 
+def save_report_client(name):
+    """Remember the name for the report until client data is deleted."""
+    consultstore.save("report_client", json.dumps(name), TMP_CONSULT_DATA_DIR)
+
+
+def load_report_client():
+    body = consultstore.load("report_client", TMP_CONSULT_DATA_DIR)
+    return json.loads(body) if body else ""
+
+
 def _printout_context(client):
     """Everything the printout template needs, for the current consultation."""
     pdebug("Gathering consult data...")
@@ -332,10 +347,8 @@ def _printout_context(client):
 @app.route("/evidence/printout/", methods=["GET"])
 def evidence_printout():
 
-    client = ""
-    try:
-        client = session["client"]
-    except KeyError:
+    client = load_report_client()
+    if not client:
         flash("Client name not entered. Please provide a name to put in the report.")
         return redirect(url_for("evidence_home"))
 
