@@ -176,7 +176,7 @@ class AppScan(object):
 
         if len(installed_apps) <= 0:
             return pd.DataFrame(
-                [], columns=["title", "flags", "score", "class_", "html_flags"]
+                [], columns=["title", "flags", "score", "html_flags"]
             )
         r = blocklist.app_title_and_flag(
             pd.DataFrame({"appId": installed_apps}),
@@ -202,7 +202,6 @@ class AppScan(object):
         r.loc[td.index, "title"] = td.get("title", "")
         r.reset_index(inplace=True)
 
-        r["class_"] = r["flags"].apply(blocklist.assign_class)
         r["score"] = r["flags"].apply(blocklist.score)
         r["title"] = r.title.str.encode("ascii", errors="ignore").str.decode("ascii")
         r["title"] = r.title.fillna("")
@@ -215,7 +214,7 @@ class AppScan(object):
         )
         r.set_index("appId", inplace=True)
 
-        return r[["title", "flags", "score", "class_", "html_flags"]]
+        return r[["title", "flags", "score", "html_flags"]]
 
     def flag_apps(self, serialno):
         installed_apps = self.get_apps(serialno, from_dump=False)

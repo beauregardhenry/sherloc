@@ -109,7 +109,7 @@
                             <td><a href="/details/app/{{ device }}?appId={{ appId }}&serial={{ serial }}" target="_blank" rel="noopener"
                                    class="text text-dark"> &lt;Unknown&gt;</a></td>
                             {% endif %}
-                            <td><a class="{{ info.class_ }} appid" href="https://www.google.com/search?q={{ appId }}"
+                            <td><a class="{{ info.flags|flag_class }} appid" href="https://www.google.com/search?q={{ appId }}"
                                    target="_blank" rel="noopener"><code>{{ appId }}</code></a></td>
                             <td>{{ info['html_flags'] | safe }}</td>
                             <td><input type="text" placeholder="Remarks" class='form-control appnotes' name="{{ appId }}" /></td>
