@@ -7,7 +7,7 @@ Sherloc is built on [ISDI](https://github.com/stopipv/isdi), which checks Androi
 
 ## Installing Sherloc :computer:
 
-Right now, Sherloc only natively supports **macOS and Linux**. If you are using a Windows device, you can use the Windows Subsystem for Linux 2
+Right now, Sherloc only natively supports **macOS on Apple Silicon (M1 or newer) and Linux**. Intel Macs are not supported: Homebrew builds Pango, which the PDF report needs, from source there, and the install often fails. If you are using a Windows device, you can use the Windows Subsystem for Linux 2
 (WSL2), which can be installed by following [these instructions](https://docs.microsoft.com/en-us/windows/wsl/wsl2-install). After this, follow the remaining instructions as a Linux user would, cloning/running Sherloc inside the Linux container of your choice.
 
 ### Dependencies
@@ -18,8 +18,7 @@ These are written and tested for macOS users. We trust power (Linux) users know 
 - [adb](https://developer.android.com/studio/releases/platform-tools.html)
 - expect
 - ideviceinstaller
-- wkhtmltopdf requirement
-    - This project uses `wkhtmltopdf` to generate the evidentiary document. The brew cask for `wkhtmltopdf` is deprecated, so you will need to download the appropriate `wkhtmltopdf` binary from the project website: https://wkhtmltopdf.org/downloads.html.
+- Pango, which [WeasyPrint](https://doc.courtbouillon.org/weasyprint/) uses to make the evidentiary document (`brew bundle` installs it on macOS)
 
 
 #### Steps for macOS users
@@ -34,16 +33,10 @@ Install the xcode developer tools if prompted as well.
 Then quickly install the project dependencies by running `brew bundle` in the sherloc subfolder.
 
 
-##### Caveats
-- wkhtmltopdf
-    - If installing on Mac, this error will appear when opening the .pkg file "Apple could not verify “wkhtmltox-0.12.6-2.macos-cocoa.pkg” is free of malware that may harm your Mac or compromise your privacy.”
-    To fix this go to System Settings > Privacy & Security > Security and see the message of the .pkg failing.
-    Click open anyway and continue installation.
-
 #### Debian family
 
 ```bash
-sudo apt install adb expect libimobiledevice-utils ideviceinstaller ifuse
+sudo apt install adb expect libimobiledevice-utils ideviceinstaller ifuse libpango-1.0-0 libpangoft2-1.0-0
 ```
 
 #### Windows Subsystem Linux (v2)

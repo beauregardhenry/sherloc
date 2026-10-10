@@ -9,6 +9,7 @@
   "consultstore.py::_connect::makedirs": "client-data",
   "consultstore.py::_overwrite_and_remove::open": "client-data",
   "consultstore.py::count::connect": "client-data",
+  "evidence_collection.py::create_printout::open": "client-data",
   "evidence_collection.py::delete_client_data::makedirs": "client-data",
   "evidence_collection.py::wipe_client_database::connect": "client-data",
   "indicators.py::update_list::open": "app-data",

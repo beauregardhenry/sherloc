@@ -7,14 +7,11 @@ browser, so no copy of it is kept in the reports folder.
 
 import io
 import secrets
-import shutil
 from typing import Optional
 
-import pdfkit
 import pypdf
 
 import evidence_collection as ec
-from config import THIS_DIR
 
 
 def neutral_filename() -> str:
@@ -25,8 +22,8 @@ def neutral_filename() -> str:
 def protect_pdf(data: bytes, password: Optional[str]) -> bytes:
     """Replace the file's metadata and, given a password, encrypt it with AES-256.
 
-    wkhtmltopdf records its name, the Qt version and the creation time in the
-    file. Those are replaced by a neutral title.
+    The renderer records its name and the creation time in the file. Those
+    are replaced by a neutral title.
     """
     writer = pypdf.PdfWriter(clone_from=pypdf.PdfReader(io.BytesIO(data)))
     writer.metadata = {"/Title": "Notes"}
@@ -39,12 +36,5 @@ def protect_pdf(data: bytes, password: Optional[str]) -> bytes:
 
 def create_takehome_pdf(context: dict, password: Optional[str] = None) -> bytes:
     """Render the take-home copy and return the PDF bytes."""
-    context = dict(context, takehome=True)
-    html = ec.render_printout_html(context)
-    wkhtmltopdf = shutil.which("wkhtmltopdf") or "/usr/local/bin/wkhtmltopdf"
-    conf = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf)
-    css = str(THIS_DIR / "webstatic" / "style.css")
-    data = pdfkit.from_string(
-        html, False, options=ec.printout_pdf_options(takehome=True), configuration=conf, css=css
-    )
+    data = ec.render_printout_pdf(dict(context, takehome=True))
     return protect_pdf(data, password)

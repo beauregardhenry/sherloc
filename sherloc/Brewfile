@@ -7,3 +7,6 @@ brew "expect"
 
 brew "ideviceinstaller"
 brew "exiftool"
+
+# The PDF report (WeasyPrint)
+brew "pango"

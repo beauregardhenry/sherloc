@@ -91,10 +91,10 @@ json module
 load_json_data function
 load_object_from_json function
 os module
-pdfkit module
-printout_pdf_options function
+printout_footer function
 remove_unwanted_data function
 render_printout_html function
+render_printout_pdf function
 save_data_as_json function
 shutil module
 sqlite3 module
