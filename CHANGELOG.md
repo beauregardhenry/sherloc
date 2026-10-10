@@ -21,6 +21,9 @@ Security in case of vulnerabilities.
 - `./dev.sh` sets up a virtual environment and runs the tests without root; `requirements-dev.txt` lists the development tools
 - Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)
 
+### Removed
+- `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
+
 ### Changed
 - The indicator update script reads `ioc.yaml` with `yaml.safe_load` (it used `FullLoader`), adds an app listed twice only once, and the weekly pull request is titled "Update stalkerware indicators" (it was "[Example] Update stalkware indicators")
 - `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
