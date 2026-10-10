@@ -1,7 +1,9 @@
-import pandas as pd
-import config
-import dataset
+import sqlite3
 import sys
+
+import pandas as pd
+
+import config
 
 
 def join_csv_files(flist, ofname):
@@ -43,15 +45,14 @@ def create_app_flags_file():
     sys.stderr.write("Concatenating...")
     fulld = pd.concat(dlist)
     sys.stderr.write("done\n")
-    spyware = pd.read_csv(config.SPYWARE_LIST_FILE, index_col="appId")
+    spyware = pd.read_csv(config.spyware_list_file, index_col="appId")
     fulld.loc[spyware.index, "flag"] = "spyware"
-    print("Writing to the file: {config.APP_FLAGS_FILE}")
+    print(f"Writing to the file: {config.APP_FLAGS_FILE}")
     fulld.to_csv(config.APP_FLAGS_FILE)
 
 
 def create_app_info_dict():
     dlist = []
-    conn = dataset.connect(config.APP_INFO_SQLITE_FILE)
     print("Creating app-info dict")
     for k, v in config.source_files.items():
         d = pd.read_csv(v, index_col="appId")
@@ -60,11 +61,18 @@ def create_app_info_dict():
 
         if "permissions" not in d.columns:
             print(k, v, d.columns)
-            d.assign(permissions=["<not recorded>"] * len(d))
+            d = d.assign(permissions="<not recorded>")
         d.columns = d.columns.str.lower().str.replace(" ", "-").str.replace("-", "_")
         dlist.append(d)
-    pd.concat(dlist).to_sql("apps", conn.engine, if_exists="replace")
-    conn.engine.execute("create index idx_appId on apps(appId)")
+    # pandas writes to a plain sqlite3 connection; no SQLAlchemy engine needed.
+    path = config.APP_INFO_SQLITE_FILE.replace("sqlite:///", "", 1)
+    con = sqlite3.connect(path)
+    try:
+        pd.concat(dlist).to_sql("apps", con, if_exists="replace")
+        con.execute("create index if not exists idx_appId on apps(appId)")
+        con.commit()
+    finally:
+        con.close()
 
 
 if __name__ == "__main__":
