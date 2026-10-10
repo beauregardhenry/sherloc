@@ -10,3 +10,8 @@ updates:
     directory: "/sherloc"
     schedule:
       interval: "weekly"
+    ignore:
+      # pandas 3 needs Python 3.11 or newer; Sherloc supports Python 3.10.
+      # Remove this when Sherloc moves to Python 3.11.
+      - dependency-name: "pandas"
+        versions: [">=3"]
