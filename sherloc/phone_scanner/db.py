@@ -160,7 +160,7 @@ def get_is_rooted(serial):
     try:
         d = query_db(
             "select id, is_rooted, rooted_reasons from scan_res where serial=?",
-            args=(serial),
+            args=(serial,),
             one=False,
         )
         if d:
