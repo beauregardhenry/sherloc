@@ -86,6 +86,8 @@ APP_INFO_SQLITE_FILE = "sqlite:///static_data/app-info.db"
 # IOC stalkware indicators
 IOC_PATH = "stalkerware-indicators"
 IOC_FILE = os.path.join(IOC_PATH, "ioc.yaml")
+# Where the update script records the source and date of the app list.
+IOC_SOURCE_FILE = "static_data/app-flags-source.json"
 
 # we will resolve the database path using an absolute path to __FILE__ because
 # there are a couple of sources of truth that may disagree with their "path

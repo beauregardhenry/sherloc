@@ -134,6 +134,14 @@ encryption (FileVault, BitLocker or LUKS) and delete the data when the
 consultation ends. Deleting overwrites the database content, but it cannot
 promise that other copies are gone from a flash drive or a backup.
 
+### The stalkerware app list
+`sherloc/static_data/app-flags.csv` lists known stalkerware and dual-use apps.
+A weekly GitHub workflow adds apps from
+[AssoEchap/stalkerware-indicators](https://github.com/AssoEchap/stalkerware-indicators)
+and opens a pull request; review and merge it to update the list. It only adds
+apps. It never removes or edits a row. The app shows the source, the commit and
+the date the list last changed on every page and in the full report.
+
 ### Take-home copy of the report
 The evidence home page has a "Create take-home copy" button. The file it makes
 leaves out the clinic's name and contact details, the client's name, device

@@ -10,6 +10,8 @@
   "consultstore.py::count::connect": "client-data",
   "evidence_collection.py::delete_client_data::makedirs": "client-data",
   "evidence_collection.py::wipe_client_database::connect": "client-data",
+  "indicators.py::update_list::open": "app-data",
+  "indicators.py::write_source_file::open": "app-data",
   "phone_scanner/__init__.py::<module>::connect": "app-data",
   "phone_scanner/android_permissions.py::permissions_map::to_csv": "app-data",
   "phone_scanner/data_process.py::create_app_flags_file::to_csv": "tool",
@@ -24,6 +26,5 @@
   "phone_scanner/parse_dump.py::check_unseen_permissions::open": "app-data",
   "phone_scanner/parse_dump.py::load_file::open": "client-data",
   "phone_scanner/privacy_scan_android.py::take_screenshot::open": "client-data",
-  "scripts/blacklist-flags-odds.py::<module>::to_csv": "tool",
-  "scripts/get-stalkerware-indicators.py::<module>::open": "tool"
+  "scripts/blacklist-flags-odds.py::<module>::to_csv": "tool"
 }

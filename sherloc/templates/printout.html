@@ -84,6 +84,7 @@
 
             <br/>
             <h3 class="">{{scans|length}} Devices Scanned</h3>
+            {% if not takehome and indicator_list %}<p><i>{{indicator_list}} Apps on each device were compared with this list.</i></p>{% endif %}
             {% if scans|length > 0 %}
             <table class="summary-table">
                     <thead>

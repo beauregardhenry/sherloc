@@ -30,11 +30,17 @@ logger = logging.getLogger(__name__)
 import web.view
 
 import clientdata
+import indicators
 
 
 @app.context_processor
 def inject_client_data():
     return {"client_data": clientdata.summary()}
+
+
+@app.context_processor
+def inject_indicator_list():
+    return {"indicator_list": indicators.describe(indicators.summary())}
 
 
 @app.before_request
