@@ -3,6 +3,7 @@ filelock==3.20.3
 Flask-Bootstrap==3.3.7.1
 Flask-Migrate==4.0.7
 Flask-WTF==1.2.2
+pypdf==6.20.0
 pandas==2.2.3
 pdfkit==1.0.0
 pymobiledevice3==4.21.0

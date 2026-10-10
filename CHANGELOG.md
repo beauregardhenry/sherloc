@@ -15,6 +15,7 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Added
+- Take-home copy of the report ("Create take-home copy" on the evidence home page). It leaves out the clinic's name, logos and contact details, the client's name, device serial numbers, the consultant's comments and screenshot metadata. The file has a random neutral name and neutral PDF metadata, can be protected with a password (AES-256, `pypdf`), and is built in memory so no copy stays on the computer. The full report is unchanged
 - `CONTRIBUTING.md`, `SECURITY.md` and a pull request template
 - `./dev.sh` sets up a virtual environment and runs the tests without root; `requirements-dev.txt` lists the development tools
 - Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)

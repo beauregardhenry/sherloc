@@ -48,6 +48,15 @@
                 </div>
                 <br/>
 
+                <div class="generate-takehome">
+                    <h4>Copy for the client to take home</h4>
+                    <p>Leaves out the clinic's name and contact details, the client's name, device serial numbers and the consultant's comments. The file has a neutral name and is not kept on this computer.</p>
+                    <label for="takehome_password">Password for the file (optional; give it to the client in person):</label>
+                    <input type="password" id="takehome_password" name="takehome_password" autocomplete="new-password">
+                    <button type="submit" class="btn btn-secondary" formmethod="post" formaction="{{ url_for('evidence_takehome') }}">Create take-home copy</button>
+                </div>
+                <br/>
+
 
                 <div id="loading" style="display:none;"><img src="../../../webstatic/images/waiting.gif" alt="" /></div>
 

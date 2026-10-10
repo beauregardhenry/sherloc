@@ -134,6 +134,15 @@ encryption (FileVault, BitLocker or LUKS) and delete the data when the
 consultation ends. Deleting overwrites the database content, but it cannot
 promise that other copies are gone from a flash drive or a backup.
 
+### Take-home copy of the report
+The evidence home page has a "Create take-home copy" button. The file it makes
+leaves out the clinic's name and contact details, the client's name, device
+serial numbers, the consultant's comments and screenshot metadata, and it is
+named `notes-<random>.pdf`. You can set a password; tell it to the client in
+person, not in the same message as the file. The file is not saved on the
+computer. Sherloc cannot control what happens to the copy after the client
+leaves, so talk through where it will be kept.
+
 ### Downloaded data
 The data downloaded and stored in the study are the
 following.  1. A `sqlite` database containing the feedback and actions taken by

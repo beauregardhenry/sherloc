@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-TYPED = ["debuglog.py", "inputcheck.py", "clientdata.py", "consultstore.py"]
+TYPED = ["debuglog.py", "inputcheck.py", "clientdata.py", "consultstore.py", "takehome.py"]
 
 
 def test_typed_modules_pass_mypy():

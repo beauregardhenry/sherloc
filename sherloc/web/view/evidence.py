@@ -1,3 +1,4 @@
+import io
 import os
 import time
 from datetime import datetime
@@ -32,12 +33,14 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     send_from_directory,
     session,
     url_for,
 )
 from flask_bootstrap import Bootstrap
 from phone_scanner import AndroidScan, IosScan
+from takehome import create_takehome_pdf, neutral_filename
 from web import app
 from debuglog import debug, pdebug
 
@@ -278,18 +281,8 @@ def evidence_screenshots():
         # Reload the screenshot page
         return redirect(url_for('evidence_screenshots'))
 
-@app.route("/evidence/printout/", methods=["GET"])
-def evidence_printout():
-
-    client = ""
-    try:
-        client = session["client"]
-    except KeyError:
-        flash("Client name not entered. Please provide a name to put in the report.")
-        return redirect(url_for("evidence_home"))
-
-    start_time = time.perf_counter()
-
+def _printout_context(client):
+    """Everything the printout template needs, for the current consultation."""
     pdebug("Gathering consult data...")
     consult_data = ConsultationData(
         setup=dict(
@@ -329,6 +322,22 @@ def evidence_printout():
             if abbrv.strip() != "":
                 context["select_text"][abbrv] = full_text
 
+    return context
+
+
+@app.route("/evidence/printout/", methods=["GET"])
+def evidence_printout():
+
+    client = ""
+    try:
+        client = session["client"]
+    except KeyError:
+        flash("Client name not entered. Please provide a name to put in the report.")
+        return redirect(url_for("evidence_home"))
+
+    start_time = time.perf_counter()
+    context = _printout_context(client)
+
     # create the printout document
 
     pdebug("Creating the printout...")
@@ -340,6 +349,21 @@ def evidence_printout():
     debug(f"Function executed in {elapsed_time:.6f} seconds")
 
     return send_from_directory(workingdir, filename)
+
+@app.route("/evidence/takehome", methods=["POST"])
+def evidence_takehome():
+    """A copy of the report for the client to take home. See takehome.py."""
+    # The password comes from the form body only; it is not logged or stored.
+    password = request.form.get("takehome_password", "")
+    context = _printout_context("")
+    data = create_takehome_pdf(context, password)
+    return send_file(
+        io.BytesIO(data),
+        mimetype="application/pdf",
+        download_name=neutral_filename(),
+        as_attachment=True,
+    )
+
 
 @app.route("/evidence/delete-data", methods=["POST"])
 def evidence_delete_data():
