@@ -24,6 +24,7 @@ To run the app itself, see the README.
   - a changed URL (`tests/routes_snapshot.txt`)
   - coverage below the floor set in `.github/workflows/tests.yml`
 - Write the test first and watch it fail. Then make it pass.
+- A change to a page should keep `tests/test_browser_smoke.py` passing. It clicks through the evidence home page in Chromium and runs when Playwright is installed (`pip install playwright` and `python -m playwright install chromium`); CI always runs it.
 - Keep one theme per pull request.
 - Add a line to `CHANGELOG.md` under "Unreleased".
 - Modules listed in `tests/test_typed_modules.py` are checked with mypy. Annotate new modules and add them there.

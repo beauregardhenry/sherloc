@@ -15,6 +15,7 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Added
+- A browser smoke test (`tests/test_browser_smoke.py`) clicks through the evidence home page in Chromium: report, take-home copy, and "Delete Client Data" with the confirmation accepted and cancelled. It fails on the nested-form bug fixed earlier. CI runs it in its own job
 - The app shows where its stalkerware app list came from and when it last changed (a line on every page and in the full report). `scripts/get-stalkerware-indicators.py` records the source repository, the commit and its date, and the date of the change in `static_data/app-flags-source.json`; nothing is rewritten when there is nothing new. Until that file exists the app says the source and date are not recorded
 - Take-home copy of the report ("Create take-home copy" on the evidence home page). It leaves out the clinic's name, logos and contact details, the client's name, device serial numbers, the consultant's comments and screenshot metadata. The file has a random neutral name and neutral PDF metadata, can be protected with a password (AES-256, `pypdf`), and is built in memory so no copy stays on the computer. The full report is unchanged
 - `CONTRIBUTING.md`, `SECURITY.md` and a pull request template
