@@ -39,6 +39,7 @@ Security in case of vulnerabilities.
 - A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
+- The "Delete Client Data" button, and the Delete buttons for scans and accounts, on the evidence home page did nothing. Each was a form inside another form, which browsers drop, so a click saved the notes form instead and showed no confirmation. They now post to their own routes after a confirmation. `tests/test_no_nested_forms.py` fails on any template with a nested form
 - A failed uninstall was reported as a success, and the app was recorded as deleted in the database even though it was still on the phone. `uninstall` now returns False when the tool exits non-zero, prints `Failure`/`ERROR`, is missing or times out
 - A failed `adb` app listing was read as a list of apps (the error text). It now restarts the adb server and returns no apps
 - Android device descriptions no longer keep the newline that `getprop` prints

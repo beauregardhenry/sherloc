@@ -38,9 +38,8 @@
                 <br/>
                 
                 <div>
-                    <form method="post" action="{{ url_for('evidence_delete_data') }}" style="display:inline" onsubmit="return confirm('Are you sure you want to delete all client data? This cannot be undone.')">
-                        <button type="submit" class="btn btn-danger">Delete Client Data</button>
-                    </form>
+                    {# A <form> inside this form is dropped by browsers, so the button posts to its own route. #}
+                    <button type="submit" class="btn btn-danger" formmethod="post" formaction="{{ url_for('evidence_delete_data') }}" onclick="return confirm('Are you sure you want to delete all client data? This cannot be undone.')">Delete Client Data</button>
                 </div>
                 <br/>
 
@@ -140,9 +139,7 @@
                                 <a href="{{ url_for('evidence_scan_investigate', ser=scan.serial) }}" class="btn btn-default">Investigate</a>
                             </td>
                             <td>
-                                <form method="post" action="{{ url_for('evidence_delete_scan', ser=scan.serial) }}" style="display:inline" onsubmit="return confirm('Are you sure? This cannot be undone.')">
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                </form>
+                                <button type="submit" class="btn btn-danger" formmethod="post" formaction="{{ url_for('evidence_delete_scan', ser=scan.serial) }}" onclick="return confirm('Are you sure? This cannot be undone.')">Delete</button>
                             </td>
                         </tr> 
                         {% endfor %}
@@ -201,9 +198,7 @@
                                 <a href="{{ url_for('evidence_account', id=loop.index0) }}" class="btn btn-default">Edit</a>
                             </td>
                             <td>
-                                <form method="post" action="{{ url_for('evidence_delete_account', id=loop.index0) }}" style="display:inline" onsubmit="return confirm('Are you sure? This cannot be undone.')">
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                </form>
+                                <button type="submit" class="btn btn-danger" formmethod="post" formaction="{{ url_for('evidence_delete_account', id=loop.index0) }}" onclick="return confirm('Are you sure? This cannot be undone.')">Delete</button>
                             </td>
                         </tr> 
                         {% endfor %}
