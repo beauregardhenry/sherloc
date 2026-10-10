@@ -24,6 +24,7 @@ import jinja2
 import pdfkit
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION
 from phone_scanner.db import create_mult_appinfo, create_scan
+from scanrecord import build_scan_record, rooted_label, split_suspicious
 from phone_scanner.privacy_scan_android import take_screenshot
 from web.view.index import get_device
 from web.view.scan import first_element_or_none
@@ -376,30 +377,17 @@ def get_scan_data(device, device_owner):
             template_d["error"] = error
             raise Exception(error)
 
-        clientid = "1"
-
-        scan_d = {
-            'clientid': clientid,
-            'serial': config.hmac_serial(ser),
-            'serial_or_udid': ser,
-            'device': device,
-            'device_model': device_name_map.get('model', '<Unknown>').strip(),
-            'device_version': device_name_map.get('version', '<Unknown>').strip(),
-            'device_primary_user': device_owner,
-        }
-
-        if device == 'ios':
-            scan_d['device_manufacturer'] = 'Apple'
-            scan_d['last_full_charge'] = 'unknown'
-        else:
-            scan_d['device_manufacturer'] = device_name_map.get(
-                'brand', "<Unknown>").strip()
-            scan_d['last_full_charge'] = device_name_map.get(
-                'last_full_charge', "<Unknown>")
-
         rooted, rooted_reason = sc.isrooted(ser)
-        scan_d['is_rooted'] = rooted
-        scan_d['rooted_reasons'] = rooted_reason
+        scan_d = build_scan_record(
+            clientid="1",
+            ser=ser,
+            device=device,
+            device_owner=device_owner,
+            device_name_map=device_name_map,
+            rooted=rooted,
+            rooted_reason=rooted_reason,
+            include_raw_serial=True,
+        )
 
         scanid = create_scan(scan_d)
 
@@ -414,44 +402,16 @@ def get_scan_data(device, device_owner):
             info['flags']), '', '<new>') for appid, info in apps.items()])
 
         template_d.update(dict(
-            isrooted=(
-                "Maybe (this is possibly just a bug with our scanning tool). Reason(s): {}"
-                .format(rooted_reason) if rooted
-                else "Don't know" if rooted is None
-                else "No"
-            ),
+            isrooted=rooted_label(rooted, rooted_reason),
             device_name=device_name_print,
             apps=apps,
             scanid=scanid,
             sysapps=set(),  # sc.get_system_apps(serialno=ser)),
             serial=ser,
-            # TODO: make this a map of model:link to display scan results for that
-            # scan.
             error=config.error()
         ))
 
-        suspicious_apps = []
-        other_apps = []
-
-        for k in apps.keys():
-            app = apps[k]
-            app["id"] = k
-            app["app_name"] = app["title"]
-            if app["app_name"].strip() == "":
-                app["app_name"] = k
-
-            # Check if any suspicious flags are present and add to the suspicious list
-            suspicious_flags = ['spyware',
-                                'dual-use',
-                                'regex-spy',
-                                'offstore-spyware',
-                                'co-occurrence',
-                                'onstore-dual-use',
-                                'offstore-app']
-            if len([x for x in app["flags"] if x in suspicious_flags]) > 0:
-                suspicious_apps.append(app)
-            else:
-                other_apps.append(app)
+        suspicious_apps, other_apps = split_suspicious(apps)
 
         detailed_suspicious_apps = get_multiple_app_details(device, ser, suspicious_apps)
         detailed_other_apps = get_multiple_app_details(device, ser, other_apps)

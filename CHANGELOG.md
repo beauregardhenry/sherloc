@@ -25,6 +25,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- The scan record, the root-check label and the suspicious/other app split are built in one place, `scanrecord.py`, for both the classic scan page and the evidence workflow. The root-check reason is now stored as plain text by both (the classic page stored it as JSON text)
 - The indicator update script reads `ioc.yaml` with `yaml.safe_load` (it used `FullLoader`), adds an app listed twice only once, and the weekly pull request is titled "Update stalkerware indicators" (it was "[Example] Update stalkware indicators")
 - `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
 - Four stale TODO/FIXME comments were removed or corrected. The rest are collected in issues #17 to #21
@@ -47,6 +48,7 @@ Security in case of vulnerabilities.
 ### Fixed
 - App details failed with `IndentationError` for the last package in an Android dump, and for any package followed by another section: the package's text ran on into the next section. It now ends at the next line indented no deeper than the package header
 - Data usage from an old dump's `net_stats` compared the app uid as text with a numeric column, so it always showed 0.00 MB; with empty or unexpected `net_stats` it crashed. It now matches the uid as a number and answers "unknown" when it cannot tell. Current scans do not collect `net_stats`
+- Scanning from a dump always showed the root check as `<ROOTED_ERR>`: `get_is_rooted` passed the serial as a string instead of a one-item tuple, so the query failed
 - The indicator update glued its first new row onto the last row of `app-flags.csv`, which has no final newline, damaging both rows. It now starts a new line first. Pull request #4 on the fork was made by the old script and contains the damaged row
 - The "Delete Client Data" button, and the Delete buttons for scans and accounts, on the evidence home page did nothing. Each was a form inside another form, which browsers drop, so a click saved the notes form instead and showed no confirmation. They now post to their own routes after a confirmation. `tests/test_no_nested_forms.py` fails on any template with a nested form
 - A failed uninstall was reported as a success, and the app was recorded as deleted in the database even though it was still on the phone. `uninstall` now returns False when the tool exits non-zero, prints `Failure`/`ERROR`, is missing or times out

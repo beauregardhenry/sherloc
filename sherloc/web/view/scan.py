@@ -14,6 +14,7 @@ from phone_scanner.db import (
     first_element_or_none,
 )
 from debuglog import debug, warn
+from scanrecord import build_scan_record, rooted_label
 
 def get_param(key):
     return request.form.get(key, request.args.get(key))
@@ -164,33 +165,20 @@ def scan():
         template_d["error"] = error
         return render_template("main.html", **template_d), 201
 
-    scan_d = {
-        "clientid": session["clientid"],
-        "serial": config.hmac_serial(ser),
-        "device": device,
-        "device_model": device_name_map.get("model", "<Unknown>").strip(),
-        "device_version": device_name_map.get("version", "<Unknown>").strip(),
-        "device_primary_user": device_owner,
-    }
-
-    if device == "ios":
-        scan_d["device_manufacturer"] = "Apple"
-        scan_d["last_full_charge"] = "unknown"
-    else:
-        scan_d["device_manufacturer"] = device_name_map.get(
-            "brand", "<Unknown>"
-        ).strip()
-        scan_d["last_full_charge"] = device_name_map.get(
-            "last_full_charge", "<Unknown>"
-        )
-
     debug(f"Getting from dump: {from_dump}")
     if from_dump:
         rooted, rooted_reason = db.get_is_rooted(ser)
     else:
         rooted, rooted_reason = sc.isrooted(ser)
-    scan_d["is_rooted"] = rooted
-    scan_d["rooted_reasons"] = json.dumps(rooted_reason)
+    scan_d = build_scan_record(
+        clientid=session["clientid"],
+        ser=ser,
+        device=device,
+        device_owner=device_owner,
+        device_name_map=device_name_map,
+        rooted=rooted,
+        rooted_reason=rooted_reason,
+    )
 
     # TODO: here, adjust client session.
     if from_dump:
@@ -224,11 +212,9 @@ def scan():
     template_d.update(
         dict(
             isrooted=(
-                "<strong class='text-info'>Maybe (this is possibly just a bug with our scanning tool).</strong> Reason(s): {}".format(
-                    rooted_reason
-                )
+                "<strong class='text-info'>{}</strong>".format(rooted_label(rooted, rooted_reason))
                 if rooted
-                else "Don't know" if rooted is None else "No"
+                else rooted_label(rooted, rooted_reason)
             ),
             device_name=device_name_print,
             apps=apps,
