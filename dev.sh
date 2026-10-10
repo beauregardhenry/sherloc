@@ -5,15 +5,15 @@
 #   ./dev.sh setup    only set up
 #   ./dev.sh -- ARGS  run pytest with your own arguments, for example: ./dev.sh -- -k consult
 #
-# Environment: PYTHON (default python3, must be 3.10 or newer), VENV (default .venv).
+# Environment: PYTHON (default python3, must be 3.12 or newer), VENV (default .venv).
 set -euo pipefail
 cd "$(dirname "$0")"
 
 PYTHON="${PYTHON:-python3}"
 VENV="${VENV:-.venv}"
 
-if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
-  echo "Sherloc needs Python 3.10 or newer. Set PYTHON to one, for example PYTHON=python3.12 ./dev.sh" >&2
+if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)' 2>/dev/null; then
+  echo "Sherloc needs Python 3.12 or newer. Set PYTHON to one, for example PYTHON=python3.12 ./dev.sh" >&2
   exit 1
 fi
 

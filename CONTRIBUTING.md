@@ -4,7 +4,7 @@ Sherloc handles evidence from people in abuse situations. Read "What to protect"
 
 ## Set up
 
-You need Python 3.10 or newer. You do not need root.
+You need Python 3.12 or newer. You do not need root.
 
 ```bash
 ./dev.sh            # first run creates .venv, installs everything, runs the tests
