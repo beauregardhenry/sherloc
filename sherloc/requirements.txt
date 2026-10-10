@@ -9,4 +9,4 @@ pdfkit==1.0.0
 pymobiledevice3==4.21.0
 PyYAML==6.0.2
 rsonlite==0.1.0
-WTForms-Alchemy==0.19.0
+WTForms-Alchemy==0.19.1
