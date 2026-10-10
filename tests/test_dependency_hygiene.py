@@ -23,9 +23,20 @@ def _pins():
     return pins
 
 
-def test_filelock_has_the_symlink_race_fixes():
-    # GHSA-w853-jp5j-5j7f (fixed in 3.20.1) and GHSA-qmgc-5h2g-mvrw (fixed in 3.20.3).
-    assert _pins()["filelock"] >= (3, 20, 3)
+def test_filelock_is_gone_or_has_the_symlink_race_fixes():
+    # No code uses filelock since the consultation answers moved to SQLite.
+    # If it comes back: GHSA-w853-jp5j-5j7f (fixed in 3.20.1) and
+    # GHSA-qmgc-5h2g-mvrw (fixed in 3.20.3).
+    pin = _pins().get("filelock")
+    assert pin is None or pin >= (3, 20, 3)
+
+
+def test_every_pinned_package_that_is_only_ours_is_imported_somewhere():
+    # A pin nothing uses still has to be audited and updated. filelock was one.
+    code = "\n".join(p.read_text() for p in (ROOT / "sherloc").rglob("*.py"))
+    for name in ("filelock",):
+        if name in _pins():
+            assert re.search(rf"^\s*(import|from) {name}\b", code, re.M), f"{name} is pinned but unused"
 
 
 def test_dependabot_watches_actions_and_python_packages():
