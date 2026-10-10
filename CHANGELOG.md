@@ -15,12 +15,14 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Added
+- The app shows where its stalkerware app list came from and when it last changed (a line on every page and in the full report). `scripts/get-stalkerware-indicators.py` records the source repository, the commit and its date, and the date of the change in `static_data/app-flags-source.json`; nothing is rewritten when there is nothing new. Until that file exists the app says the source and date are not recorded
 - Take-home copy of the report ("Create take-home copy" on the evidence home page). It leaves out the clinic's name, logos and contact details, the client's name, device serial numbers, the consultant's comments and screenshot metadata. The file has a random neutral name and neutral PDF metadata, can be protected with a password (AES-256, `pypdf`), and is built in memory so no copy stays on the computer. The full report is unchanged
 - `CONTRIBUTING.md`, `SECURITY.md` and a pull request template
 - `./dev.sh` sets up a virtual environment and runs the tests without root; `requirements-dev.txt` lists the development tools
 - Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)
 
 ### Changed
+- The indicator update script reads `ioc.yaml` with `yaml.safe_load` (it used `FullLoader`), adds an app listed twice only once, and the weekly pull request is titled "Update stalkerware indicators" (it was "[Example] Update stalkware indicators")
 - `evidence_model.py` (1,135 lines) is split by domain into `evidence_base.py`, `evidence_accounts.py`, `evidence_apps.py` and `evidence_taq.py`; `evidence_model` re-exports every name. The scan routes moved from `web/view/evidence.py` to `web/view/evidence_scan.py`. The URLs are unchanged (`tests/test_routes_snapshot.py`)
 - Four stale TODO/FIXME comments were removed or corrected. The rest are collected in issues #17 to #21
 - Consultation answers (TAQ, scans, accounts, notes) are stored in the SQLite database, in the new `consult_documents` table, instead of four JSON files with lock files. One place to protect, count and wipe. JSON files from an earlier version are moved into the database the first time they are read, then overwritten and removed; an answer already in the database is never replaced by an old file, and a file that cannot be parsed is left alone. The `filelock` package is no longer used by the code

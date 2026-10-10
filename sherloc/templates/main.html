@@ -99,6 +99,9 @@
             Delete it when the consultation is over: <a href="{{ url_for('evidence_home') }}">Evidence home</a>, <em>Delete Client Data</em>.
         </div>
         {% endif %}
+        {% if indicator_list %}
+        <p class="text-muted small" id="indicator-list">{{ indicator_list }}</p>
+        {% endif %}
       {% block content %}
         {% if task == 'home' %}
           {% include 'home.html' %}

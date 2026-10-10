@@ -40,6 +40,7 @@ from flask import (
 )
 from flask_bootstrap import Bootstrap
 from phone_scanner import AndroidScan, IosScan
+import indicators
 from takehome import create_takehome_pdf, neutral_filename
 from web import app
 from debuglog import debug, pdebug
@@ -306,6 +307,9 @@ def _printout_context(client):
 
     # Need url_root to load screenshots
     context["url_root"] = request.url_root
+
+    # Which version of the stalkerware app list the apps were checked against
+    context["indicator_list"] = indicators.describe(indicators.summary())
 
     # Need Sherloc version to print on the cover
     context["sherloc_version"] = config.SHERLOC_VERSION
