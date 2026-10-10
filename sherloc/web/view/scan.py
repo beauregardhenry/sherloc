@@ -136,7 +136,8 @@ def scan():
     # and save it to scan_res along with device_primary_user.
     device_name_print, device_name_map = "<NOT FOUND>", {}
     if from_dump:
-        d = db.get_device_info(ser)
+        # The database holds only the pseudonymized serial.
+        d = db.get_device_info(config.hmac_serial(ser))
         if d:
             debug(d)
             device_name_print = f"{d['device_model']} ({d['device_primary_user']})"
@@ -167,7 +168,7 @@ def scan():
 
     debug(f"Getting from dump: {from_dump}")
     if from_dump:
-        rooted, rooted_reason = db.get_is_rooted(ser)
+        rooted, rooted_reason = db.get_is_rooted(config.hmac_serial(ser))
     else:
         rooted, rooted_reason = sc.isrooted(ser)
     scan_d = build_scan_record(
@@ -182,7 +183,7 @@ def scan():
 
     # TODO: here, adjust client session.
     if from_dump:
-        scanid = db.get_most_recent_scan_id(ser)
+        scanid = db.get_most_recent_scan_id(config.hmac_serial(ser))
         if scanid == -1:
             template_d["error"] = (
                 "The serial number provided does not have a scan yet, "

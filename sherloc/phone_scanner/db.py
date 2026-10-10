@@ -202,7 +202,8 @@ def get_most_recent_scan_id(ser: str) -> int:
         "select max(id) as scanid from scan_res where serial=?", args=(ser,), one=True
     )
     debug(f"Get_most_recent_scanid: {d}")
-    return d["scanid"]
+    # max() over no rows is NULL; callers check for -1.
+    return d["scanid"] if d and d["scanid"] is not None else -1
 
 
 def get_scan_res_from_db(scanid):
