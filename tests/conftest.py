@@ -60,4 +60,26 @@ def isolated_database(tmp_path, monkeypatch):
     """
     import config
 
-    monkeypatch.setattr(config, "SQL_DB_PATH", f"sqlite:///{tmp_path / 'isolated-fieldstudy.db'}")
+    url = f"sqlite:///{tmp_path / 'isolated-fieldstudy.db'}"
+    monkeypatch.setattr(config, "SQL_DB_PATH", url)
+
+    # Flask-SQLAlchemy built its engine from config.SQL_DB_PATH when `web`
+    # was imported. Swap that engine too, so the ORM (the intake form) writes
+    # to the same temporary file. Tests that never import `web` skip this.
+    import sys
+
+    web = sys.modules.get("web")
+    if web is None or not hasattr(web, "sa"):
+        yield
+        return
+    import sqlalchemy
+
+    engine = sqlalchemy.create_engine(url)
+    with web.app.app_context():
+        monkeypatch.setitem(web.sa.engines, None, engine)
+    try:
+        yield
+    finally:
+        with web.app.app_context():
+            web.sa.session.remove()
+        engine.dispose()

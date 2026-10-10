@@ -15,6 +15,7 @@ Security in case of vulnerabilities.
 ## [Unreleased]
 
 ### Added
+- Tests for the intake form (`tests/test_intake_form.py`). The test database fixture now also points Flask-SQLAlchemy at the temporary database; before, the ORM kept the engine it built at import, on the real `fieldstudy.db`
 - A browser smoke test (`tests/test_browser_smoke.py`) clicks through the evidence home page in Chromium: report, take-home copy, and "Delete Client Data" with the confirmation accepted and cancelled. It fails on the nested-form bug fixed earlier. CI runs it in its own job
 - The app shows where its stalkerware app list came from and when it last changed (a line on every page and in the full report). `scripts/get-stalkerware-indicators.py` records the source repository, the commit and its date, and the date of the change in `static_data/app-flags-source.json`; nothing is rewritten when there is nothing new. Until that file exists the app says the source and date are not recorded
 - Take-home copy of the report ("Create take-home copy" on the evidence home page). It leaves out the clinic's name, logos and contact details, the client's name, device serial numbers, the consultant's comments and screenshot metadata. The file has a random neutral name and neutral PDF metadata, can be protected with a password (AES-256, `pypdf`), and is built in memory so no copy stays on the computer. The full report is unchanged
@@ -50,6 +51,8 @@ Security in case of vulnerabilities.
 - A notice at the top of every page shows when client data is stored on the computer, with a count for each kind
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
+- The intake form (`/form/`) did not enforce its required questions (labels ending in `*`). Column defaults made `wtforms_alchemy` add `Optional()`, which ends validation on a blank answer before `InputRequired()` runs, so a form with no consultant names or FJC was saved. "Chief concerns" and "Vulnerabilities discovered" had no check at all. All are now required
+- Editing a saved intake form with an invalid answer still wrote it to the database. It now shows the errors and keeps the saved form. Opening an old form whose checkbox answers were empty no longer crashes, and submitting edits without choosing a form goes back to the list instead of a 400 error
 - `phone_scanner/data_process.py`, the script that rebuilds the app list and app-info database from crawls, had stopped working: it read `config.SPYWARE_LIST_FILE`, which does not exist, and pandas no longer writes through the SQLAlchemy 1.4 engine it used. It now runs, writes the database through `sqlite3`, and has tests
 - Investigation answers for apps added by hand were all overwritten with the answers for the last app: apps were matched by app id, and hand-added apps have none. Answers are now paired with apps by position
 - The manual-add form could not be saved unless "Is the device rooted?" was answered; its default, "none", was not one of the choices, and the error read "Not a valid choice"

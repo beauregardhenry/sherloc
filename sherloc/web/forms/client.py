@@ -3,6 +3,7 @@ from web.model import Client
 from wtforms.fields import SelectMultipleField
 from wtforms.widgets import CheckboxInput, ListWidget
 from wtforms import TextAreaField
+from wtforms.validators import InputRequired, Optional
 
 
 class ClientForm(ModelForm):
@@ -30,6 +31,7 @@ class ClientForm(ModelForm):
         coerce=str,
         option_widget=CheckboxInput(),
         widget=ListWidget(prefix_label=False),
+        validators=[InputRequired()],
     )
 
     checkups = SelectMultipleField(
@@ -78,6 +80,7 @@ class ClientForm(ModelForm):
         coerce=str,
         option_widget=CheckboxInput(),
         widget=ListWidget(prefix_label=False),
+        validators=[InputRequired()],
     )
 
     __order = (
@@ -141,6 +144,16 @@ class ClientForm(ModelForm):
         'Case Summary (Can fill out after consult, see "Edit previous forms")',
         render_kw={"rows": 10, "cols": 70},
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # wtforms_alchemy adds Optional() to every column that has a default,
+        # and Optional() ends validation on a blank answer before
+        # InputRequired() runs. Drop it where the question is required.
+        for field in self._fields.values():
+            if any(isinstance(v, InputRequired) for v in field.validators):
+                field.validators = [v for v in field.validators if not isinstance(v, Optional)]
+                field.flags.optional = False
 
     def __iter__(self):  # https://stackoverflow.com/a/25323199
         fields = list(super(ClientForm, self).__iter__())
