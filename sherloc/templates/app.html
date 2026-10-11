@@ -1,6 +1,6 @@
 <div class="container">
     <br/>
-    <h2>Information about "{{ app.title | safe }}"</h2>
+    <h2>Information about "{{ app.title }}"</h2>
     <div class="container form-group">
         <table class="table table-bordered">
             <tbody>
@@ -21,8 +21,8 @@
 		<br>
 	    </div>
         <ul class="list-group">
-            {% for perm in app.permissions %}
-            <li class="code">{{ perm | capitalize | replace('_', ' ') }}</li>
+            {% for name, detail in app.permissions %}
+            <li class="list-group-item"><b>{{ name }}</b><br><small>{{ detail }}</small></li>
             {% endfor %}
         </ul>
     </div>

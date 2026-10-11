@@ -368,3 +368,52 @@ def test_the_android_dump_is_found_by_the_pseudonymised_serial(tmp_path, monkeyp
     assert AndroidScan().dump_path(SERIAL) == str(tmp_path / f"{config.hmac_serial(SERIAL)}_android.json")
 
 
+
+
+# --- the app details page, end to end -------------------------------------------
+
+
+def test_the_details_page_renders_for_an_app_without_app_info(fake_adb, android_dump, no_app_info):
+    import web
+    import web.view  # noqa: F401
+
+    fake_adb.respond([{"match": "appops", "stdout": APPOPS}])
+    web.app.config.update(TESTING=True)
+    r = web.app.test_client().get(f"/details/app/android?appId=com.example.tracker&serial={SERIAL}")
+    page = r.get_data(as_text=True)
+    assert r.status_code == 200
+    assert "Take pictures and videos (CAMERA)" in page
+    assert "WAKE_LOCK" in page
+
+
+def test_the_ios_details_page_renders(ios_scan, no_app_info, monkeypatch):
+    import web
+    import web.view  # noqa: F401
+
+    monkeypatch.setattr("web.view.details.get_device", lambda device: ios_scan)
+    web.app.config.update(TESTING=True)
+    r = web.app.test_client().get(f"/details/app/ios?appId=com.example.tracker&serial={SERIAL}")
+    assert r.status_code == 200
+    assert "See where you are" in r.get_data(as_text=True)
+
+
+def test_each_permission_is_shown_with_when_it_was_last_used(fake_adb, android_dump, no_app_info):
+    import web
+
+    fake_adb.respond([{"match": "appops", "stdout": "No operations.\n"}])
+    page = web.app.test_client().get(f"/details/app/android?appId=com.example.tracker&serial={SERIAL}").get_data(as_text=True)
+    # The template printed each (name, detail) pair as a lower-cased Python tuple.
+    assert "&#39;, &#39;last used" not in page.lower()
+    assert "<b>Take pictures and videos (CAMERA)</b><br><small>Last used: Never</small>" in page
+
+
+def test_an_app_title_from_the_phone_is_escaped(ios_scan, no_app_info, monkeypatch):
+    # The iOS title is the app's executable name, read from the phone. The
+    # page printed it unescaped, so an app could run script in Sherloc.
+    import web
+
+    ios_scan.parse_dump.df.loc[0, "CFBundleExecutable"] = "<script>alert(1)</script>"
+    monkeypatch.setattr("web.view.details.get_device", lambda device: ios_scan)
+    page = web.app.test_client().get(f"/details/app/ios?appId=com.example.tracker&serial={SERIAL}").get_data(as_text=True)
+    assert "<script>alert(1)</script>" not in page
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page
