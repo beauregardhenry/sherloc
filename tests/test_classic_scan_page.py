@@ -139,3 +139,14 @@ def test_reading_from_a_dump_uses_the_earlier_scan(client):
     assert _rows("select count(*) from scan_res") == [(1,)]
     scanid = _rows("select id from scan_res")[0][0]
     assert {row[0] for row in _rows("select scanid from app_info")} == {scanid}
+
+
+def test_an_ios_scan_keeps_the_device_info_dump(client, tmp_path):
+    # Like the evidence workflow: the dump stays with the rest of the client
+    # data until "Delete client data" (or the end of a RAM-only session).
+    info = tmp_path / "ios_info.xml"
+    info.write_text("<plist/>")
+    client.scanner.dump_path = lambda serial, kind: str(info)
+    r = _scan(client, device="ios", device_owner="me")
+    assert r.status_code == 200
+    assert info.exists()
