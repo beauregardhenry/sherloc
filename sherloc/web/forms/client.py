@@ -1,4 +1,6 @@
 from wtforms_alchemy import ModelForm
+
+import intake_choices
 from web.model import Client
 from wtforms.fields import SelectMultipleField
 from wtforms.widgets import CheckboxInput, ListWidget
@@ -12,22 +14,7 @@ class ClientForm(ModelForm):
 
     chief_concerns = SelectMultipleField(
         "Chief concerns*",
-        choices=[
-            ("spyware", "Worried about spyware/tracking"),
-            ("hacked", "Abuser hacked accounts or knows secrets"),
-            ("location", "Worried abuser was tracking their location"),
-            ("glitchy", "Phone is glitchy"),
-            ("unknown_calls", "Abuser calls/texts from unknown numbers"),
-            ("social_media", "Social media concerns (e.g., fake accounts, harassment)"),
-            ("child_devices", "Concerns about child device(s), e.g., unknown apps"),
-            (
-                "financial_concerns",
-                "Financial concerns, e.g., fraud, money missing from bank account",
-            ),
-            ("curious", "Curious and want to learn about privacy"),
-            ("sms", "SMS texts"),
-            ("other", "Other chief concern (write in next question)"),
-        ],
+        choices=intake_choices.CHIEF_CONCERNS,
         coerce=str,
         option_widget=CheckboxInput(),
         widget=ListWidget(prefix_label=False),
@@ -36,15 +23,7 @@ class ClientForm(ModelForm):
 
     checkups = SelectMultipleField(
         "List apps/accounts manually checked (Optional)",
-        choices=[
-            ("facebook", "Facebook"),
-            ("instagram", "Instagram"),
-            ("snapchat", "SnapChat"),
-            ("google", "Google (including GMail)"),
-            ("icloud", "iCloud"),
-            ("whatsapp", "WhatsApp"),
-            ("other", "Other apps/accounts (write in next question)"),
-        ],
+        choices=intake_choices.CHECKUPS,
         coerce=str,
         option_widget=CheckboxInput(),
         widget=ListWidget(prefix_label=False),
@@ -52,31 +31,7 @@ class ClientForm(ModelForm):
 
     vulnerabilities = SelectMultipleField(
         "Vulnerabilities discovered*",
-        choices=[
-            ("none", "None"),
-            ("shared plan", "Shared plan / abuser pays for plan"),
-            (
-                "password:observed compromise",
-                "Observed compromise (e.g., client reports abuser shoulder-surfed, or told them password)",
-            ),
-            ("password:guessable", "Surfaced guessable passwords"),
-            (
-                "cloud:stored passwords",
-                "Stored passwords in app that is synced to cloud (e.g., passwords written in Notes and backed up)",
-            ),
-            (
-                "cloud:passwords synced/password manager",
-                "Password syncing (e.g., iCloud Keychain)",
-            ),
-            (
-                "unknown trusted device",
-                "Found an account with an active login from a device not under client's control; trusted device",
-            ),
-            ("ISDi:found dual-use apps/spyware", "ISDi found dual-use apps/spyware"),
-            ("ISDi:false positive", "ISDi false positive as confirmed by client"),
-            ("browser extension", "Browser extension potential spyware"),
-            ("desktop potential spyware", "Desktop application potential spyware"),
-        ],
+        choices=intake_choices.VULNERABILITIES,
         coerce=str,
         option_widget=CheckboxInput(),
         widget=ListWidget(prefix_label=False),

@@ -275,8 +275,6 @@ class AndroidScan(AppScan):
         cmd = [self.cli, "-s", serialno, "shell", "pm", "list", "packages", *flag.split()]
         p = run_command(cmd)
         s = catch_err(p, msg="App search failed", cmd=" ".join(cmd))
-        # catch_err returns an error message when the command fails, so the
-        # exit status decides whether `s` is a package list.
         if p.returncode != 0 or not s:
             self.setup()
             return []

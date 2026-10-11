@@ -120,11 +120,25 @@ APP_FLAGS_FILE, SQL_DB_PATH = set_test_mode(TEST)
 
 STATIC_DATA = THIS_DIR / "static_data"
 
-# TODO: We should get rid of this, ADB_PATH is very confusing
-ANDROID_HOME = os.getenv("ANDROID_HOME", "")
+def _find_adb():
+    """The adb program to run, as one argument (never through a shell).
 
-# The path of the adb program. It is passed as one argument, never through a shell.
-ADB_PATH = os.path.join(ANDROID_HOME, "adb")
+    SHERLOC_ADB names it outright. Otherwise ANDROID_HOME is the Android SDK
+    folder, which keeps adb in platform-tools/; older setups put it directly
+    in ANDROID_HOME. Without either, `adb` is looked up on the PATH, where
+    the Brewfile installs it.
+    """
+    if os.getenv("SHERLOC_ADB"):
+        return os.environ["SHERLOC_ADB"]
+    home = os.getenv("ANDROID_HOME", "")
+    if home:
+        for candidate in (os.path.join(home, "platform-tools", "adb"), os.path.join(home, "adb")):
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return candidate
+    return "adb"
+
+
+ADB_PATH = _find_adb()
 
 LIBIMOBILEDEVICE_PATH = ""
 

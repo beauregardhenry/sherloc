@@ -19,9 +19,13 @@ def test_output_of_a_successful_command_is_returned():
     assert runcmd.catch_err(_proc(0, out="hello world, this is fine\n")) == "hello world, this is fine\n"
 
 
-def test_a_failing_command_returns_a_message_with_its_error():
-    msg = runcmd.catch_err(_proc(2, err="boom"), cmd="thing", msg="context")
-    assert "boom" in msg and "thing" in msg and "context" in msg
+def test_a_failing_command_returns_no_output_and_logs_its_error(monkeypatch):
+    # One return type: the output, or "" when the command failed. The error
+    # message used to be returned instead, and callers took it for output.
+    logged = []
+    monkeypatch.setattr(runcmd, "debug", lambda *a: logged.append(" ".join(map(str, a))))
+    assert runcmd.catch_err(_proc(2, err="boom"), cmd="thing", msg="context") == ""
+    assert any("boom" in m and "thing" in m and "context" in m for m in logged)
 
 
 def test_a_short_output_that_says_error_is_treated_as_empty():
@@ -71,7 +75,7 @@ def test_run_command_with_nowait_returns_a_pid():
 
 def test_a_missing_program_looks_like_a_failed_process():
     p = runcmd.run_command(["definitely-not-installed-xyz", "--flag"])
-    assert runcmd.catch_err(p, cmd="x") != ""
+    assert runcmd.catch_err(p, cmd="x") == ""
     assert p.returncode != 0
 
 
