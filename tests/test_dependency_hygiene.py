@@ -74,3 +74,10 @@ def test_every_ignored_advisory_says_why():
             if "--ignore-vuln" in line:
                 above = [ln for ln in lines[max(0, i - 8): i] if ln.strip().startswith("#")]
                 assert above, f"{p.name}:{i + 1} ignores an advisory without a comment"
+
+
+def test_flask_migrate_is_gone():
+    # There was no migrations/ folder; web/schema.sql creates the tables.
+    assert "flask-migrate" not in _pins()
+    code = "\n".join(p.read_text() for p in (ROOT / "sherloc").rglob("*.py"))
+    assert not re.search(r"^\s*(import|from) flask_migrate\b", code, re.M)

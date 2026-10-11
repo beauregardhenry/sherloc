@@ -6,7 +6,6 @@ import config
 from flask import Flask, g, session, request
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from htmlclean import clean_description
 from web.security import register_request_guards
 
@@ -25,7 +24,6 @@ sa = SQLAlchemy(app)
 # outside server sees when a consultation is running.
 app.config["BOOTSTRAP_SERVE_LOCAL"] = True
 Bootstrap(app)
-Migrate(app, sa)
 
 register_request_guards(app)
 app.jinja_env.filters["clean_html"] = clean_description

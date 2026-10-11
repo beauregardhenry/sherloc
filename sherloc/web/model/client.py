@@ -1,9 +1,7 @@
-# If changes are made to this model, please run
-# `flask db migrate` and then delete the drops to other tables from the upgrade() method in
-# migrations/versions/<version>.py
-# before running `flask db upgrade` and re-launching the server.
-# if the migrations folder isn't present, run `flask db init` first.
-# _order in ClientForm should be modified .
+# The table is created by web/schema.sql (CREATE TABLE IF NOT EXISTS), not by
+# SQLAlchemy. When adding a column, add it here and in schema.sql, and add the
+# field to the order list in web/forms/client.py. CREATE TABLE IF NOT EXISTS does
+# not add a column to an existing database; that needs an ALTER TABLE.
 
 from web import sa
 from wtforms.validators import Email, InputRequired
