@@ -11,7 +11,12 @@ from debuglog import debug
 def catch_err(
     p: subprocess.Popen[bytes], cmd="", msg="", time=5, large_output=False
 ) -> str:
-    """TODO: Therer are two different types. homogenize them"""
+    """The command's output, or "" when it failed.
+
+    A failure (non-zero exit, a short output that says "fail" or "error", a
+    timeout) is logged with `cmd` and `msg`, and gives "". Callers can rely on
+    a non-empty result being real output.
+    """
     try:
         large_output_var = b""
         if large_output:
@@ -30,12 +35,10 @@ def catch_err(
             m = "[{}]: Error running {!r}. Error ({}): {}\n{}".format(
                 "android", cmd, p.returncode, err_msg, msg
             )
-            debug(cmd, p.returncode, err_msg, msg)
+            debug(m)
             if "insufficient permissions for device: user in plugdev group" in err_msg:
-                e = 'Error: Please set "USB For File Transfers" mode on your Android device.'
-                debug(e)
-                return ""
-            return m
+                debug('Error: Please set "USB For File Transfers" mode on your Android device.')
+            return ""
         else:
             if large_output:
                 s = large_output_var.decode()

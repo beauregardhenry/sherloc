@@ -14,7 +14,7 @@ NORMAL_USER=$USER
 # sudo clears the environment. Pass Sherloc's own settings through, above all
 # SHERLOC_DATA_DIR: without it client data would go to the default folders.
 SHERLOC_ENV=()
-for var in SHERLOC_DATA_DIR SHERLOC_HOST SHERLOC_ALLOWED_HOSTS SHERLOC_SQL_ECHO DEBUG TEST; do
+for var in SHERLOC_DATA_DIR SHERLOC_HOST SHERLOC_ALLOWED_HOSTS SHERLOC_ADB ANDROID_HOME SHERLOC_SQL_ECHO DEBUG TEST; do
     if [ -n "${!var+x}" ]; then
         SHERLOC_ENV+=("$var=${!var}")
     fi

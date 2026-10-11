@@ -154,3 +154,15 @@ def test_a_missing_info_file_still_loads(dump_files, tmp_path):
     apps, _ = dump_files
     d = parse_dump.IosDump(str(apps), finfo=str(tmp_path / "missing.xml"))
     assert d.device_class == ""
+
+
+def test_dump_fails_when_the_script_fails(tmp_path, monkeypatch):
+    # catch_err used to return the error message, which counted as output,
+    # so a failed dump was reported as a success.
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    from tests.fakebin import FakeTool
+
+    FakeTool(scripts, "ios_dump.sh", [{"match": "", "stderr": "ERROR: No device found\n", "rc": 1}])
+    monkeypatch.setattr(config, "SCRIPT_DIR", scripts)
+    assert IosScan()._dump_phone(UDID) is False

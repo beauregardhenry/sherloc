@@ -75,6 +75,8 @@ Sherloc has no login and handles sensitive evidence, so it only listens on `127.
 
 Everything Sherloc saves about a client (phone dumps, screenshots, reports, the consultation answers) goes in one folder. By default that is the `sherloc/` folder itself, with the subfolders `phone_dumps`, `reports`, `data`, `tmp-consult-data` and `webstatic/images/screenshots`; the app log goes in `logs`. To keep all of it somewhere else, for example on a RAM disk, set `SHERLOC_DATA_DIR` to that folder before starting Sherloc. `./sherloc.sh` passes it through `sudo`. Sherloc prints the folder it uses when it starts.
 
+Sherloc runs `adb` from the `PATH` (the Brewfile installs it there). If `ANDROID_HOME` points to an Android SDK, it uses `platform-tools/adb` inside it. To use a different adb, set `SHERLOC_ADB` to its full path.
+
 ### Requirements for taking screenshots with iOS devices
 
 iOS devices have two requirements if you want to take screenshots.

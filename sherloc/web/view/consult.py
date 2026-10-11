@@ -1,3 +1,4 @@
+import intake_choices
 import config
 import json
 from web import app, sa
@@ -49,15 +50,6 @@ def client_forms():
     )
 
 
-def _checkbox_answers(value):
-    """The saved JSON list for a checkbox question. Old rows may hold ''."""
-    if not value:
-        return []
-    if isinstance(value, list):
-        value = "".join(value)
-    return json.loads(value)
-
-
 @app.route("/form/edit/", methods=["GET", "POST"])
 def edit_forms():
     if request.method == "POST":
@@ -71,7 +63,7 @@ def edit_forms():
             form = ClientForm(obj=form_obj)
             for field in form:
                 if field.type == "SelectMultipleField":
-                    field.data = _checkbox_answers(field.data)
+                    field.data = intake_choices.checkbox_answers(field.data)
             return render_template(
                 "main.html",
                 task="form",
