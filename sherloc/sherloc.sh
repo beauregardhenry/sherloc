@@ -11,6 +11,12 @@ PYTHON=python${PYTHON_VERSION:='3.12'}
 : ${VENV:='sherloc-venv'}
 NORMAL_USER=$USER
 
+# Intel Macs are not supported (Pango, which the PDF report needs, has to be
+# built from source there). Say so up front instead of failing later.
+if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "x86_64" ]; then
+    echo "⚠️  Intel Macs are not supported. Sherloc supports Apple Silicon Macs (M1 or newer) and Linux."
+fi
+
 # sudo clears the environment. Pass Sherloc's own settings through, above all
 # SHERLOC_DATA_DIR: without it client data would go to the default folders.
 SHERLOC_ENV=()

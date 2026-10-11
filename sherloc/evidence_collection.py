@@ -21,8 +21,8 @@ from enum import Enum
 import config
 import consultstore
 import jinja2
-import pdfkit
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION, screenshot_path
+from pdfrender import render_pdf
 import scanflow
 from scanrecord import split_suspicious
 from web.view.index import get_device
@@ -155,50 +155,39 @@ def get_data_filename(datatype: ConsultDataTypes):
 def render_printout_html(context):
     """Render the printout template to an HTML string."""
     template_loader = jinja2.FileSystemLoader("./")
-    # Notes, nicknames and app names are free text and wkhtmltopdf renders the
-    # result, so everything is HTML-escaped.
+    # Notes, nicknames and app names are free text and are rendered to PDF,
+    # so everything is HTML-escaped.
     template_env = jinja2.Environment(loader=template_loader, autoescape=True)
     template_env.filters["screenshot_path"] = screenshot_path
     template = template_env.get_template(os.path.join('templates', 'printout.html'))
     return template.render(context)
 
 
-def printout_pdf_options(takehome=False):
-    # No 'enable-local-file-access': the page is built from user-entered text, and
-    # images are fetched from the running app over http (see url_root).
-    # JavaScript is off: pdfkit 1.0.0 (CVE-2025-26240) lets page script run
-    # and read local files, and the printout needs none.
-    opts = {
-        'disable-javascript': '',
-        'margin-top': '15mm',
-        'margin-bottom': '20mm',
-        'margin-left': '10mm',
-        'margin-right': '10mm',
-        'footer-spacing': '5',
-        'footer-center': 'Created by Madison Tech Clinic using Sherloc {} • Page [page] of [toPage]'.format(SHERLOC_VERSION),
-        'footer-font-name': 'Georgia',
-        'footer-font-size': '8',
-    }
-    if takehome:
-        # Nothing that names the clinic or the tool. The file's own metadata is
-        # replaced in takehome.protect_pdf.
-        opts['footer-center'] = 'Page [page] of [toPage]'
-    return opts
+FULL_FOOTER = 'Created by Madison Tech Clinic using Sherloc {} • Page [page] of [toPage]'
+# The take-home copy names neither the clinic nor the tool.
+TAKEHOME_FOOTER = 'Page [page] of [toPage]'
+
+
+def printout_footer(takehome=False):
+    return TAKEHOME_FOOTER if takehome else FULL_FOOTER.format(SHERLOC_VERSION)
+
+
+def render_printout_pdf(context):
+    """PDF bytes of the printout. See pdfrender for what the renderer may load."""
+    html_string = render_printout_html(context)
+    return render_pdf(
+        html_string,
+        url_root=context.get("url_root") or "http://localhost:6200/",
+        footer=printout_footer(context.get("takehome", False)),
+    )
 
 
 def create_printout(context, out_file=None):
     out_file = out_file or os.path.join(REPORT_DIR, 'test_report.pdf')
-    css_path = os.path.join('webstatic', 'style.css')
-
-    html_string = render_printout_html(context)
-
-    wkhtmltopdf = shutil.which('wkhtmltopdf') or '/usr/local/bin/wkhtmltopdf'
-    config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf)
-
-    pdfkit.from_string(html_string, out_file, options=printout_pdf_options(), configuration=config, css=css_path, verbose=True)
-
+    data = render_printout_pdf(context)
+    with open(out_file, 'wb') as f:
+        f.write(data)
     debug("Printout created. Filename is", out_file)
-
     return out_file
 
 

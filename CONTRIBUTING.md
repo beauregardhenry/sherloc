@@ -11,7 +11,7 @@ You need Python 3.12 or newer. You do not need root.
 ./dev.sh -- -k name # run part of the suite
 ```
 
-`adb`, `ideviceinstaller` and `wkhtmltopdf` are optional for development. Tests that need `wkhtmltopdf` are skipped without it. No test needs a phone: device tools are replaced by fake programs (`tests/fakebin.py`).
+`adb` and `ideviceinstaller` are optional for development. The PDF tests need Pango (see the README) and use `pdftotext` (poppler) when it is installed. No test needs a phone: device tools are replaced by fake programs (`tests/fakebin.py`).
 
 To run the app itself, see the README.
 

@@ -28,10 +28,4 @@ jobs:
       - name: Install pip-audit
         run: python -m pip install pip-audit==2.10.1
       - name: Audit the pinned requirements
-        # PYSEC-2026-2860 (CVE-2025-26240): pdfkit 1.0.0 from_string lets page
-        # script run and read local files. No fixed release exists. We escape
-        # all user text, disable JavaScript and do not enable local file
-        # access (tests/test_printout.py). Remove this line once pdfkit has a fix.
-        run: >
-          pip-audit -r sherloc/requirements.txt --progress-spinner off
-          --ignore-vuln PYSEC-2026-2860
+        run: pip-audit -r sherloc/requirements.txt --progress-spinner off

@@ -16,8 +16,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
-      - name: System packages (PDF printout tests)
-        run: sudo apt-get update && sudo apt-get install -y wkhtmltopdf poppler-utils
+      - name: System packages (WeasyPrint needs Pango; pdftotext checks the PDFs)
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 poppler-utils
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: "3.13"
       - name: System packages (PDF printout tests)
-        run: sudo apt-get update && sudo apt-get install -y wkhtmltopdf poppler-utils
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 poppler-utils
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -52,8 +52,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.12"
-      - name: System packages (the report needs wkhtmltopdf)
-        run: sudo apt-get update && sudo apt-get install -y wkhtmltopdf
+      - name: System packages (the report needs Pango for WeasyPrint)
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0
       - name: Install dependencies and Chromium
         run: |
           python -m pip install --upgrade pip

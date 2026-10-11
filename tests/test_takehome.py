@@ -50,6 +50,9 @@ def _full_context(**extra):
     return ctx
 
 
+needs_pdftotext_only = pytest.mark.skipif(shutil.which("pdftotext") is None, reason="pdftotext not installed")
+
+
 # --- content ---------------------------------------------------------------
 
 
@@ -90,20 +93,22 @@ def test_take_home_text_is_still_escaped():
 
 
 def test_take_home_footer_does_not_name_the_clinic():
-    opts = ec.printout_pdf_options(takehome=True)
-    assert "Madison" not in opts["footer-center"]
-    assert "Sherloc" not in opts["footer-center"]
-    assert "[page]" in opts["footer-center"]
-
-
-def test_take_home_options_keep_the_security_settings():
-    opts = ec.printout_pdf_options(takehome=True)
-    assert "disable-javascript" in opts
-    assert not opts.get("enable-local-file-access")
+    footer = ec.printout_footer(takehome=True)
+    assert "Madison" not in footer
+    assert "Sherloc" not in footer
+    assert "[page]" in footer
 
 
 def test_the_full_report_footer_is_unchanged():
-    assert "Madison Tech Clinic" in ec.printout_pdf_options()["footer-center"]
+    assert "Madison Tech Clinic" in ec.printout_footer()
+
+
+@needs_pdftotext_only
+def test_the_take_home_pdf_footer_has_page_numbers_and_no_clinic():
+    data = takehome.create_takehome_pdf(_full_context())
+    text = subprocess.run(["pdftotext", "-", "-"], input=data, capture_output=True).stdout.decode()
+    assert re.search(r"Page 1 of \d+", text)
+    assert "Madison" not in text
 
 
 # --- file name --------------------------------------------------------------
@@ -174,10 +179,7 @@ def test_the_file_does_not_name_the_tool_or_the_time_it_was_made(password):
 
 # --- the route --------------------------------------------------------------
 
-needs_tools = pytest.mark.skipif(
-    shutil.which("wkhtmltopdf") is None or shutil.which("pdftotext") is None,
-    reason="wkhtmltopdf or pdftotext not installed",
-)
+needs_tools = pytest.mark.skipif(shutil.which("pdftotext") is None, reason="pdftotext not installed")
 
 
 @pytest.fixture
