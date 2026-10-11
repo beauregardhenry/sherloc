@@ -1,4 +1,30 @@
 # Sherloc
+
+> **Sherloc has moved into ISDi.** Use
+> [beauregardhenry/isdi](https://github.com/beauregardhenry/isdi) instead.
+> This fork is no longer maintained.
+>
+> Sherloc's consultation workflow is part of ISDi from the release after
+> 1.8.1, with the same steps:
+> - the technology assessment questionnaire;
+> - account checks;
+> - devices and the questions asked about each app;
+> - screenshots;
+> - notes;
+> - the report with a take-home copy and a password-protected PDF.
+>
+> Its fixes came along too: four-word client IDs, cleaned store
+> descriptions, and Android permission labels on the app page. ISDi also
+> scans with commands that never go through a shell, encrypts client data
+> at rest, and keeps an audit log with sign-in for each person. The
+> consultation record is stored per client, not once per computer.
+>
+> There is no importer. Sherloc keeps a consultation only until "Delete
+> Client Data", so finish or print any open consultation here before
+> switching. Install ISDi from its
+> [releases](https://github.com/beauregardhenry/isdi/releases) and see
+> "Consultation record" in its README.
+
 ### A.K.A. Software to Help with Evidence Retrieval and Log Online Cyberabuse
 
 Sherloc is a tool to support computer security clinics. It is meant to be run by a tech clinic consultant, allowing the consultant to enter findings and investigations. Then, Sherloc enables the consultant to create an evidentiary document synthesizing the consultation.
