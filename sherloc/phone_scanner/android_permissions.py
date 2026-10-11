@@ -11,10 +11,9 @@ from rsonlite import simpleparse
 
 from inputcheck import validate_appid
 
-from .runcmd import catch_err, run_command
+from .runcmd import run_command
 from debuglog import debug
 
-# MAP = config.ANDROID_PERMISSIONS
 DUMPPKG = "dumppkg"
 
 
@@ -56,7 +55,6 @@ def recent_permissions_used(appid):
     validate_appid(appid)
     cmd = [config.ADB_PATH, "shell", "appops", "get", appid]
     recently_used = run_command(cmd).stdout.read().decode("utf-8")
-    #recently_used = catch_err(run_command(cmd, app=appid))
 
     if "No operations." in recently_used:
         return df
@@ -136,25 +134,7 @@ def package_info(dumpf, appid):
     # We need to remove it, otherwise the parsing will fail.
     package_dump = package_dump.split("Hidden system packages")[0]
 
-    # cmd = '{cli} shell dumpsys usagestats {app} | grep "App Standby States:" -A 1'\
-    #     .format(cli=config.ADB_PATH, app=appid)
-    # now = datetime.datetime.now()
-    # usage_stats = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)\
-    #        .stdout.read().decode('utf-8')#.strip()
 
-    """
-     App Standby States:
-        package=net.cybrook.trackview u=0 bucket=10 reason=u-mb used=+4m41s645ms usedScr=+2m19s198ms lastPred=+19d0h27m2s920ms activeLeft=+55m18s355ms wsLeft=-30d6h13m15s667ms lastJob=-24855d3h14m7s432ms idle=n
-
-        totalElapsedTime=+305d6h7m59s376ms
-        totalScreenOnTime=+67d8h56m19s585ms
-    """
-
-    """
-    # switch to top method after tests
-    package_dump = open(DUMPPKG, 'r').read()
-    #print(package_dump)
-    """
     sp = None
     try:
         # Parse the package dump (TODO: Look into)
@@ -182,22 +162,12 @@ def package_info(dumpf, appid):
         ]
         requested_perms = pkg.get("requested permissions:", [])
 
-        # usage_stats = filter(None, usage_stats.split('\n')[1].split(' '))
-        # usage_stats = dict(item.split('=') for item in usage_stats)
-        # print(usage_stats)
         pkg_info = {}
         pkg_info["firstInstallTime"] = pkg.get("firstInstallTime", "")
         pkg_info["lastUpdateTime"] = pkg.get("lastUpdateTime", "")
         pkg_info["versionCode"] = pkg.get("versionCode", "")
         pkg_info["versionName"] = pkg.get("versionName", "")
-        # pkg_info['used'] = now - _parse_time(usage_stats['used'])
-        # pkg_info['usedScr'] = now - _parse_time(usage_stats['usedScr'])
 
-        # ('User 0:  installed', 'true hidden=false stopped=false notLaunched=false enabled=0\nlastDisabledCaller: com.android.vending\ngids=[3003]\nruntime permissions:')
-        # inst_det_key = [v for k,v in pkg.items() if 'User 0:' in k][0]
-        # install_details = dict(item.split('=') for item in inst_det_key.strip().split(' ')[1:])
-        # install_details = {k:bool(strtobool(install_details[k])) for k in install_details}
-        # print(install_details)
 
         all_perms = list(set(requested_perms) | set(install_perms))
         all_perms.sort()
@@ -346,7 +316,6 @@ if __name__ == "__main__":
     exit()
     recent_permissions = recent_permissions_used(appid)
 
-    # permissions = permissions_map()
     permissions = pd.read_csv(config.ANDROID_PERMISSIONS)
     app_permissions_tbl = permissions[
         permissions["permission"].isin(app_perms)
@@ -362,8 +331,6 @@ if __name__ == "__main__":
             app_permissions_tbl.shape[0], recent_permissions.shape[0]
         )
     )
-    # for permission in hf_app_permissions:
-    #    print(permission)
 
     app_permissions_tbl["permission_abbrv"] = app_permissions_tbl["permission"].apply(
         lambda x: x.rsplit(".", n=1)[-1]
@@ -377,13 +344,7 @@ if __name__ == "__main__":
         right_on="permission_abbrv",
         how="right",
     ).fillna("unknown")
-    # print(hf_recent_permissions.columns)
-    # print(hf_recent_permissions.shape)
-    # print(hf_recent_permissions.op == hf_recent_permissions.permission_abbrv)
-    # print(hf_recent_permissions[['label','op','permission']])
-    # print(hf_recent_permissions[['label','timestamp','time_ago','permission']])
 
-    # print(hf_recent_permissions[['label','description','timestamp','time_ago', 'duration']])
     print(hf_recent_permissions[["label", "permission_abbrv", "timestamp"]])
 
     no_hf_recent_permissions = recent_permissions[

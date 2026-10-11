@@ -186,11 +186,6 @@ details {
     font-size: 10px;
   }
 
-div.progress-bar {
-    fill: green;
-    background-color: green;
-}
-
 textarea {
     width: 100%;
     padding: 5px;

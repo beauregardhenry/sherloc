@@ -25,14 +25,11 @@ import pdfkit
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION, screenshot_path
 from phone_scanner.db import create_mult_appinfo, create_scan
 from scanrecord import build_scan_record, rooted_label, split_suspicious
-from phone_scanner.privacy_scan_android import take_screenshot
 from web.view.index import get_device
 from web.view.scan import first_element_or_none
 
 from evidence_choices import (  # noqa: F401
     TMP_CONSULT_DATA_DIR,
-    SCREENSHOT_FOLDER,
-    CONTEXT_PKL_FNAME,
     YES_NO_DEFAULT,
     PERSON_DEFAULT,
     LEGAL_DEFAULT,
@@ -47,10 +44,8 @@ from evidence_choices import (  # noqa: F401
     LEGAL_CHOICES,
     DEVICE_TYPE_CHOICES,
     TWO_FACTOR_CHOICES,
-    ACCOUNT_CHOICES,
 )
 from evidence_model import (  # noqa: F401
-    Pages,
     EvidenceDataEncoder,
     Dictable,
     DictInitClass,
@@ -72,7 +67,6 @@ from evidence_model import (  # noqa: F401
     TAQKids,
     TAQLegal,
     Notes,
-    RiskFactor,
     ConsultationData,
     AccountInvestigation,
     ScanData,
@@ -87,19 +81,13 @@ from evidence_forms import (  # noqa: F401
     NotesForm,
     PermissionForm,
     InstallForm,
-    SpywareAppForm,
-    DualUseAppForm,
     SuspiciousLoginsForm,
     PasswordForm,
     RecoveryForm,
     TwoFactorForm,
     SecurityQForm,
-    AccountInfoForm,
     AppSelectForm,
     StartForm,
-    ScanForm,
-    SpywareForm,
-    DualUseForm,
     SingleAppCheckForm,
     AppInvestigationForm,
     AccountCompromiseForm,
@@ -126,8 +114,6 @@ def get_scan_by_ser(ser, all_scan_data: list[ScanData]):
             return scan
 
     return ScanData()
-
-
 
 
 def update_scan_by_ser(new_scan: ScanData, all_scan_data: list[ScanData]):
@@ -217,37 +203,6 @@ def create_printout(context, out_file=None):
     return out_file
 
 
-def create_overall_summary(context, second_person=False):
-    concerns = dict(
-        spyware = [],
-        dualuse = [],
-        accounts = []
-    )
-
-    return concerns
-
-def get_screenshots(context, name, dir):
-    screenshots = os.listdir(dir)
-    name = name.replace(' ', '')
-    return list(filter(lambda x: context in x and name in x, screenshots))
-
-
-def screenshot(device, fname):
-    """Take a screenshot and return the file where the screenshot is"""
-    fname = os.path.join(SCREENSHOT_FOLDER, fname)
-
-    sc = get_device(device)
-    ser = sc.devices()
-
-    if device.lower() == "android":
-        take_screenshot(ser, fname=fname)
-
-    else:
-        # don't know how to do this yet
-        return None
-
-    return fname
-
 def remove_unwanted_data(data):
     """Clean data from forms (e.g., remove CSRF tokens so they don't live in the session)"""
     unwanted_keys = ["csrf_token"]
@@ -267,14 +222,6 @@ def remove_unwanted_data(data):
     else:
         return data
 
-def account_is_concerning(account):
-    login_concern = account['suspicous_logins']['recognize'] != 'y' or account['suspicous_logins']['activity_log'] != 'n'
-    pwd_concern = account['password_check']['guess'] != 'n' or account['password_check']['know'] != 'n'
-    recovery_concern = account['recovery_settings']['phone_owned'] != 'y' or account['recovery_settings']['email_owned'] != 'y'
-    twofactor_concern = account['two_factor_settings']['second_factor_owned'] != 'n'
-    security_concern = account['security_questions']['know'] != 'n'
-
-    return login_concern or pwd_concern or recovery_concern or twofactor_concern or security_concern
 
 def get_multiple_app_details(device, ser, apps):
     filled_in_apps = []
@@ -300,9 +247,6 @@ def get_app_details(device, ser, appid):
         except KeyError:
             d[item] = ""
 
-    #d = d.fillna('')
-    #d = d.to_dict(orient='index').get(0, {})
-    #d['appId'] = appid
 
     return d
 
@@ -392,12 +336,6 @@ def get_scan_data(device, device_owner):
 
         scanid = create_scan(scan_d)
 
-        # if device == 'ios':
-        #    pii_fpath = sc.dump_path(ser, 'Device_Info')
-        #    print('Revelant info saved to db. Deleting {} now.'.format(pii_fpath))
-        #    cmd = os.unlink(pii_fpath)
-        #    s = catch_err(run_command(cmd), msg="Delete pii failed", cmd=cmd)
-        #    print('iOS PII deleted.')
 
         create_mult_appinfo([(scanid, appid, json.dumps(
             info['flags']), '', '<new>') for appid, info in apps.items()])
@@ -409,7 +347,6 @@ def get_scan_data(device, device_owner):
             scanid=scanid,
             sysapps=set(),  # sc.get_system_apps(serialno=ser)),
             serial=ser,
-            error=config.error()
         ))
 
         suspicious_apps, other_apps = split_suspicious(apps)

@@ -1,28 +1,18 @@
 import re
 import sqlite3
-from flask_sqlalchemy import SQLAlchemy
 import config
 from flask import g
 from datetime import datetime as dt
-import config
 import os
-import pandas as pd
 from debuglog import debug
-
 
 
 def database_path():
     return config.SQL_DB_PATH.replace("sqlite:///", "").strip()
 
 
-# CONSULTS_DATABASE = config.SQL_DB_CONSULT_PATH.replace('sqlite:///', '')
-
-
 def today():
-    db = get_db()
-    t = dt.now()
-    today = t.strftime("%Y%m%d")
-    return today
+    return dt.now().strftime("%Y%m%d")
 
 
 def new_client_id():
@@ -93,14 +83,8 @@ def insert_many(query, argss):
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
-    lrowid = cur.lastrowid
     cur.close()
     return (rv[0] if rv else None) if one else rv
-
-
-def save_note(scanid, note):
-    insert("update scan_res set note=? where id=?", args=(note, scanid))
-    return True
 
 
 def create_scan(scan_d):
@@ -138,24 +122,6 @@ def update_appinfo(scanid, appid, remark, action):
     )
 
 
-def update_mul_appinfo(args):
-    return insert_many(
-        "update app_info set " "remark=? where scanid=? and appid=?", args
-    )
-
-
-def create_appinfo(scanid, appid, flags, remark="", action="<new>"):
-    """
-    @scanr must have following fields.
-
-    """
-    return insert(
-        "insert into app_info (scanid, appid, flags, remark, action_taken) "
-        "values (?,?,?,?,?)",
-        args=(scanid, appid, flags, remark, action),
-    )
-
-
 def create_mult_appinfo(args):
     """ """
     return insert_many(
@@ -174,7 +140,7 @@ def get_is_rooted(serial):
         if d:
             d = d[0]
         return d["is_rooted"], d["rooted_reasons"]
-    except Exception as e:
+    except Exception:
         return "<ROOTED_ERR>", "<ROOTED_ERR>"
 
 
@@ -211,19 +177,6 @@ def get_most_recent_scan_id(ser: str) -> int:
     return d["scanid"] if d and d["scanid"] is not None else -1
 
 
-def get_scan_res_from_db(scanid):
-    d = query_db("select * from scan_res where id=?", args=(scanid,), one=True)
-    return d
-
-
-def get_app_info_from_db(scanid):
-    d = query_db("select * from app_info where scanid=?", args=(scanid,), one=False)
-    if d:
-        return d
-    else:
-        return []
-
-
 def get_device_from_db(scanid):
     d = query_db("select device from scan_res where id=?", args=(scanid,), one=True)
     if d:
@@ -245,17 +198,3 @@ def first_element_or_none(l):
         return l[0]
 
 
-def create_report(clientid):
-    """
-    Creates a report for a clientid
-    """
-    reportf = os.path.join(config.REPORT_PATH, clientid + ".csv")
-    d = pd.DataFrame(
-        query_db(
-            "select * from scan_res inner join app_info on "
-            "scan_res.id=app_info.scanid where scan_res.clientid=?",
-            args=(clientid,),
-        )
-    )
-    d.to_csv(reportf, index=None)
-    return d

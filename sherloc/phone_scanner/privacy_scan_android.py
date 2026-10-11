@@ -30,19 +30,18 @@ Finally screen capture.
 """
 
 import os
-import random
 import re
-import shlex
 import subprocess
 import time
-from datetime import datetime
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import TimeoutExpired
 
 from flask import url_for
 
 import config
 from inputcheck import validate_serial
 from debuglog import debug
+
+from .runcmd import run_command
 
 # Activity names look like `com.example/.Settings\$Inner`. The backslash is for
 # the shell on the device, which turns `\$` into `$`. Names come from this
@@ -51,23 +50,19 @@ _ACTIVITY = re.compile(r"[A-Za-z0-9_./\\$]+")
 
 
 def run_capture(args, timeout=4):
-    """Run a program and return (stdout, stderr) as text.
+    """Run a program to completion and return (stdout, stderr) as text.
 
-    `args` is a list; no shell is involved. Not the same as
-    `runcmd.run_command`, which returns the process.
+    Built on `runcmd.run_command`, which logs the arguments and reports a
+    missing program on stderr instead of raising.
     """
-    debug(" ".join(shlex.quote(a) for a in args))
+    p = run_command(args)
     try:
-        p = Popen(args, stdout=PIPE, stderr=PIPE)
         p.wait(timeout)
-        return p.stdout.read().decode("utf-8"), p.stderr.read().decode("utf-8")
-    except FileNotFoundError as e:
-        return "", f"Command not found: {e}"
     except TimeoutExpired:
         p.kill()
         return "", "Command timed out"
-    except Exception as e:
-        return "", f"Error: {e}"
+    return (p.stdout.read().decode("utf-8", errors="replace"),
+            p.stderr.read().decode("utf-8", errors="replace"))
 
 
 def thiscli(ser):
@@ -141,8 +136,6 @@ def take_screenshot(ser, fname=None):
     """
     Take a screenshot and output the iamge
     """
-    # if not is_screen_on(ser):
-    #     keycode(ser, 'power'); keycode(ser, 'menu') # Wakes the screen up
     if not fname:
         fname = "tmp_screencap.png"
 
@@ -174,7 +167,6 @@ def wait(t):
     time.sleep(t)
 
 def add_image(img, nocache=False):
-    #rand = random.randint(0, 10000)
     return (
         "<img height='400px' src='"
         + url_for("static", filename=img)
@@ -189,18 +181,12 @@ def do_privacy_check(ser, command, context):
             ser,
             "com.google.android.gms/com.google.android.gms.app.settings.GoogleSettingsLink",
         )
-        # wait(2)
-        # keycode(ser, 'home')
-        # take_screenshot(ser, 'account.png')
         return (
             "Click on the <code>Google Account</code> on the phone, and check the "
             "<em>account email address</em> at the top."
         )
     elif command == "backup":  # 2. Backup & reset
         open_activity(ser, r"com.android.settings/.Settings\$PrivacySettingsActivity")
-        # wait(2)
-        # keycode(ser, 'home')
-        # take_screenshot(ser, 'account.png')
         return (
             "If backup is <b>on</b>, then check the email address where <code>Backup "
             "account</code> is registered to."
@@ -247,8 +233,4 @@ def do_privacy_check(ser, command, context):
 
 
 if __name__ == "__main__":
-    # ser = "ZY224F8TKG"
-    # print(get_screen_res(ser)
-    # print(is_screen_on(ser))
-    # do_privacy_check(ser, 'account')
     take_screenshot(ser=None)

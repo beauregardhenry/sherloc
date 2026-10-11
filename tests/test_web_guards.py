@@ -24,7 +24,6 @@ def client(monkeypatch):
 
     monkeypatch.setattr(subprocess, "Popen", fake_spawn)
     monkeypatch.setattr(subprocess, "run", fake_spawn)
-    monkeypatch.setattr("phone_scanner.privacy_scan_android.Popen", fake_spawn)
 
     c = app.test_client()
     c.spawned = spawned

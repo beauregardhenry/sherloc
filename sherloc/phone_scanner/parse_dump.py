@@ -4,18 +4,15 @@ import os
 import re
 import sys
 from pathlib import Path
-from pprint import pprint
 from typing import Dict, List
 
 import pandas as pd
-from rsonlite import simpleparse
 
 import config
 from debuglog import debug, pdebug
 
 
 def count_lspaces(lspaces):
-    # print(">>", repr(l))
     return re.search(r"\S", lspaces).start()
 
 
@@ -43,8 +40,6 @@ class PhoneDump(object):
     def __init__(self, dev_type, fname):
         self.device_type = dev_type
         self.fname = fname
-        # df must be a dictionary
-        # self.df = self.load_file()
 
     def load_file(self):
         raise Exception("Not Implemented")
@@ -59,65 +54,6 @@ class AndroidDump(PhoneDump):
         super(AndroidDump, self).__init__("android", fname)
         self.df = self.load_file()
 
-    # def _extract_lines(self, service):
-    #     """Extract lines for te DUMP OF SERVICE <service> """
-    #     cmd = "sed -n -e '/DUMP OF SERVICE {}/,/DUMP OF SERVICE/p' '{fname}' "\
-    #           "| head -n -1"
-    #     s = "DUMP OF SERVICE {}".format(service)
-    #     started = False
-    #     with open(self.dumpf) as f:
-    #         for l in f:
-    #             if started:
-    #                 if "DUMP OF SERVICE" in l:
-    #                     break
-    #                 else:
-    #                     yield l
-    #             elif s in l:
-    #                 started = True
-
-    @staticmethod
-    def custom_parse(service, lines):
-        if service == "appops":
-            return lines
-
-    @staticmethod
-    def new_parse_dump_file(self, fname):
-        """Not used working using simple parse to parse the files."""
-        if not Path(fname).exists():
-            debug("File: {!r} does not exists".format(fname))
-        data = open(fname)
-        d = {}
-        service = ""
-        join_lines = []
-        custom_parse_services = {"appops"}
-
-        def _parse(lines):
-            try:
-                if service in custom_parse_services:
-                    return AndroidDump.custom_parse(service, lines)
-                else:
-                    return simpleparse("\n".join(join_lines))
-            except Exception as ex:
-                debug(
-                    "Could not parse for {} service={}. Exception={}".format(
-                        fname, service, ex
-                    )
-                )
-                return lines
-
-        for i, l in enumerate(data):
-            if l.startswith("----"):
-                continue
-            if l.startswith("DUMP OF SERVICE"):
-                if service:
-                    d[service] = _parse(join_lines)
-                service = l.strip().rsplit(" ", 1)[1]
-                join_lines = []
-            else:
-                join_lines.append(l)
-        if len(join_lines) > 0 and len(d.get(service, [])) == 0:
-            d[service] = _parse(join_lines)
-        return d
 
     def _extract_info_lines(self, fp) -> list:
         lastpos = fp.tell()
@@ -148,9 +84,6 @@ class AndroidDump(PhoneDump):
                 continue
             line = line.replace("\t", " " * 5)
             t_spcnt = count_lspaces(line)
-            # print(t_spcnt, curr_spcnt, curr_lvl)
-            # if t_spcnt == 1:
-            #     print(repr(l))
             if t_spcnt >= 0 and t_spcnt >= curr_spcnt[-1] + 2:
                 curr_lvl += 1
                 curr_spcnt.append(t_spcnt)
@@ -159,9 +92,6 @@ class AndroidDump(PhoneDump):
                 curr_spcnt.pop()
             if curr_spcnt[-1] > 0:
                 curr_spcnt[-1] = t_spcnt
-            # assert (t_spcnt != 0) or (curr_lvl == 0), \
-            #         "t_spc: {} <--> curr_lvl: {}\n{}".format(t_spcnt, curr_lvl, l)
-            # print(lvls[:curr_lvl], curr_lvl, curr_spcnt)
             curr = get_d_at_level(res, lvls[:curr_lvl])
             k = line.strip().rstrip(":")
             lvls[curr_lvl] = k  # '{} --> {}'.format(curr_lvl, k)
@@ -171,12 +101,10 @@ class AndroidDump(PhoneDump):
     # @staticmethod
     def parse_dump_file(self, fname) -> dict:
         if not Path(fname).exists():
-            #print("File: {!r} does not exists".format(fname))
             raise FileNotFoundError(fname)
         fp = open(fname)
         d = {}
         service = ""
-        # curr_spcnt, curr_lvl = 0, 0
         while True:
             line = fp.readline().rstrip()
             if line.startswith("----"):
@@ -220,8 +148,7 @@ class AndroidDump(PhoneDump):
                 except Exception as ex:
                     debug("File ({!r}) could not be opened or parsed.".format(fname))
                     debug("Exception: {}".format(ex))
-                    raise (ex)
-                    return {}
+                    raise
         return d
 
     @staticmethod
@@ -262,11 +189,9 @@ class AndroidDump(PhoneDump):
 
     @staticmethod
     def get_battery_stat(d, uidu):
-        # Apparently this is where batterystats info is located:
-        #   'batterystats'
-        #       'Statistics since last charge'
-        #           'Estimated power use <something>'
-        #               'Uid {UIDU}: <something>'
+        # Battery use per app appears to sit in the batterystats section, under
+        # "Statistics since last charge", then "Estimated power use ...", then
+        # one "Uid <uid>: ..." line per app.
 
         # TODO: Fix this.
 
@@ -367,7 +292,7 @@ class AndroidDump(PhoneDump):
                 del relevant_package_info["userId"]
                 relevant_package_info["data_usage"] = self.get_data_usage(self.df, process_uid)
 
-            except KeyError as e:
+            except KeyError:
                 relevant_package_info["data_usage"] = "Unavailable"
 
             # Get the battery usage using the UID
@@ -386,15 +311,9 @@ class AndroidDump(PhoneDump):
                         uidu = uidu[0]
                 relevant_package_info["battery_usage"] = self.get_battery_stat(self.df, uidu)
 
-            except KeyError as e:
+            except KeyError:
                 relevant_package_info["battery_usage"] = "Unavailable"
 
-            # Get memory information - was commented out. 
-            # TODO: Look into this. Revive?
-            #memory_matches = [
-            #    item for item in list(self.df["meminfo"]["Total PSS by process"].keys())
-            #    if appid in item
-            #]
 
             return relevant_package_info
 
@@ -403,20 +322,7 @@ class AndroidDump(PhoneDump):
             return {}
 
 
-
 class IosDump(PhoneDump):
-    # COLS = ['ApplicationType', 'BuildMachineOSBuild', 'CFBundleDevelopmentRegion',
-    #    'CFBundleDisplayName', 'CFBundleExecutable', 'CFBundleIdentifier',
-    #    'CFBundleInfoDictionaryVersion', 'CFBundleName',
-    #    'CFBundleNumericVersion', 'CFBundlePackageType',
-    #    'CFBundleShortVersionString', 'CFBundleSupportedPlatforms',
-    #    'CFBundleVersion', 'DTCompiler', 'DTPlatformBuild', 'DTPlatformName',
-    #    'DTPlatformVersion', 'DTSDKBuild', 'DTSDKName', 'DTXcode',
-    #    'DTXcodeBuild', 'Entitlements', 'IsDemotedApp', 'IsUpgradeable',
-    #    'LSRequiresIPhoneOS', 'MinimumOSVersion', 'Path', 'SequenceNumber',
-    #    'UIDeviceFamily', 'UIRequiredDeviceCapabilities',
-    #    'UISupportedInterfaceOrientations']
-    # INDEX = 'CFBundleIdentifier'
     def __init__(self, fplist, finfo=None):
         self.device_type = "ios"
         self.fname = fplist
@@ -462,7 +368,6 @@ class IosDump(PhoneDump):
             }
 
     def load_file(self):
-        # d = pd.read_json(self.fname)[self.COLS].set_index(self.INDEX)
         try:
             apps_list = []
             with open(self.fname, "r") as app_data:
@@ -494,7 +399,6 @@ class IosDump(PhoneDump):
                     self.permissions_map[permission] = permission_human_readable
                     fh.write(json.dumps(self.permissions_map))
                 debug("Noted.")
-            # print('\t'+msg+": "+str(PERMISSIONS_MAP[permission])+"\tReason: "+app.get(permission,'system app'))
 
     def get_permissions(self, app: str) -> list:
         """
@@ -549,11 +453,6 @@ class IosDump(PhoneDump):
                 )
             )
         )
-        # pii = retrieve(
-        #     app,
-        #     ["Entitlements", "com.apple.private.MobileGestalt.AllowedProtectedKeys"],
-        # )
-        # print("\tPII: "+str(pii))
         return all_permissions
 
     def device_info(self):
@@ -580,13 +479,11 @@ class IosDump(PhoneDump):
         'jailbroken': tuple (whether or not phone is suspected to be jailbroken, rationale)
         'phone_kind': tuple (make, OS version)
         """
-        # d = self.df
         res = {
             "title": "",
             "jailbroken": "",  # TODO: These are never set: phone_kind and jailbroken
             "phone_kind": "",
         }
-        # app = self.df.iloc[appidx,:].dropna()
         app = self.df[self.df["CFBundleIdentifier"] == appid].squeeze().dropna()
         party = app.ApplicationType.lower()
         permissions = []
@@ -623,22 +520,8 @@ class IosDump(PhoneDump):
 
         return res
 
-    # TODO: The following function is incorrect or incomplete. Commenting out for now.
-    # def all(self):
-    #     for appidx in range(self.df.shape[0]):
-    #         app = self.df.iloc[appidx,:].dropna()
-    #         party = app.ApplicationType.lower()
-    #         if party in ['system','user']:
-    #             print(app['CFBundleName'],"("+app['CFBundleIdentifier']+") is a {} app and has permissions:"\
-    #                     .format(party))
-
-    #             permissions = get_permissions(app)
-    #             for permission in permissions:
-    #                 print("\t"+str(permission[0])+"\tReason: "+str(permission[1]))
-    #             print("")
 
     def system_apps(self):
-        # return self.df.query('ApplicationType=="System"')['CFBundleIdentifier'].tolist()
         return self.df.query('ApplicationType=="System"')["CFBundleIdentifier"]
 
     def installed_apps_titles(self) -> pd.DataFrame:
@@ -648,7 +531,6 @@ class IosDump(PhoneDump):
             ).set_index("appId")
 
     def installed_apps(self):
-        # return self.df.index
         if self.df is None:
             return []
         debug("parse_dump (installed_apps): >>", self.df.columns, len(self.df))
@@ -657,7 +539,6 @@ class IosDump(PhoneDump):
 
 if __name__ == "__main__":
     fname = sys.argv[1]
-    # data = [l.strip() for l in open(fname)]
     ddump: PhoneDump
     if sys.argv[2] == "android":
         ddump = AndroidDump(fname)

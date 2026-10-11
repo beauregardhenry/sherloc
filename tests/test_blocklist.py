@@ -1,7 +1,6 @@
 import re
 from blocklist import _regex_blocklist, app_title_and_flag
 import pandas as pd
-import sys
 
 test_list = [
     ("com.spyware.app", True),
@@ -14,8 +13,6 @@ test_list = [
     ("com.AntiTrackware.com", False),
     ("com.spyware-removal.com", False),
 ]
-# regex_ = r'(?i)(?!.*anti)[\-\s]*(spy|track|keylog)'
-# regex_ = r'(?i)((?!.*anti)[\-\s]*.*(spy|track)).*'
 regex_pos = r"(?i)(spy|track|keylog)"
 regex_neg = r"(?i)(anti.*(spy|track|keylog)|(spy|track|keylog).*remov[ea])"
 

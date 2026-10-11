@@ -269,7 +269,6 @@ class ScanData(Dictable):
         risks = list()
         self.concerning_apps = list()
 
-        # Jailbreaking
         if self.is_rooted:
             new_risk = Risk(
                 risk="Evidence of jailbreaking",

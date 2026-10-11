@@ -14,7 +14,6 @@ import ast
 import json
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent / "sherloc"
 LISTING = Path(__file__).with_name("data_write_sites.json")

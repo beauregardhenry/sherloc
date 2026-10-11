@@ -37,7 +37,6 @@ from flask import (
     request,
     send_file,
     send_from_directory,
-    session,
     url_for,
 )
 from flask_bootstrap import Bootstrap

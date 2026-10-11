@@ -71,10 +71,6 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
             # clean up the submitted data
             clean_data = remove_unwanted_data(form.data)
 
-            # Ensure any previous screenshots have been removed before scan
-            # print("Removing files:")
-            # os.system("ls webstatic/images/screenshots/")
-            # os.system("rm webstatic/images/screenshots/*")
 
             # Do the above at end of consult instead
 
@@ -130,7 +126,6 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
     return redirect(url_for('evidence_scan_start'))
 
 
-
 @app.route("/evidence/scan/select/<string:ser>", methods={'GET', 'POST'}, defaults={'show_rescan': False})
 @app.route("/evidence/scan/select/<string:ser>/show-rescan-<show_rescan>", methods={'GET', 'POST'})
 def evidence_scan_select(ser, show_rescan):
@@ -148,7 +143,6 @@ def evidence_scan_select(ser, show_rescan):
 
     # IF IT'S A GET:
     if request.method == 'GET':
-        #form.process(data=current_scan.to_dict())
 
         context = dict(
             task = "evidence-scan",
@@ -176,8 +170,6 @@ def evidence_scan_select(ser, show_rescan):
         pdebug(form.data)
         if form.is_submitted() and form.validate():
 
-            # clean up the submitted data
-            #clean_data = remove_unwanted_data(form.data)
 
             # get selected apps from the form data
             to_investigate_ids = [app["appId"] for app in form.data['apps'] if app['investigate']]
@@ -205,7 +197,6 @@ def evidence_scan_select(ser, show_rescan):
                     a.investigate = False
 
             # update the current scan data and save it as the most recent scan
-            # current_scan.selected_apps = [AppInfo(**app) for app in selected_apps]
             all_scan_data = update_scan_by_ser(current_scan, all_scan_data)
 
             # save this updated data

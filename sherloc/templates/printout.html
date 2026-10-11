@@ -615,30 +615,6 @@
                     {% endfor %}
                 </td>
             </tr>
-            {#
-            <tr>
-                <th>
-                    <h3>Permissions Used {% if not scan.manual %}<span class="tag">&#9881; System-captured</span>{%endif%}</h3>
-                    {% if app.permission_info.permissions | length > 0 %}
-                    <ul class="permissions-used">
-                        {% for p in app.permission_info.permissions %}
-                        <li>{{p[0]}} ({{p[1]}})</li>
-                        {% if loop.index % 5 == 0 %}
-                    </ul>
-                </th>
-            </tr>
-            <tr>
-                <th>
-                    <ul class="permissions-used">
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <p>None.</p>
-                    {% endif %}
-                </th>
-            </tr>
-            #}
             <tr>
                 <th>
                     <h3>Installation Questionnaire <span class="tag">&#9999;&#65039; Human-entered</span></h3>

@@ -25,6 +25,11 @@ Security in case of vulnerabilities.
 - Type annotations on `debuglog`, `inputcheck`, `clientdata` and `consultstore`, checked by mypy in the test suite (`tests/test_typed_modules.py`)
 
 ### Removed
+- Dead and duplicate code. On main, ruff found 334 dead-code items: 75 unused imports, 20 unused variables and 236 lines of commented-out code. The lint ratchet now fails on any new one. Also removed:
+  - Python: functions, classes and form classes nothing called; the always-empty `config.error()` plumbing; unreachable code (the disabled iOS jailbreak check is in git history, see the comment in `IosScan.isrooted`); a second copy of `run_capture` logic, now built on `runcmd.run_command`
+  - Routes nothing in the app links to or calls: `/view_results` (a work-in-progress stub that redirected home), `/error`, `/saveapps/<scanid>` and `/savescan/<scanid>` (their only caller was a submit button that was commented out)
+  - Templates never rendered (`evidence.html`, `summary.html`, `evidence-setup.html`); script tags outside any block in templates that extend a base, which Jinja never output, including jQuery 1.6.2 over plain HTTP; commented-out markup sent to the browser; uncalled JavaScript; an empty progress bar that nothing moved; a duplicate `<body>` tag
+  - Files: `tests/config.py` (a stale copy of the config module), a byte-for-byte duplicate test file, a commented-out Flask tutorial test, broken helper scripts in `tests/` and `scripts/`, and unreferenced data in `static_data/`, including a 148 KB `ios-deploy` binary
 - The `dataset` package. Only `data_process.py` used it, to open a database connection
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 

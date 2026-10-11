@@ -1,17 +1,7 @@
 """Base classes and small shared types for the consultation data."""
-from enum import Enum
 from pathlib import Path
 import json
 import subprocess
-
-
-class Pages(Enum):
-    START = 1
-    SCAN = 2
-    SPYWARE = 3
-    DUALUSE = 4
-    ACCOUNTS_USED = 5
-    ACCOUNT_COMP = 6
 
 
 # Helps create JSON encoding from nested classes
@@ -60,13 +50,6 @@ class RiskReport(Dictable):
 
 class Notes(DictInitClass):
     attrs = ['client_notes', 'consultant_notes']
-
-
-class RiskFactor():
-
-    def __init__(self, risk, description):
-        self.risk = risk
-        self.description = description
 
 
 class ScreenshotInfo(Dictable):

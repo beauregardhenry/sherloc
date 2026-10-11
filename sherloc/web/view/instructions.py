@@ -1,5 +1,5 @@
 import config
-from flask import render_template, request, session
+from flask import render_template
 from web import app
 
 

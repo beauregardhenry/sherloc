@@ -1,10 +1,8 @@
 """Choice lists and defaults shared by the consultation forms and data model."""
 import config
 
-# Both are under config.DATA_ROOT, with the rest of the client data.
+# Under config.DATA_ROOT, with the rest of the client data.
 TMP_CONSULT_DATA_DIR = config.CONSULT_DATA_DIR
-SCREENSHOT_FOLDER = config.SCREENSHOT_DIR / "misc"
-CONTEXT_PKL_FNAME = "context.pkl"
 
 YES_NO_DEFAULT = ""
 PERSON_DEFAULT = ""
@@ -22,6 +20,4 @@ PWD_CHOICES = [('online', 'Online notes'), ('paper', 'Paper notes'), ('pwd_manag
 
 LEGAL_CHOICES = [('ro', 'Restraining order'), ('div', 'Divorce or other family court'), ('cl', 'Criminal case'), ('other_legal', 'Other')]
 DEVICE_TYPE_CHOICES = EMPTY_CHOICE + [('android', 'Android'), ('ios', 'iOS')]
-#two_factor_choices = [empty_choice] + [(x.lower(), x) for x in second_factors]
 TWO_FACTOR_CHOICES = [(x.lower().replace(" ", "_"), x) for x in SECOND_FACTORS]
-ACCOUNT_CHOICES = [(x, x) for x in ACCOUNTS]

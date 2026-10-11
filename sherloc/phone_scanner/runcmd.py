@@ -1,26 +1,8 @@
-# import config
 import io
 import re
 import shlex
 import subprocess
 from debuglog import debug
-
-"""
-def add_to_error(*args):
-    global ERROR_LOG
-    m = '\n'.join(str(e) for e in args)
-    debug(m)
-    ERROR_LOG.append(m)
-
-def error():
-    global ERROR_LOG
-    e = ''
-    if len(ERROR_LOG)>0:
-        e, ERROR_LOG = ERROR_LOG[0], ERROR_LOG[1:]
-
-        debug("ERROR: {}".format(e))
-    return e.replace("\n", "<br/>")
-"""
 
 
 # TODO: @sam the catch_err should only catch the os level errors, not
@@ -53,7 +35,6 @@ def catch_err(
                 e = 'Error: Please set "USB For File Transfers" mode on your Android device.'
                 debug(e)
                 return ""
-            # config.add_to_error(m)
             return m
         else:
             if large_output:
@@ -69,7 +50,6 @@ def catch_err(
                 or "insufficient permissions for device: user in plugdev group; are your udev rules wrong?"
                 in s
             ):
-                # config.add_to_error(s)
                 return ""
             if (
                 "insufficient permissions for device: user in plugdev group; are your udev rules wrong?"
@@ -81,7 +61,6 @@ def catch_err(
                 debug(s)
                 return s
     except Exception as ex:
-        # config.add_to_error(ex)
         debug("Exception>>>", ex)
         return ""
 

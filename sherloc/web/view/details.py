@@ -21,11 +21,6 @@ def app_details(device):
     d, info = sc.app_details(ser, appid)
     d["appId"] = appid
 
-    # detect apple and put the key into d.permissions
-    # if "Ios" in str(type(sc)):
-    #    print("apple iphone")
-    # else:
-    #    print(type(sc))
 
     debug(d.keys())
     return render_template(

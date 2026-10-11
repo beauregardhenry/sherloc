@@ -12,8 +12,8 @@ import config
 import evidence_model
 
 LAYOUT = {
-    "evidence_base": ["Pages", "EvidenceDataEncoder", "Dictable", "DictInitClass",
-                      "Risk", "RiskReport", "RiskFactor", "ScreenshotInfo", "Notes"],
+    "evidence_base": ["EvidenceDataEncoder", "Dictable", "DictInitClass",
+                      "Risk", "RiskReport", "ScreenshotInfo", "Notes"],
     "evidence_accounts": ["AccountSection", "SuspiciousLogins", "PasswordCheck",
                           "RecoverySettings", "TwoFactorSettings", "SecurityQuestions",
                           "AccountInvestigation", "get_all_screenshot_files"],

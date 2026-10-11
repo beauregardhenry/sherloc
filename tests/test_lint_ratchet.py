@@ -9,7 +9,9 @@ Update the baseline after fixing findings with:
     python tests/test_lint_ratchet.py --update
 
 Rules: F821 undefined name, W605 invalid escape sequence, B006 mutable default
-argument, E722 bare except, S602 subprocess with shell=True, S307 eval.
+argument, E722 bare except, S602 subprocess with shell=True, S307 eval; and
+dead code: F401 unused import, F841 unused variable, F811 redefined unused
+name, ERA001 commented-out code. Deleted code stays in git history.
 """
 
 import json
@@ -23,7 +25,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = Path(__file__).with_name("lint_baseline.json")
-RULES = "F821,W605,B006,E722,S602,S307"
+RULES = "F821,W605,B006,E722,S602,S307,F401,F841,F811,ERA001"
 TARGETS = ["sherloc", "tests"]
 
 

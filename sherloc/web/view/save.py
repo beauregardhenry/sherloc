@@ -1,39 +1,14 @@
-from flask import request, session
+from flask import request
 import config
 from inputcheck import validate_appid, validate_serial
 from web import app
 from phone_scanner.db import (
     get_serial_from_db,
-    save_note,
     update_appinfo,
-    update_mul_appinfo,
-    create_report,
     get_device_from_db,
 )
 from web.view.index import get_device
 from debuglog import debug, warn
-
-
-@app.route("/saveapps/<scanid>", methods=["POST"])
-def record_applist(scanid):
-    device = get_device_from_db(scanid)
-    sc = get_device(device)
-    d = request.form
-    update_mul_appinfo([(remark, scanid, appid) for appid, remark in d.items()])
-    return "Success", 200
-
-
-@app.route("/savescan/<scanid>", methods=["POST"])
-def record_scanres(scanid):
-    device = get_device_from_db(scanid)
-    sc = get_device(device)
-    note = request.form.get("notes")
-    r = save_note(scanid, note)
-    create_report(session["clientid"])
-    # create_report(request.form.get('clientid'))
-    return is_success(
-        r, "Success!", "Could not save the form. See logs in the terminal."
-    )
 
 
 @app.route("/delete/app/<scanid>", methods=["POST"])
@@ -63,7 +38,7 @@ def delete_app(scanid):
         debug("Update appinfo failed! r={}".format(r))
     else:
         warn("Uninstall failed.")
-    return is_success(r, "Success!", config.error())
+    return is_success(r, "Success!")
 
 
 def is_success(b, msg_succ="", msg_err=""):

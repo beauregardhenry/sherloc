@@ -21,10 +21,6 @@ def test_match_keys():
         "a": {"bc1": ["cd11"], "bc2": []},
     }
 
-    # assert pdump.match_keys(D, '^a$//^b.*$//^.*d11$', only_last=True) == {
-    #     'a': {'bc2': []},
-    # }
-
 
 def test_prune_leaves():
     keys = pdump.match_keys(D, "^a$//^b.*$//^.*d11$")

@@ -13,7 +13,6 @@ import pytest
 import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
 import evidence_collection as ec
-from phone_scanner import db as phone_db
 from phone_scanner import parse_dump, privacy_scan_android as psa
 from web import app
 
@@ -68,12 +67,7 @@ def _fill(tmp_path, dirs, db, fake_adb):
     fname = config.create_screenshot_fname("root", MARK)
     with app.test_request_context():
         psa.take_screenshot(SERIAL, fname=fname)
-    # a CSV report written from the database rows
-    with app.app_context():
-        phone_db.create_report("c")
     return keep_open
-
-
 
 
 def _leftovers(root):
