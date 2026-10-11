@@ -12,7 +12,6 @@ import pytest
 
 import config
 import evidence_collection as ec
-import web  # noqa: F401  (import order: web first avoids a circular import)
 from phone_scanner import AndroidScan, IosScan, parse_dump
 from phone_scanner import android_permissions as perms
 from web import app

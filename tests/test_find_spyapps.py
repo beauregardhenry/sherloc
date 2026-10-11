@@ -181,7 +181,7 @@ def test_ios_titles_come_from_the_dump(monkeypatch, tmp_path, no_app_info):
     monkeypatch.setattr(sc, "get_apps", lambda serialno, from_dump=False: [REGEX_ONLY, "com.apple.mobilecal"])
     monkeypatch.setattr(sc, "get_system_apps", lambda serialno, from_dump=False: ["com.apple.mobilecal"])
     titles = pd.DataFrame({"title": ["KeyLog", "MobileCal"]}, index=pd.Index([REGEX_ONLY, "com.apple.mobilecal"], name="appId"))
-    monkeypatch.setattr(sc, "get_app_titles", lambda serialno: titles)
+    monkeypatch.setattr(sc, "app_titles", lambda serialno, apps: titles)
     r = sc.find_spyapps(SERIAL)
     assert r.loc[REGEX_ONLY, "title"] == "KeyLog"
     assert r.loc["com.apple.mobilecal", "flags"] == ["system-app"]
@@ -366,4 +366,5 @@ def test_the_ios_dump_is_found_by_the_pseudonymised_serial(no_app_info, tmp_path
 def test_the_android_dump_is_found_by_the_pseudonymised_serial(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DUMP_DIR", tmp_path)
     assert AndroidScan().dump_path(SERIAL) == str(tmp_path / f"{config.hmac_serial(SERIAL)}_android.json")
+
 

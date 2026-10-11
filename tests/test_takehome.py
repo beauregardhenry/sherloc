@@ -18,7 +18,7 @@ import pytest
 import config
 import evidence_collection as ec
 import takehome
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 from tests.test_printout import _context
 
 SERIAL = "SERIAL-ZY224F8TKG"

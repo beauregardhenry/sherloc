@@ -13,7 +13,7 @@ import pytest
 
 import config
 import evidence_collection as ec
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 from phone_scanner import db as phone_db
 
 N = ec.ConsultDataTypes

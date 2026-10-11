@@ -8,7 +8,7 @@ import pytest
 
 import config
 import scanrecord
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 
 
 def _record(**kw):

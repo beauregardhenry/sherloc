@@ -3,7 +3,7 @@
 import pytest
 
 import config
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 from phone_scanner import privacy_scan_android as psa
 
 SERIAL = "R58M123ABCD"

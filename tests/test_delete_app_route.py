@@ -3,7 +3,6 @@
 import pytest
 
 import config
-import web  # noqa: F401  (import order: web first avoids a circular import)
 from web import app
 
 REAL = "ZY224F8TKG"

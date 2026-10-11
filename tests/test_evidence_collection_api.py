@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 import evidence_collection as ec
-import web  # noqa: F401  (import order: web first avoids a circular import)
 
 SNAPSHOT = Path(__file__).with_name("evidence_collection_api.txt")
 

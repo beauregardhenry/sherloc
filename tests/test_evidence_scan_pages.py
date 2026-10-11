@@ -235,3 +235,53 @@ def test_manual_apps_keep_their_own_investigation_answers(client):
     (scan,) = _scans()
     notes = [a.notes.client_notes for a in scan.selected_apps]
     assert notes == ["first app", "second app"]
+
+
+def test_blank_manual_app_rows_are_skipped(client):
+    _manual(client, ["Hidden Tracker", "  "])
+    (scan,) = _scans()
+    assert [a.title for a in scan.selected_apps] == ["Hidden Tracker"]
+
+
+def test_a_given_serial_is_kept(client):
+    r = _manual(client, ["Hidden Tracker"], serial="R58M999")
+    assert r.headers["Location"].endswith("/evidence/scan/investigate/R58M999")
+
+
+def test_a_manual_device_needs_a_nickname(client):
+    r = client.post("/evidence/scan/manualadd/", data={"device_nickname": "", "submit": "y"})
+    assert r.status_code in (302, 303)
+    assert _scans() == []
+
+
+def test_add_line_shows_one_more_row_and_saves_nothing(client):
+    r = client.post("/evidence/scan/manualadd/", data={
+        "device_nickname": "old phone", "apps-0-app_name": "Hidden Tracker", "addline": "y"})
+    page = r.get_data(as_text=True)
+    assert 'name="apps-1-app_name"' in page
+    assert _scans() == []
+
+
+def test_a_saved_manual_device_opens_with_its_answers(client):
+    client.post("/evidence/scan/manualadd/", data={
+        "device_nickname": "old phone", "device_model": "Galaxy S9", "submit": "y",
+        "apps-0-app_name": "Hidden Tracker", "apps-0-spyware": "y",
+        "apps-1-app_name": "Family Locator", "apps-1-dualuse": "y",
+    })
+    page = client.get("/evidence/scan/manualadd/MANADD-old-phone").get_data(as_text=True)
+    assert 'value="Galaxy S9"' in page
+    assert 'value="Family Locator"' in page
+    assert 'checked id="apps-0-spyware"' in page
+    # The dual-use box came back unticked, so saving again dropped the flag.
+    assert 'checked id="apps-1-dualuse"' in page
+
+
+def test_saving_a_manual_device_again_replaces_it(client):
+    _manual(client, ["Hidden Tracker"])
+    _manual(client, ["Hidden Tracker", "Other Spy"])
+    (scan,) = _scans()
+    assert len(scan.selected_apps) == 2
+
+
+def test_an_unknown_manual_device_is_not_found(client):
+    assert client.get("/evidence/scan/manualadd/NOPE").status_code == 404
