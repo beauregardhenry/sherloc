@@ -17,19 +17,6 @@ def adb(fake_bin, monkeypatch):
     return tool
 
 
-def test_screen_resolution_is_read_from_dumpsys(adb):
-    adb.respond([
-        {"match": "dumpsys window", "stdout": "  mUnrestrictedScreen=(0,0) 1080x2400\n  other line\n"}
-    ])
-    assert psa.get_screen_res(SERIAL) == (1080, 2400)
-    assert ["-s", SERIAL, "shell", "dumpsys", "window"] in adb.calls
-
-
-def test_screen_resolution_is_unknown_when_dumpsys_has_no_match(adb):
-    adb.respond([{"match": "dumpsys window", "stdout": "nothing useful\n"}])
-    assert psa.get_screen_res(SERIAL) == (-1, -1)
-
-
 def test_open_activity_succeeds_on_clean_output(adb):
     adb.respond([{"match": "am start", "stdout": "Starting: Intent { cmp=x/.Y }\n"}])
     assert psa.open_activity(SERIAL, "com.android.settings/.Settings") is True
@@ -59,32 +46,19 @@ def test_open_activity_rejects_an_unsafe_name(adb):
     assert adb.calls == []
 
 
-def test_tap_converts_percent_to_pixels(adb):
-    adb.respond([{"match": "dumpsys window", "stdout": "mUnrestrictedScreen=(0,0) 1000x2000\n"}])
-    psa.tap(SERIAL, 50, 25)
-    assert ["-s", SERIAL, "shell", "input", "tap", "500", "500"] in adb.calls
-
-
 def test_keycode_sends_the_key_event(adb):
     psa.keycode(SERIAL, "home")
     assert ["-s", SERIAL, "shell", "input", "keyevent", "3"] in adb.calls
 
 
-@pytest.mark.parametrize("dump,expected", [("  mInteractive=true\n", True), ("  mInteractive=false\n", False), ("", False)])
-def test_screen_state_is_read_from_the_input_method_dump(adb, dump, expected):
-    adb.respond([{"match": "dumpsys input_method", "stdout": dump}])
-    assert psa.is_screen_on(SERIAL) is expected
-
-
 def test_no_serial_means_the_default_device(adb):
-    adb.respond([{"match": "dumpsys window", "stdout": "mUnrestrictedScreen=(0,0) 10x20\n"}])
-    assert psa.get_screen_res(None) == (10, 20)
-    assert ["shell", "dumpsys", "window"] in adb.calls
+    psa.keycode(None, "home")
+    assert ["shell", "input", "keyevent", "3"] in adb.calls
 
 
 def test_an_unsafe_serial_is_refused_before_any_command(adb):
     with pytest.raises(ValueError):
-        psa.get_screen_res("x; reboot")
+        psa.keycode("x; reboot", "home")
     assert adb.calls == []
 
 

@@ -12,7 +12,7 @@ from typing import Any, Optional
 import config
 from debuglog import debug, warn
 from inputcheck import validate_serial
-from phone_scanner import AndroidScan, IosScan, TestScan, db
+from phone_scanner import AndroidScan, IosScan, db
 from scanrecord import build_scan_record
 
 
@@ -22,8 +22,6 @@ def get_device(k: str) -> Any:
         return AndroidScan()
     if k == "ios":
         return IosScan()
-    if k == "test":
-        return TestScan()
     return None
 
 

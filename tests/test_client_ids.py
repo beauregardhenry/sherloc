@@ -19,7 +19,7 @@ from phone_scanner import db as phone_db
 @pytest.fixture
 def app_db():
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     with web.app.app_context():
         yield
 

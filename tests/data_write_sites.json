@@ -17,7 +17,6 @@
   "indicators.py::update_list::open": "app-data",
   "indicators.py::write_source_file::open": "app-data",
   "phone_scanner/__init__.py::read_app_info::connect": "app-data",
-  "phone_scanner/android_permissions.py::permissions_map::to_csv": "app-data",
   "phone_scanner/data_process.py::create_app_flags_file::to_csv": "tool",
   "phone_scanner/data_process.py::create_app_info_dict::connect": "tool",
   "phone_scanner/data_process.py::join_csv_files::to_csv": "tool",

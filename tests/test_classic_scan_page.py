@@ -41,7 +41,7 @@ class FakeScanner:
 @pytest.fixture
 def client(monkeypatch):
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     scanner = FakeScanner()
     # web.view re-exports the view function `scan`, which hides the module of that name.
     scan_module = sys.modules["web.view.scan"]

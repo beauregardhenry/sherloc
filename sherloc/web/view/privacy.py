@@ -34,7 +34,7 @@ def privacy_scan(device, cmd, context, ser):
         return "Invalid request.", 400
     debug(ser)
     if device == "ios":
-        res = iosScreenshot(ser, context, nocache=True)
+        res = iosScreenshot(ser, context)
     else:
         res = do_privacy_check(ser, cmd, context)
     debug("Screenshot Taken")
@@ -55,7 +55,7 @@ def _read_rsd(lines):
     return address, port
 
 
-def iosScreenshot(ser, context, nocache = False):
+def iosScreenshot(ser, context):
     fname = config.create_screenshot_fname(context, ser)
     tunnel = subprocess.Popen(["pymobiledevice3", "lockdown", "start-tunnel"], stdout=subprocess.PIPE)
     try:

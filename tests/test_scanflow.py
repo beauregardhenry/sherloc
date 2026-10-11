@@ -43,7 +43,7 @@ class FakeScanner:
 @pytest.fixture
 def app_db():
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     with web.app.app_context():
         yield
 
@@ -156,3 +156,19 @@ def test_no_view_passes_the_unused_owner_choices():
 
     for name in ("scan", "privacy", "instructions", "details"):
         assert "DEVICE_PRIMARY_USER" not in inspect.getsource(sys.modules[f"web.view.{name}"])
+
+
+def test_only_android_and_ios_have_a_scanner():
+    # "test" gave TestScan, whose get_apps() did not accept from_dump, so
+    # /scan?device=test crashed with a TypeError.
+    assert scanflow.get_device("test") is None
+    assert scanflow.get_device("android").device_type == "android"
+    assert scanflow.get_device("ios").device_type == "ios"
+
+
+def test_an_unknown_device_type_asks_for_a_device(app_db):
+    c = web.app.test_client()
+    with c.session_transaction() as s:
+        s["clientid"] = "amber-otter-canyon-teapot"
+    r = c.get("/scan?device=test&device_owner=me")
+    assert "Please choose one device to scan." in r.get_data(as_text=True)

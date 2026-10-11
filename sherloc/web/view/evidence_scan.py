@@ -30,9 +30,6 @@ from evidence_collection import (
 from web import app
 from web.view.index import current_client_id
 
-USE_PICKLE_FOR_SUMMARY = False
-USE_FAKE_DATA = True
-
 
 @app.route("/evidence/scan", methods={'GET', 'POST'},
            defaults={'device_type': '', 'device_nickname': '', 'force_rescan': False})

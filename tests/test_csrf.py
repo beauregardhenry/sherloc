@@ -36,7 +36,7 @@ def _url(rule):
 @pytest.fixture
 def csrf_on():
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=True)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     return web.app.test_client()
 
 

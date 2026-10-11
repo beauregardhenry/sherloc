@@ -49,9 +49,6 @@ from phone_scanner import AndroidScan, IosScan
 from takehome import create_takehome_pdf, neutral_filename
 from web import app
 
-USE_PICKLE_FOR_SUMMARY = False
-USE_FAKE_DATA = True
-
 
 @app.route("/evidence/home", methods={'GET', 'POST'})
 def evidence_home():

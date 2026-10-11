@@ -79,7 +79,6 @@ IOS_DUMPFILES = {
     "Info": "ios_info.xml",
 }
 
-TEST_APP_LIST = "static_data/android.test.apps_list"
 
 TITLE = {"title": "Sherloc{}".format(" (test)" if TEST else "")}
 
@@ -150,7 +149,6 @@ APPROVED_INSTALLERS = {"com.android.vending",
                        "com.sec.android.preloadinstaller", 
                        "com.sec.android.app.samsungapps"}
 
-REPORT_PATH = REPORT_DIR
 PII_KEY_PATH = STATIC_DATA / "pii.key"
 # This installation's own client-ID words (see clientwords.py).
 CLIENT_WORDS_PATH = STATIC_DATA / "client-words.key"

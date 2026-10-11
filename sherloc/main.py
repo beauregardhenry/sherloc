@@ -18,7 +18,7 @@ apply_cli_mode(sys.argv, os.environ)
 
 import config  # noqa: E402
 from phone_scanner import db
-from web import app, sa
+from web import app
 
 PORT = 6200 if not (config.TEST or config.DEBUG) else 6202
 HOST = config.HOST
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     print(f"TEST={config.TEST}")
     print(f"Client data folder: {config.DATA_ROOT}")
-    db.init_db(app, sa, force=config.TEST)
+    db.init_db(app)
     config.setup_logger()
     Timer(1, open_browser).start()
     app.run(host=HOST, port=PORT, debug=config.DEBUG, use_reloader=config.DEBUG)

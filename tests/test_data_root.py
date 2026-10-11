@@ -23,7 +23,6 @@ print(json.dumps({
     "dirs": [str(d) for d in config.client_data_dirs()],
     "db": config.SQL_DB_PATH,
     "log": str(config.LOG_DIR),
-    "report_path": str(config.REPORT_PATH),
     "consult_store_dir": str(evidence_choices.TMP_CONSULT_DATA_DIR),
 }))
 """
@@ -49,7 +48,7 @@ def test_every_client_data_location_is_under_the_setting(tmp_path):
     root = tmp_path / "ramdisk"
     got = _probe({"SHERLOC_DATA_DIR": str(root)})
     assert os.path.realpath(got["root"]) == os.path.realpath(root)
-    places = got["dirs"] + [got["db"], got["log"], got["report_path"],
+    places = got["dirs"] + [got["db"], got["log"],
                             got["consult_store_dir"]]
     assert all(_under(p, str(root)) for p in places), places
 

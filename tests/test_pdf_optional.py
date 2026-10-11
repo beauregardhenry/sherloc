@@ -44,7 +44,7 @@ def test_making_a_pdf_without_weasyprint_says_what_is_missing(no_weasyprint):
 @pytest.fixture
 def client(monkeypatch):
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     monkeypatch.setattr("web.view.evidence.load_report_client", lambda: "Client")
     monkeypatch.setattr("web.view.evidence._printout_context", lambda client: {"url_root": "http://localhost/"})
     return web.app.test_client()
