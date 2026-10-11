@@ -39,14 +39,12 @@ def test_app_title_and_flags():
             ]
         }
     )
-    ret = app_title_and_flag(d, ["core.framework", "com.android.system"])
-    assert len(ret) == len(ret.appId)
-    # assert ret.flags ==
-    ret.to_csv(
-        index=None
-    ) == """appId,title,flags
-LEM.TrackMe,TrackMe - GPS Tracker,"['dual-use', 'regex-spy']"
-com.android.system, System Service,"['spyware', 'co-occurrence', 'offstore-app']"
-com.spy2mobile.light, Data Backup,"['spyware', 'co-occurrence', 'regex-spy']"
-core.framework,mSpy,"['spyware', 'offstore-app', 'regex-spy']"
-"""
+    ret = app_title_and_flag(d, ["core.framework", "com.android.system"]).set_index("appId")
+    # This comparison had no `assert`, and the expected text had gone stale.
+    assert ret["flags"].to_dict() == {
+        "LEM.TrackMe": ["dual-use", "regex-spy"],
+        "com.android.system": ["spyware", "offstore-app"],
+        "com.spy2mobile.light": ["spyware", "regex-spy"],
+        "core.framework": ["spyware", "offstore-app", "regex-spy"],
+    }
+    assert ret.loc["com.spy2mobile.light", "title"] == "Data Backup"
