@@ -118,7 +118,7 @@ def test_the_evidence_scan_uses_the_shared_steps(app_db, shared_flow_fails, monk
     monkeypatch.setattr(ec, "get_scan_obj", lambda device, nickname: FakeScanner())
     monkeypatch.setattr(ec, "get_ser_from_scan_obj", lambda sc: SER)
     with pytest.raises(scanflow.ScanFailed, match="SHARED-FLOW-MARKER"):
-        ec.get_scan_data("android", "phone")
+        ec.get_scan_data("android", "phone", "amber-otter-canyon-teapot")
 
 
 class Devices:

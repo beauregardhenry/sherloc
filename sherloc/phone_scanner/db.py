@@ -1,5 +1,5 @@
-import re
 import sqlite3
+import clientwords
 import config
 from flask import g
 from datetime import datetime as dt
@@ -16,25 +16,16 @@ def today():
 
 
 def new_client_id():
-    """The next client ID for today: YYYYMMDD_NNN.
+    """A new client ID: four random words, not used by any intake form or scan."""
 
-    Counts today's IDs from intake forms and from scans, so a client who
-    was scanned without an intake form still uses up a number. It goes by the
-    date in the ID, not by timestamps, and skips IDs in any other format.
-    """
-    d = today()
-    rows = query_db(
-        "select clientid from clients_notes where clientid like ? "
-        "union select clientid from scan_res where clientid like ?",
-        args=(d + "%", d + "%"),
-    )
-    pattern = re.compile(re.escape(d) + r"_(\d{3,})")
-    numbers = [
-        int(m.group(1)) for r in rows or [] if (m := pattern.fullmatch(r["clientid"] or ""))
-    ]
-    cid = "{}_{:03d}".format(d, max(numbers, default=0) + 1)
-    debug("new_client_id >>>> {}".format(cid))
-    return cid
+    def taken(cid):
+        return bool(query_db(
+            "select 1 from clients_notes where clientid = ? "
+            "union select 1 from scan_res where clientid = ?",
+            args=(cid, cid),
+        ))
+
+    return clientwords.make_client_id(taken)
 
 
 def make_dicts(cursor, row):

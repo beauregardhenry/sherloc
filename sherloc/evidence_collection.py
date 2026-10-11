@@ -268,7 +268,7 @@ def get_serial(device, nickname):
     return ser
 
 
-def get_scan_data(device, device_owner):
+def get_scan_data(device, device_owner, clientid):
     """Scan the device for the evidence workflow. Raises `scanflow.ScanFailed`."""
     sc = get_scan_obj(device, device_owner)
     ser = get_ser_from_scan_obj(sc)
@@ -279,7 +279,7 @@ def get_scan_data(device, device_owner):
         device=device,
         ser=ser,
         device_owner=device_owner,
-        clientid="1",
+        clientid=clientid,
         include_raw_serial=True,
     )
     suspicious_apps, other_apps = split_suspicious(result.apps)

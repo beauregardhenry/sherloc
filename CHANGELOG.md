@@ -34,6 +34,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- Client IDs are four random words, such as `amber-otter-canyon-teapot`, drawn with `secrets` from a list of 2,951 everyday words (`clientwords.py`). The old IDs (`20261010_003`) showed the date and how many clients came before. The evidence workflow saved every scan under client ID `"1"`; it now uses the consultation's ID. "Delete client data" ends the consultation, so the next client gets a new ID
 - The classic scan page no longer deletes an iPhone's device-info dump (`ios_info.xml`) right after a scan. It now matches the evidence workflow: the file stays with the rest of the client data, which "Delete client data" removes together (and which stays in memory in RAM-only mode)
 - Both scan pages find the device and save the scan through one module, `scanflow.py` (issue #20). The evidence workflow's copy also built a page dictionary it never returned and had an iOS pairing branch that could not fail; both are gone. `config.DEVICE_PRIMARY_USER` was passed to four pages and read by none; it is removed
 - The colour of an app row on the scan page is chosen by a template filter (`flag_class`) in the web layer. `blocklist.assign_class` and the scanner's `class_` column are gone
