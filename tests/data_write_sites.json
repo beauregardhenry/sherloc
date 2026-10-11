@@ -1,5 +1,7 @@
 {
   "clientdata.py::_count_rows::connect": "app-data",
+  "clientwords.py::installation_words::fdopen": "app-data",
+  "clientwords.py::installation_words::mkdir": "app-data",
   "config.py::create_screenshot_fname::makedirs": "client-data",
   "config.py::ensure_dirs::mkdir": "app-data",
   "config.py::open_or_create_random_key::fdopen": "app-data",
