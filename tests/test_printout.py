@@ -12,7 +12,6 @@ import subprocess
 import pytest
 
 import evidence_collection as ec
-import web  # noqa: F401  (import order: web first avoids a circular import)
 
 try:
     import pdfrender

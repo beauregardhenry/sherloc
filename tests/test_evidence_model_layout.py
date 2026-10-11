@@ -9,7 +9,6 @@ import pytest
 
 import config
 import evidence_model
-import web  # noqa: F401  (import order: web first avoids a circular import)
 
 LAYOUT = {
     "evidence_base": ["EvidenceDataEncoder", "Dictable", "DictInitClass",

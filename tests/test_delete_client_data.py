@@ -7,7 +7,7 @@ import pytest
 
 import config
 import evidence_collection as ec
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 
 SCHEMA = Path(config.THIS_DIR) / "web" / "schema.sql"
 MARKERS = [b"MARKER-NOTE-7731", b"MARKER-SERIAL-7731", b"MARKER-REMARK-7731"]

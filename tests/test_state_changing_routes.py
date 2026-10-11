@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 from web import app
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "sherloc" / "templates"

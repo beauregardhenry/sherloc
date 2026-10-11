@@ -11,7 +11,7 @@ import pytest
 
 import config
 import indicators
-import web  # noqa: F401  (import order: web first avoids a circular import)
+import web
 
 IOC = [
     {"name": "Alpha", "names": ["Alpha Spy", "Alpha Tracker"], "packages": ["com.alpha.spy", "com.alpha.two"]},

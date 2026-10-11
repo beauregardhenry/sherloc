@@ -10,7 +10,6 @@ import pandas as pd
 import pytest
 
 import config
-import web  # noqa: F401  (import order: web first avoids a circular import)
 from phone_scanner import data_process
 
 

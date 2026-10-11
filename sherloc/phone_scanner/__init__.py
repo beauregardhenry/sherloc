@@ -41,6 +41,17 @@ def read_app_info(sql: str, params: tuple, columns: list) -> pd.DataFrame:
         con.close()
 
 
+def _ios_reason(reason: str) -> str:
+    """A developer's reason for a permission, or a placeholder for reasons
+    that are only a reference to text the dump does not include."""
+    low = reason.lower()
+    if "permission granted by system" in low:
+        return "[system permission]"
+    if "infoplist.strings" in low or "nslocationwheninuseusagedescriptionundefined" in low:
+        return "[description not available]"
+    return reason
+
+
 class AppScan(object):
     device_type = ""
 
@@ -70,119 +81,45 @@ class AppScan(object):
     def get_offstore_apps(self, serialno: str, from_dump: bool) -> list:
         return []
 
-    def get_app_titles(self, serialno):
-        return []
+    def app_titles(self, serialno, apps) -> pd.DataFrame:
+        """Titles for the installed apps, indexed by app id. None by default;
+        the blocklist titles are used then."""
+        return pd.DataFrame(columns=["title"], index=pd.Index([], name="appId"))
 
     def dump_path(self, serial, fkind="json"):
-        hmac_serial = config.hmac_serial(serial)
-        if self.device_type == "ios":
-            devicedumpsdir = os.path.join(
-                config.DUMP_DIR, "{}_{}".format(hmac_serial, "ios")
-            )
-            if fkind == "Jailbroken-FS":
-                return os.path.join(
-                    devicedumpsdir, config.IOS_DUMPFILES.get("Jailbroken-FS", "")
-                )
-            elif fkind == "Jailbroken-SSH":
-                return os.path.join(
-                    devicedumpsdir, config.IOS_DUMPFILES.get("Jailbroken-SSH", "")
-                )
-            elif fkind == "Device_Info":
-                return os.path.join(
-                    devicedumpsdir, config.IOS_DUMPFILES.get("Info", "")
-                )
-            elif fkind == "Apps":
-                return os.path.join(
-                    devicedumpsdir, config.IOS_DUMPFILES.get("Apps", "")
-                )
-            elif fkind == "Dir":
-                return devicedumpsdir
-            else:
-                # returns apps dumpfile if fkind isn't explicitly specified.
-                return os.path.join(
-                    devicedumpsdir, config.IOS_DUMPFILES.get("Apps", "")
-                )
-
+        """Where this phone's dump is kept, named by the pseudonymised serial."""
         return os.path.join(
-            config.DUMP_DIR, "{}_{}.{}".format(hmac_serial, self.device_type, fkind)
+            config.DUMP_DIR, "{}_{}.{}".format(config.hmac_serial(serial), self.device_type, fkind)
         )
 
+    def _dump(self, serialno) -> parse_dump.PhoneDump:
+        return parse_dump.AndroidDump(self.dump_path(serialno))
+
+    def _app_info(self, appid) -> dict:
+        """The app's row in app-info.db (Play Store data), or {}."""
+        d = read_app_info(
+            "select * from apps where appid=?",
+            (appid,),
+            ["appid", "title", "description", "permissions"],
+        )
+        d["permissions"] = d.get("permissions", pd.Series([])).fillna("").str.split(", ")
+        if "descriptionHTML" not in d:
+            d["descriptionHTML"] = d["description"]
+        return d.fillna("").to_dict(orient="index").get(0, {})
+
     def app_details(self, serialno, appid) -> tuple[dict, dict]:
+        """What the app details page shows: the app-info row and what the
+        phone's dump says about the app."""
         try:
-            # Read the database and get info about this app
-            # TODO: Stop using the database
-            d = read_app_info(
-                "select * from apps where appid=?",
-                (appid,),
-                ["appid", "title", "description", "permissions"],
-            )
-
-            # Ensure the permissions attribute is a list
-            if not isinstance(d.get("permissions", ""), list):
-                d["permissions"] = d.get("permissions", pd.Series([]))
-                d["permissions"] = d["permissions"].fillna("").str.split(", ")
-
-            # Update descriptionHTML
-            if "descriptionHTML" not in d:
-                d["descriptionHTML"] = d["description"]
-
-            # Parse the dump to get dump info (which includes..?)
-            dfname = self.dump_path(serialno)
-            if self.device_type == "ios":
-                ddump = self.parse_dump
-                if not ddump:
-                    ddump = parse_dump.IosDump(dfname)
-            else:
-                ddump = parse_dump.AndroidDump(dfname)
-            info = ddump.info(appid)
-
-            config.logging.info("BEGIN APP INFO")
-            config.logging.info("info={}".format(info))
-            config.logging.info("END APP INFO")
-
-            # For Android, combine permissions together
-            # We start with three types: runtime, declared, install
-            if self.device_type == "android":
-                # declared and install are regular
-                # runtime is nested under "User ...."
-                pass
-
-            # FIXME: sloppy iOS hack but should fix later, just add these to DF
-            # directly.
-            if self.device_type == "ios":
-                # TODO: add extra info about iOS? Like idevicediagnostics
-                # ioregentry AppleARMPMUCharger or IOPMPowerSource or
-                # AppleSmartBattery.
-                d["permissions"] = pd.Series(info.get("permissions", []), dtype=object)
-                d["title"] = pd.Series(info.get("title", ""))
-
-            d = d.fillna("").to_dict(orient="index").get(0, {}) # what does this do?
-
-            if self.device_type == "ios":
-                d["permissions"] = info.get("permissions", [])
-                d["title"] = info.get("title", "")
-
-                # TEMP FIX: mask InfoPlist.strings references
-                old_permissions = d.get("permissions", []) 
-                new_permissions = []
-
-                for perm, reason in old_permissions:
-                    if "permission granted by system" in reason.lower():
-                        reason = "[system permission]"
-                    elif "infoplist.strings" in reason.lower():
-                        reason = "[description not available]"
-                    elif "NSLocationWhenInUseUsageDescriptionUndefined".lower() in reason.lower():
-                        reason = "[description not available]"
-                    
-                    new_permissions.append((perm, reason))
-
-                d["permissions"] = new_permissions
-
-            return d, info
-        
+            d = self._app_info(appid)
+            info = self._dump(serialno).info(appid)
         except KeyError as ex:
             debug(">>> Exception:::", ex, file=sys.stderr)
             return dict(), dict()
+        config.logging.info("BEGIN APP INFO")
+        config.logging.info("info={}".format(info))
+        config.logging.info("END APP INFO")
+        return d, info
 
     def find_spyapps(self, serialno, from_dump=False):
         """Finds the apps in the phone and add flags to them based on @blocklist.py
@@ -201,16 +138,7 @@ class AppScan(object):
             system_apps=self.get_system_apps(serialno, from_dump=from_dump),
         )
         r["title"] = r.title.fillna("")
-        if self.device_type == "android":
-            td = read_app_info(
-                "select appid as appId, title from apps where appid in (?{})".format(
-                    ", ?" * (len(installed_apps) - 1)
-                ),
-                tuple(installed_apps),
-                ["appId", "title"],
-            ).set_index("appId")
-        elif self.device_type == "ios":
-            td = self.get_app_titles(serialno)
+        td = self.app_titles(serialno, installed_apps)
 
         r.set_index("appId", inplace=True)
         td = td.loc[:, ~td.columns.duplicated()]
@@ -413,6 +341,16 @@ class AndroidScan(AppScan):
         ok, _ = run_checked([self.cli, "-s", serial, "uninstall", appid])
         return ok
 
+    def app_titles(self, serialno, apps) -> pd.DataFrame:
+        """Play Store titles from app-info.db, when it is installed."""
+        return read_app_info(
+            "select appid as appId, title from apps where appid in ({})".format(
+                ", ".join("?" * len(apps))
+            ),
+            tuple(apps),
+            ["appId", "title"],
+        ).set_index("appId")
+
     def app_details(self, serialno, appid) -> tuple[dict, dict]:
 
         # First, get basic app details using the Super class
@@ -518,12 +456,38 @@ class IosScan(AppScan):
         """FIXME: iOS setup."""
         return (True, "Follow trust dialog on iOS device to continue.")
 
-    # TODO: This might send titles out of order. Fix this to send both appid and
-    # titles.
-    def get_app_titles(self, serialno):
+    # Which of config.IOS_DUMPFILES each kind of dump_path() is.
+    _DUMP_KINDS = {
+        "Jailbroken-FS": "Jailbroken-FS",
+        "Jailbroken-SSH": "Jailbroken-SSH",
+        "Device_Info": "Info",
+        "Apps": "Apps",
+    }
+
+    def dump_path(self, serial, fkind="Apps"):
+        """The folder of this phone's dump ("Dir"), or one file in it. Any
+        other kind is the apps file."""
+        folder = os.path.join(config.DUMP_DIR, "{}_ios".format(config.hmac_serial(serial)))
+        if fkind == "Dir":
+            return folder
+        return os.path.join(folder, config.IOS_DUMPFILES.get(self._DUMP_KINDS.get(fkind, "Apps"), ""))
+
+    def _dump(self, serialno) -> parse_dump.PhoneDump:
+        return self.parse_dump or parse_dump.IosDump(self.dump_path(serialno))
+
+    def app_titles(self, serialno, apps) -> pd.DataFrame:
+        """Titles from the phone's dump."""
         if not self.parse_dump:
             self._dump_phone(serialno)
         return self.parse_dump.installed_apps_titles()
+
+    def app_details(self, serialno, appid) -> tuple[dict, dict]:
+        """The permissions and title come from the dump, not app-info.db."""
+        d, info = super().app_details(serialno, appid)
+        if info:
+            d["permissions"] = [(p, _ios_reason(r)) for p, r in info.get("permissions", [])]
+            d["title"] = info.get("title", "")
+        return d, info
 
     def get_apps(self, serialno: str, from_dump: bool) -> list:
         """iOS always read everything from dump, so nothing to change."""

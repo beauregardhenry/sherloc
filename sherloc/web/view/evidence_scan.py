@@ -207,108 +207,86 @@ def evidence_scan_select(ser, show_rescan):
 
         return redirect(url_for('evidence_scan_select', ser=ser))
 
+def _manual_form(scan):
+    """The manual-add form, filled in from a saved scan (or empty)."""
+    apps = [
+        {"app_name": a.title, "spyware": "spyware" in a.flags, "dualuse": "dual-use" in a.flags}
+        for a in scan.selected_apps
+    ]
+    return ManualAddPageForm(
+        apps=apps,
+        device_nickname=scan.device_nickname,
+        device_manufacturer=scan.device_manufacturer,
+        device_model=scan.device_model,
+        device_version=scan.device_version,
+        device_serial=scan.serial,
+        # "none" was not one of the choices, so the form could not be saved
+        # until this was answered.
+        is_rooted={True: "yes", False: "no"}.get(scan.is_rooted, ""),
+        rooted_reasons=scan.rooted_reasons,
+    )
+
+
+def _manual_apps(rows):
+    """The apps typed into the form, with the flags ticked for each."""
+    apps = []
+    for row in rows:
+        if row["app_name"].strip() == "":
+            continue
+        flags = (["spyware"] if row["spyware"] else []) + (["dual-use"] if row["dualuse"] else [])
+        apps.append({"title": row["app_name"], "investigate": True, "flags": flags})
+    return apps
+
+
+def _save_manual_scan(scan, data):
+    """Copy the form's answers into `scan` and save it with the other scans."""
+    scan.device_nickname = data["device_nickname"]
+    scan.device_model = data["device_model"]
+    scan.device_version = data["device_version"]
+    scan.device_manufacturer = data["device_manufacturer"]
+    scan.is_rooted = data["is_rooted"] == "yes"
+    scan.rooted_reasons = data["rooted_reasons"]
+    # A device without a known serial gets one made from its nickname.
+    scan.serial = data["device_serial"]
+    if scan.serial.strip() == "":
+        scan.serial = "MANADD-" + scan.device_nickname.replace(" ", "-")
+    scan.all_apps = scan.selected_apps = _manual_apps(data["apps"])
+
+    all_scan_data = load_object_from_json(ConsultDataTypes.SCANS.value)
+    all_scan_data = update_scan_by_ser(scan, all_scan_data)
+    save_data_as_json(all_scan_data, ConsultDataTypes.SCANS.value)
+
+
+def _manual_page(form):
+    return render_template("main.html", task="evidence-scan-manualadd", title=config.TITLE, form=form)
+
+
 @app.route("/evidence/scan/manualadd/", methods={'GET', 'POST'}, defaults={'ser': None})
 @app.route("/evidence/scan/manualadd/<string:ser>", methods={'GET', 'POST'})
 def evidence_scan_manualadd(ser):
-
     current_scan = ScanData()
-
-    # If we passed a serial number, load the scan data for that serial
     if ser:
-        all_scan_data = load_object_from_json(ConsultDataTypes.SCANS.value)
-        current_scan = get_scan_by_ser(ser, all_scan_data)
+        current_scan = get_scan_by_ser(ser, load_object_from_json(ConsultDataTypes.SCANS.value))
         if current_scan.serial != ser:
             abort(404)
     else:
         current_scan.manual = True
 
-    manual_add_apps = [{"app_name": app.title, "spyware": "spyware" in app.flags}
-                       for app in current_scan.selected_apps]
+    form = _manual_form(current_scan)
+    if request.method == "GET":
+        return _manual_page(form)
 
-    form = ManualAddPageForm(apps = manual_add_apps,
-                             device_nickname=current_scan.device_nickname,
-                             device_manufacturer=current_scan.device_manufacturer,
-                             device_model=current_scan.device_model,
-                             device_version=current_scan.device_version,
-                             device_serial=current_scan.serial,
-                             # "none" was not one of the choices, so the form
-                             # could not be saved until this was answered.
-                             is_rooted={True: "yes", False: "no"}.get(current_scan.is_rooted, ""),
-                             rooted_reasons=current_scan.rooted_reasons)
+    # "Add line" reloads the page with one more row.
+    if form.addline.data:
+        form.update_self()
+        return _manual_page(form)
 
-    ### IF IT'S A GET:
-    if request.method == 'GET':
+    if form.validate():
+        _save_manual_scan(current_scan, form.data)
+        return redirect(url_for("evidence_scan_investigate", ser=current_scan.serial))
 
-        context = dict(
-            task = "evidence-scan-manualadd",
-            title = config.TITLE,
-            form = form
-        )
-
-        return render_template('main.html', **context)
-
-    ### IF IT'S A POST:
-    if request.method == 'POST':
-
-        if form.is_submitted():
-
-            # if it's an addline request, do that and reload
-            if form.addline.data:
-                form.update_self()
-                context = dict(
-                    task = "evidence-scan-manualadd",
-                    title = config.TITLE,
-                    form = form
-                )
-                return render_template('main.html', **context)
-
-            elif form.validate():
-                # Get scan details that were manually added
-                current_scan.device_nickname = form.data['device_nickname']
-                current_scan.device_model = form.data['device_model']
-                current_scan.device_version = form.data['device_version']
-                current_scan.device_manufacturer = form.data['device_manufacturer']
-                current_scan.is_rooted = form.data['is_rooted'] == 'yes'
-                current_scan.rooted_reasons = form.data['rooted_reasons']
-
-                # Input serial or make a fake one if needed
-                current_scan.serial = form.data['device_serial']
-                if current_scan.serial.strip() == "":
-                    current_scan.serial = "MANADD-" + current_scan.device_nickname.replace(" ", "-")
-
-                # Add apps that were manually added to selected_apps and all_apps
-                selected_apps = []
-                for a in form.data['apps']:
-                    flags = []
-                    if a['spyware']:
-                        flags.append('spyware')
-                    if a['dualuse']:
-                        flags.append('dual-use')
-                    if a['app_name'].strip() != "":
-                        selected_apps.append({
-                            "title": a['app_name'],
-                            "investigate": True,
-                            "flags": flags
-                        })
-
-                current_scan.all_apps = selected_apps
-                current_scan.selected_apps = selected_apps
-
-                # load all scans
-                all_scan_data = load_object_from_json(ConsultDataTypes.SCANS.value)
-
-                # add manual scan
-                all_scan_data = update_scan_by_ser(current_scan, all_scan_data)
-
-                # save
-                save_data_as_json(all_scan_data, ConsultDataTypes.SCANS.value)
-
-                return redirect(url_for('evidence_scan_investigate', ser=current_scan.serial))
-
-            if not form.validate():
-                flash("Form validation error. Raw error: {}".format(form.errors), 'error')
-
-            return redirect(url_for('evidence_scan_manualadd', ser=ser))
+    flash("Form validation error. Raw error: {}".format(form.errors), "error")
+    return redirect(url_for("evidence_scan_manualadd", ser=ser))
 
 
 @app.route("/evidence/scan/investigate/<string:ser>", methods={'GET', 'POST'})

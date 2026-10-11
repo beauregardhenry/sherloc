@@ -5,8 +5,6 @@ import subprocess
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
-
 # web.view re-exports a function named `privacy`, so import the module by name
 privacy = importlib.import_module("web.view.privacy")
 
