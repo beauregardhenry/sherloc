@@ -25,6 +25,38 @@ if not _DUMP_FIXTURE.exists():
 
 import pytest  # noqa: E402
 
+
+def _weasyprint_loads():
+    try:
+        import weasyprint  # noqa: F401
+    except (ImportError, OSError):
+        return False
+    return True
+
+
+# WeasyPrint needs Pango, which Homebrew often cannot build on the Intel Macs
+# used for development. Tests marked `pdf` are skipped there; CI sets
+# SHERLOC_REQUIRE_PDF=1 so they can never be skipped silently.
+PDF_OK = _weasyprint_loads()
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "pdf: makes a PDF, so needs WeasyPrint and Pango")
+    if os.environ.get("SHERLOC_REQUIRE_PDF") and not PDF_OK:
+        raise pytest.UsageError(
+            "SHERLOC_REQUIRE_PDF is set but WeasyPrint cannot load. Is Pango installed?"
+        )
+
+
+def pytest_collection_modifyitems(config, items):
+    if PDF_OK:
+        return
+    skip = pytest.mark.skip(reason="WeasyPrint cannot load (Pango is missing), so no PDF can be made")
+    for item in items:
+        if "pdf" in item.keywords:
+            item.add_marker(skip)
+
+
 from tests.fakebin import FakeTool  # noqa: E402
 
 
