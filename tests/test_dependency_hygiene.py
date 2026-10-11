@@ -74,3 +74,41 @@ def test_every_ignored_advisory_says_why():
             if "--ignore-vuln" in line:
                 above = [ln for ln in lines[max(0, i - 8): i] if ln.strip().startswith("#")]
                 assert above, f"{p.name}:{i + 1} ignores an advisory without a comment"
+
+
+def test_flask_migrate_is_gone():
+    # There was no migrations/ folder; web/schema.sql creates the tables.
+    assert "flask-migrate" not in _pins()
+    code = "\n".join(p.read_text() for p in (ROOT / "sherloc").rglob("*.py"))
+    assert not re.search(r"^\s*(import|from) flask_migrate\b", code, re.M)
+
+
+# Import name -> the distribution that provides it, where they differ.
+DIST = {"flask_sqlalchemy": "flask-sqlalchemy", "flask_wtf": "flask-wtf", "flask_bootstrap": "flask-bootstrap",
+        "wtforms_alchemy": "wtforms-alchemy", "yaml": "pyyaml"}
+# Installed as a dependency of a pinned package that pins or bounds them itself.
+VIA = {"flask": "flask-wtf", "wtforms": "flask-wtf", "werkzeug": "flask-wtf", "jinja2": "flask-wtf",
+       "sqlalchemy": "wtforms-alchemy", "markupsafe": "flask-wtf"}
+
+
+def test_every_third_party_import_is_pinned():
+    # Flask-SQLAlchemy was only installed because Flask-Migrate needed it;
+    # dropping Flask-Migrate removed it on a clean install.
+    import ast
+    import sys
+
+    root = ROOT / "sherloc"
+    local = {p.stem for p in root.glob("*.py")} | {p.name for p in root.iterdir() if p.is_dir()}
+    imported = set()
+    for path in root.rglob("*.py"):
+        if "scripts" in path.parts or "static_data" in path.parts:
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                imported |= {a.name.split(".")[0] for a in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                imported.add(node.module.split(".")[0])
+    third_party = {m for m in imported if m not in sys.stdlib_module_names and m not in local}
+    pins = _pins()
+    missing = sorted(m for m in third_party if DIST.get(m, m) not in pins and VIA.get(m) not in pins)
+    assert missing == []
