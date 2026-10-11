@@ -34,7 +34,12 @@ function getScreenshot(buttonId, device, ser) { // ButtonId is the context which
         loading.src = "../../../webstatic/images/waiting.gif";
         imageDiv.innerHTML = loading.outerHTML;
         document.getElementById(buttonId).parentNode.insertBefore(imageDiv, document.getElementById(buttonId).nextSibling);
-        fetch('/privacy/' + device + '/screenshot/' + buttonId + '/' + ser)
+        // POST with the CSRF token: taking a screenshot changes things on the phone.
+        var token = document.querySelector('meta[name="csrf-token"]');
+        fetch('/privacy/' + device + '/screenshot/' + buttonId + '/' + ser, {
+            method: 'POST',
+            headers: {'X-CSRFToken': token ? token.content : ''}
+        })
         .then(response => response.text())
         .then(data => {
             imageDiv.innerHTML = data;

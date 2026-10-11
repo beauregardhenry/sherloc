@@ -1,12 +1,12 @@
 import subprocess
 import time
 
-from flask import render_template, url_for
+from flask import render_template
 
 import config
 from inputcheck import validate_path_part, validate_serial
 
-from phone_scanner.privacy_scan_android import do_privacy_check
+from phone_scanner.privacy_scan_android import do_privacy_check, screenshot_img
 from web import app
 from debuglog import debug
 
@@ -24,7 +24,9 @@ def privacy():
     )
 
 
-@app.route("/privacy/<device>/<cmd>/<context>/<ser>", methods=["GET"])
+# POST: it runs commands on the phone and writes a file. A GET could be set off
+# by a link or a prefetch, and the CSRF check covers only POST.
+@app.route("/privacy/<device>/<cmd>/<context>/<ser>", methods=["POST"])
 def privacy_scan(device, cmd, context, ser):
     try:
         validate_serial(ser)
@@ -82,4 +84,4 @@ def iosScreenshot(ser, context, nocache = False):
         except Exception:
             tunnel.kill()
 
-    return "<img height='400px' src='" + url_for('static', filename=fname.split("webstatic/", 1)[-1]) + "'/>"
+    return screenshot_img(fname)

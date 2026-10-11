@@ -25,7 +25,7 @@
 /instruction ['GET', 'HEAD', 'OPTIONS'] instruction
 /kill ['OPTIONS', 'POST'] killme
 /privacy ['GET', 'HEAD', 'OPTIONS'] privacy
-/privacy/<device>/<cmd>/<context>/<ser> ['GET', 'HEAD', 'OPTIONS'] privacy_scan
+/privacy/<device>/<cmd>/<context>/<ser> ['OPTIONS', 'POST'] privacy_scan
 /scan ['GET', 'HEAD', 'OPTIONS', 'POST'] scan
 /webstatic/<path:filename> ['GET', 'HEAD', 'OPTIONS'] static
 /webstatic/bootstrap/<path:filename> ['GET', 'HEAD', 'OPTIONS'] bootstrap.static

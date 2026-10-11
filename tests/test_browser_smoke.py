@@ -135,3 +135,18 @@ def test_a_script_post_from_the_page_passes_the_csrf_check(app_url, page):
     )
     # The route's own answer, so the CSRF check let the request through.
     assert text == "Invalid device serial."
+
+
+def test_the_screenshot_button_posts_with_the_token(app_url, page, monkeypatch):
+    import sys
+
+    monkeypatch.setattr(sys.modules["web.view.privacy"], "do_privacy_check",
+                        lambda ser, cmd, ctx: "<span id='shot-ok'>SHOT-TAKEN-9</span>")
+    page.goto(app_url + "/evidence/home")
+    page.wait_for_load_state("load")
+    page.evaluate("""() => {
+        const b = document.createElement('button'); b.id = 'ctx'; document.body.appendChild(b);
+        getScreenshot('ctx', 'android', 'ZY224F8TKG');
+    }""")
+    page.wait_for_selector("#shot-ok", timeout=10000)
+    assert "SHOT-TAKEN-9" in page.content()
