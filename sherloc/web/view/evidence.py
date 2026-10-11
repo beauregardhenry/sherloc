@@ -22,6 +22,7 @@ from evidence_collection import (
     MultScreenshotEditForm,
     TAQData,
     TAQForm,
+    PdfUnavailable,
     create_printout,
     delete_client_data,
     get_scan_by_ser,
@@ -364,7 +365,11 @@ def evidence_printout():
     # create the printout document
 
     pdebug("Creating the printout...")
-    filename = create_printout(context)
+    try:
+        filename = create_printout(context)
+    except PdfUnavailable as e:
+        flash(str(e))
+        return redirect(url_for("evidence_home"))
     workingdir = os.path.abspath(os.getcwd())
 
     end_time = time.perf_counter()
@@ -379,7 +384,11 @@ def evidence_takehome():
     # The password comes from the form body only; it is not logged or stored.
     password = request.form.get("takehome_password", "")
     context = _printout_context("")
-    data = create_takehome_pdf(context, password)
+    try:
+        data = create_takehome_pdf(context, password)
+    except PdfUnavailable as e:
+        flash(str(e))
+        return redirect(url_for("evidence_home"))
     return send_file(
         io.BytesIO(data),
         mimetype="application/pdf",

@@ -13,7 +13,10 @@ import pytest
 
 import web  # noqa: F401  (import order: web first avoids a circular import)
 import evidence_collection as ec
-import pdfrender
+try:
+    import pdfrender
+except (ImportError, OSError):  # no Pango here; the tests that need it are marked `pdf`
+    pdfrender = None
 
 SECTIONS = ("devices", "accounts", "sharing", "smarthome", "kids")
 
@@ -73,6 +76,7 @@ def _text(data: bytes) -> str:
     return subprocess.run(["pdftotext", "-", "-"], input=data, capture_output=True).stdout.decode()
 
 
+@pytest.mark.pdf
 @needs_pdftotext
 def test_a_hostile_note_does_not_pull_a_local_file_into_the_pdf(tmp_path):
     secret = tmp_path / "secret.txt"
@@ -92,6 +96,7 @@ def test_a_hostile_note_does_not_pull_a_local_file_into_the_pdf(tmp_path):
 # --- the renderer itself, given raw HTML (as if escaping had failed) ---------
 
 
+@pytest.mark.pdf
 @needs_pdftotext
 def test_the_renderer_does_not_load_local_stylesheets(tmp_path):
     css = tmp_path / "evil.css"
@@ -102,6 +107,7 @@ def test_the_renderer_does_not_load_local_stylesheets(tmp_path):
     assert "LOCAL-CSS-LOADED-551" not in text
 
 
+@pytest.mark.pdf
 def test_the_fetcher_only_serves_files_under_webstatic():
     f = pdfrender.StaticOnlyFetcher("http://localhost:6200/")
     assert f.fetch("http://localhost:6200/webstatic/images/mtc-logo.png").status == 200
@@ -118,6 +124,7 @@ def test_the_fetcher_only_serves_files_under_webstatic():
             f.fetch(url)
 
 
+@pytest.mark.pdf
 @needs_pdftotext
 def test_script_in_the_page_does_not_run():
     html = "<html><body><p>plain</p><script>document.write('SCRIPT-RAN-77')</script></body></html>"
@@ -126,6 +133,7 @@ def test_script_in_the_page_does_not_run():
     assert "SCRIPT-RAN-77" not in text
 
 
+@pytest.mark.pdf
 @needs_pdftotext
 def test_the_full_report_has_the_clinic_footer_with_page_numbers(tmp_path):
     out = ec.create_printout(_context(), out_file=str(tmp_path / "out.pdf"))
@@ -134,6 +142,7 @@ def test_the_full_report_has_the_clinic_footer_with_page_numbers(tmp_path):
     assert re.search(r"Page 1 of \d+", text)
 
 
+@pytest.mark.pdf
 def test_the_logo_is_embedded_from_the_static_folder(tmp_path):
     out = ec.create_printout(_context(), out_file=str(tmp_path / "out.pdf"))
     assert b"/Subtype /Image" in open(out, "rb").read() or b"/Subtype/Image" in open(out, "rb").read()
@@ -158,6 +167,7 @@ def _png():
     )
 
 
+@pytest.mark.pdf
 def test_screenshots_outside_webstatic_are_served(tmp_path, monkeypatch):
     # Screenshots live under SHERLOC_DATA_DIR (#55) and are linked as
     # client-screenshots/...; the PDF must still include them.
@@ -177,6 +187,7 @@ def test_screenshots_outside_webstatic_are_served(tmp_path, monkeypatch):
             f.fetch(url)
 
 
+@pytest.mark.pdf
 def test_a_screenshot_is_embedded_in_the_report(tmp_path, monkeypatch):
     import config
 

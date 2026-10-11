@@ -103,6 +103,7 @@ def test_the_full_report_footer_is_unchanged():
     assert "Madison Tech Clinic" in ec.printout_footer()
 
 
+@pytest.mark.pdf
 @needs_pdftotext_only
 def test_the_take_home_pdf_footer_has_page_numbers_and_no_clinic():
     data = takehome.create_takehome_pdf(_full_context())
@@ -194,6 +195,7 @@ def client(tmp_path, monkeypatch):
     return c
 
 
+@pytest.mark.pdf
 @needs_tools
 def test_take_home_route_returns_a_pdf_without_the_client_name(client, tmp_path):
     r = client.post("/evidence/takehome", data={"takehome_password": ""})
@@ -205,6 +207,7 @@ def test_take_home_route_returns_a_pdf_without_the_client_name(client, tmp_path)
     assert "Madison" not in text
 
 
+@pytest.mark.pdf
 @needs_tools
 def test_take_home_route_with_password_returns_an_encrypted_pdf(client):
     r = client.post("/evidence/takehome", data={"takehome_password": "s3cret-pw"})
@@ -214,6 +217,7 @@ def test_take_home_route_with_password_returns_an_encrypted_pdf(client):
     assert reader.decrypt("s3cret-pw") != 0
 
 
+@pytest.mark.pdf
 @needs_tools
 def test_the_password_is_not_kept(client):
     client.post("/evidence/takehome", data={"takehome_password": "s3cret-pw"})
@@ -221,6 +225,7 @@ def test_the_password_is_not_kept(client):
         assert "s3cret-pw" not in repr(dict(s))
 
 
+@pytest.mark.pdf
 @needs_tools
 def test_no_unprotected_copy_is_left_on_disk_when_a_password_is_set(client, tmp_path):
     client.post("/evidence/takehome", data={"takehome_password": "s3cret-pw"})

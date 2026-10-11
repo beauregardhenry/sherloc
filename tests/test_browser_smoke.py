@@ -73,6 +73,7 @@ def _stored():
     return consultstore.count()
 
 
+@pytest.mark.pdf
 def test_the_report_downloads(app_url, page):
     page.goto(app_url + "/evidence/home")
     page.fill("input[name=client_name]", NAME)
@@ -81,6 +82,7 @@ def test_the_report_downloads(app_url, page):
     assert open(dl.value.path(), "rb").read(4) == b"%PDF"
 
 
+@pytest.mark.pdf
 def test_the_take_home_copy_downloads(app_url, page):
     page.goto(app_url + "/evidence/home")
     with page.expect_download(timeout=90000) as dl:

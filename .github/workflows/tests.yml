@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+# CI has Pango, so the PDF tests must run here. Without this they would be
+# skipped silently if Pango ever failed to install (see tests/conftest.py).
+env:
+  SHERLOC_REQUIRE_PDF: "1"
+
 jobs:
   pytest:
     runs-on: ubuntu-latest

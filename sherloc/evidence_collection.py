@@ -22,7 +22,6 @@ import config
 import consultstore
 import jinja2
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION, screenshot_path
-from pdfrender import render_pdf
 import scanflow
 from scanrecord import split_suspicious
 from web.view.index import get_device
@@ -172,8 +171,31 @@ def printout_footer(takehome=False):
     return TAKEHOME_FOOTER if takehome else FULL_FOOTER.format(SHERLOC_VERSION)
 
 
+PDF_UNAVAILABLE = (
+    "The PDF report cannot be made on this computer: WeasyPrint could not load"
+    " Pango. Install it with `brew bundle` (Apple Silicon Mac) or"
+    " `apt install libpango-1.0-0 libpangoft2-1.0-0` (Linux)."
+)
+
+
+class PdfUnavailable(RuntimeError):
+    """WeasyPrint or the system libraries it needs (Pango) are missing."""
+
+
+def _pdf_renderer():
+    # Imported here, not at the top: Sherloc and most of its tests run without
+    # Pango, for example on the Intel Macs used for development.
+    try:
+        from pdfrender import render_pdf
+    except (ImportError, OSError) as e:
+        raise PdfUnavailable(PDF_UNAVAILABLE) from e
+    return render_pdf
+
+
 def render_printout_pdf(context):
-    """PDF bytes of the printout. See pdfrender for what the renderer may load."""
+    """PDF bytes of the printout. See pdfrender for what the renderer may load.
+    Raises `PdfUnavailable` when WeasyPrint cannot be loaded."""
+    render_pdf = _pdf_renderer()
     html_string = render_printout_html(context)
     return render_pdf(
         html_string,

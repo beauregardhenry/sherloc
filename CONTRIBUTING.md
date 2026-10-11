@@ -13,6 +13,17 @@ You need Python 3.12 or newer. You do not need root.
 
 `adb` and `ideviceinstaller` are optional for development. The PDF tests need Pango (see the README) and use `pdftotext` (poppler) when it is installed. No test needs a phone: device tools are replaced by fake programs (`tests/fakebin.py`).
 
+### Developing on an Intel Mac
+
+Intel Macs can be used for development but not to run consultations (the README lists the supported computers). Homebrew treats Intel Macs as a Tier 3 configuration and often cannot build Pango or `ideviceinstaller`, so skip `brew bundle` and install only Python:
+
+```bash
+brew install python@3.12
+./dev.sh
+```
+
+Without Pango, the app still runs and the tests that make a PDF are skipped, each with the reason. Asking the app for a report shows a message instead of a PDF. CI has Pango and sets `SHERLOC_REQUIRE_PDF=1`, so every pull request still runs the PDF tests. Set the same variable locally to make a missing Pango an error instead of a skip.
+
 To run the app itself, see the README.
 
 ## Before you open a pull request
