@@ -39,26 +39,26 @@ def _login(client):
 
 
 def test_privacy_get_rejects_hostile_serial(client):
-    r = client.get("/privacy/android/account/x/%3Becho%20PWNED")
+    r = client.post("/privacy/android/account/x/%3Becho%20PWNED")
     assert r.status_code == 400
     assert client.spawned == []
 
 
 def test_privacy_get_rejects_hostile_serial_with_command_substitution(client):
-    r = client.get("/privacy/android/screenshot/ctx/%24%28id%29")
+    r = client.post("/privacy/android/screenshot/ctx/%24%28id%29")
     assert r.status_code == 400
     assert client.spawned == []
 
 
 @pytest.mark.parametrize("context", ["..", "."])
 def test_privacy_get_rejects_dot_segment_context(client, context):
-    r = client.get(f"/privacy/android/screenshot/{context}/ZY224F8TKG")
+    r = client.post(f"/privacy/android/screenshot/{context}/ZY224F8TKG")
     assert r.status_code == 400
     assert client.spawned == []
 
 
 def test_privacy_get_rejects_dot_segment_serial(client):
-    r = client.get("/privacy/android/screenshot/ctx/..")
+    r = client.post("/privacy/android/screenshot/ctx/..")
     assert r.status_code == 400
     assert client.spawned == []
 

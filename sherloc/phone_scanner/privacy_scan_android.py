@@ -152,7 +152,7 @@ def take_screenshot(ser, fname=None):
             f.write(data)
 
         # Return the image that will be inserted into the HTML.
-        return add_image(fname.split("webstatic/", 1)[-1], nocache=True)
+        return screenshot_img(fname)
 
     except subprocess.CalledProcessError as e:
         debug(f"Command failed with exit code {e.returncode}: {e.output}")
@@ -166,7 +166,14 @@ def take_screenshot(ser, fname=None):
 def wait(t):
     time.sleep(t)
 
+def screenshot_img(fname):
+    """An <img> for a screenshot just taken. Screenshots live under
+    config.SCREENSHOT_DIR, which the app serves as /client-screenshots/."""
+    return "<img height='400px' src='/" + config.screenshot_path(fname) + "'/>"
+
+
 def add_image(img, nocache=False):
+    """An <img> for a file in webstatic/."""
     return (
         "<img height='400px' src='"
         + url_for("static", filename=img)

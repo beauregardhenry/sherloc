@@ -19,7 +19,8 @@ TEMPLATES = Path(__file__).resolve().parent.parent / "sherloc" / "templates"
 
 # A value for each URL variable, so every POST route can be called.
 ARGS = {"id": "1", "ser": "HSN_x", "scanid": "1", "device_type": "android",
-        "device_nickname": "phone", "show_rescan": "True"}
+        "device_nickname": "phone", "show_rescan": "True", "device": "android",
+        "cmd": "screenshot", "context": "ctx"}
 
 
 def _post_rules():

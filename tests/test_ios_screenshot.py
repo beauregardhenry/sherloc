@@ -95,3 +95,14 @@ def test_tunnel_is_stopped_when_no_rsd_info_appears(env):
     assert "screenshotfail" in out
     assert env["tunnel"].terminated
     assert env["runs"] == []
+
+
+def test_the_image_links_to_the_client_screenshot_folder(env, tmp_path, monkeypatch):
+    # Since #55 screenshots live under SHERLOC_DATA_DIR, served as /client-screenshots/.
+    shots = tmp_path / "data" / "shots"
+    fname = shots / "HSN_x" / "ctx" / "1.png"
+    fname.parent.mkdir(parents=True)
+    monkeypatch.setattr(privacy.config, "SCREENSHOT_DIR", shots)
+    monkeypatch.setattr(privacy.config, "create_screenshot_fname", lambda c, s: str(fname))
+    out = _call()
+    assert "src='/client-screenshots/HSN_x/ctx/1.png'" in out
