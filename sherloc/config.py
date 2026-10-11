@@ -71,14 +71,6 @@ ALLOWED_HOSTS = {"localhost", "127.0.0.1", "::1"} | {
     if h.strip()
 }
 
-DEVICE_PRIMARY_USER = {
-    "me": "Me",
-    "child": "A child of mine",
-    "partner": "My current partner/spouse",
-    "family_other": "Another family member",
-    "other": "Someone else",
-}
-
 ANDROID_PERMISSIONS_CSV = "static_data/android_permissions.csv"
 IOS_DUMPFILES = {
     "Jailbroken-FS": "ios_jailbroken.log",

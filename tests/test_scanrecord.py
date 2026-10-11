@@ -86,14 +86,19 @@ def test_apps_are_split_into_suspicious_and_other():
 
 
 def test_both_scan_paths_use_the_shared_record():
+    # Both pages scan through scanflow, which builds the record here
+    # (tests/test_scanflow.py checks the pages call it).
     import inspect
+    import sys
 
     import evidence_collection
-    from web.view import scan
+    import scanflow
+    import web.view  # noqa: F401
 
-    for mod in (evidence_collection, scan):
+    assert "build_scan_record(" in inspect.getsource(scanflow)
+    for mod in (evidence_collection, sys.modules["web.view.scan"]):
         src = inspect.getsource(mod)
-        assert "build_scan_record(" in src
+        assert "scanflow.run_device_scan(" in src
         assert "'device_manufacturer'" not in src and '"device_manufacturer"' not in src
 
 

@@ -34,6 +34,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- Both scan pages find the device and save the scan through one module, `scanflow.py` (issue #20). The evidence workflow's copy also built a page dictionary it never returned and had an iOS pairing branch that could not fail; both are gone. `config.DEVICE_PRIMARY_USER` was passed to four pages and read by none; it is removed
 - The colour of an app row on the scan page is chosen by a template filter (`flag_class`) in the web layer. `blocklist.assign_class` and the scanner's `class_` column are gone
 - Sherloc needs Python 3.12 or newer. Python 3.10 stopped receiving security fixes on 2026-10-01. CI runs the tests on 3.12 and, in a second job, on 3.13; `sherloc.sh`, the Brewfile, `dev.sh` and mypy use 3.12, and `main.py` refuses to start on an older Python. `tests/test_python_version.py` keeps these in step. The Dependabot rule that held back pandas 3 is removed, since pandas 3 needs 3.11
 - CI fails when test coverage of `sherloc/` drops below 60% (it was 50%). Coverage is 75%
@@ -59,6 +60,7 @@ Security in case of vulnerabilities.
 - `tests/test_client_data_leak.py` fills every place the app writes client data, deletes, and searches the whole tree for the text. `tests/test_data_write_sites.py` fails when code adds a new place that writes files or opens a database without it being listed and classified in `tests/data_write_sites.json`
 ### Fixed
 - The evidence pages loaded jQuery and Bootstrap from cdnjs, so without an internet connection they lost their layout and scripts, and the CDN could see when a consultation was running. Flask-Bootstrap now serves its own bundled copies (`BOOTSTRAP_SERVE_LOCAL`). A test checks that no page loads a script or stylesheet from another host
+- The evidence workflow passed whatever serial number the device reported on to the scanner. It is now checked like on the classic scan page. The classic page's "scanning failed" message no longer points to a `report_failed.md` that does not exist
 - The scan page's "Devices scanned for this client" listed every device ever scanned on the computer, with its model and owner, not only this client's. It now lists this client's devices, and nothing when there are none (it showed the heading with an empty link)
 - Client IDs could repeat or carry the wrong date. `new_client_id` compared UTC timestamps with local midnight, so after midnight east of UTC the first IDs of the day were handed out again, and west of UTC the evening's clients counted for the next day. It now reads today's IDs themselves, counts clients who were scanned without an intake form, and skips IDs in other formats (it crashed on them)
 - Intake forms are stamped in local time like the other tables. They used UTC, the "off by 4 hours" in the code. Forms saved before this change keep their UTC time

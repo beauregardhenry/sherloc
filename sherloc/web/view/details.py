@@ -27,7 +27,6 @@ def app_details(device):
         "main.html",
         task="app",
         title=config.TITLE,
-        device_primary_user=config.DEVICE_PRIMARY_USER,
         app=d,
         info=info,
         device=device,

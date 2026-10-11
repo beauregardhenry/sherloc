@@ -23,10 +23,9 @@ import consultstore
 import jinja2
 import pdfkit
 from config import DUMP_DIR, REPORT_DIR, SCREENSHOT_DIR, SHERLOC_VERSION, screenshot_path
-from phone_scanner.db import create_mult_appinfo, create_scan
-from scanrecord import build_scan_record, rooted_label, split_suspicious
+import scanflow
+from scanrecord import split_suspicious
 from web.view.index import get_device
-from web.view.scan import first_element_or_none
 
 from evidence_choices import (  # noqa: F401
     TMP_CONSULT_DATA_DIR,
@@ -76,7 +75,7 @@ from evidence_model import (  # noqa: F401
     ScreenshotInfo,
     get_all_screenshot_files,
 )
-from debuglog import debug, warn
+from debuglog import debug
 from evidence_forms import (  # noqa: F401
     NotesForm,
     PermissionForm,
@@ -260,17 +259,8 @@ def get_scan_obj(device, nickname):
     return sc
 
 def get_ser_from_scan_obj(sc):
-    """Get the serial number of the device, if it exists."""
-    ser = sc.devices()
-
-    debug("Devices: {}".format(ser))
-    if not ser:
-        # FIXME: add pkexec scripts/ios_mount_linux.sh workflow for iOS if
-        # needed.
-        raise Exception("A device wasn't detected.")
-
-    ser = first_element_or_none(ser)
-    return ser
+    """The serial of the connected device. Raises `scanflow.ScanFailed`."""
+    return scanflow.find_serial(sc)
 
 def get_serial(device, nickname):
     sc = get_scan_obj(device, nickname)
@@ -279,86 +269,23 @@ def get_serial(device, nickname):
 
 
 def get_scan_data(device, device_owner):
+    """Scan the device for the evidence workflow. Raises `scanflow.ScanFailed`."""
+    sc = get_scan_obj(device, device_owner)
+    ser = get_ser_from_scan_obj(sc)
+    debug(">>>scanning_device", device, ser, "<<<<<")
 
-    # The following code is adapted from web/view/scan.py
-
-    template_d = dict(
-        task="home",
-        title=config.TITLE,
+    result = scanflow.run_device_scan(
+        sc,
         device=device,
-        device_primary_user=config.DEVICE_PRIMARY_USER,   # TODO: Why is this sent
-        apps={},
+        ser=ser,
+        device_owner=device_owner,
+        clientid="1",
+        include_raw_serial=True,
     )
-
-    try:
-        sc = get_scan_obj(device, device_owner)
-        ser = get_ser_from_scan_obj(sc)
-
-        debug(">>>scanning_device", device, ser, "<<<<<")
-
-        if device == 'ios':
-            # go through pairing process and do not scan until it is successful.
-            isconnected, reason = sc.setup()
-            if not isconnected:
-                error = "If an iPhone is connected, open iTunes, click through the "\
-                        "connection dialog and wait for the \"Trust this computer\" "\
-                        "prompt to pop up in the iPhone, and then scan again."
-                template_d["error"] = error.format(reason)
-                raise Exception(error)
-
-        # TODO: model for 'devices scanned so far:' device_name_map['model']
-        # and save it to scan_res along with device_primary_user.
-        device_name_print, device_name_map = sc.device_info(serial=ser)
-
-        # Finds all the apps in the device
-        # @apps have appid, title, flags, TODO: add icon
-        apps = sc.find_spyapps(serialno=ser).fillna('').to_dict(orient='index')
-        if len(apps) <= 0:
-            warn("The scanning failed for some reason.")
-            error = "The scanning failed. This could be due to many reasons. Try"\
-                " rerunning the scan from the beginning. If the problem persists,"\
-                " please report it in the file. Check the phone manually. Sorry for"\
-                " the inconvenience."
-            template_d["error"] = error
-            raise Exception(error)
-
-        rooted, rooted_reason = sc.isrooted(ser)
-        scan_d = build_scan_record(
-            clientid="1",
-            ser=ser,
-            device=device,
-            device_owner=device_owner,
-            device_name_map=device_name_map,
-            rooted=rooted,
-            rooted_reason=rooted_reason,
-            include_raw_serial=True,
-        )
-
-        scanid = create_scan(scan_d)
-
-
-        create_mult_appinfo([(scanid, appid, json.dumps(
-            info['flags']), '', '<new>') for appid, info in apps.items()])
-
-        template_d.update(dict(
-            isrooted=rooted_label(rooted, rooted_reason),
-            device_name=device_name_print,
-            apps=apps,
-            scanid=scanid,
-            sysapps=set(),  # sc.get_system_apps(serialno=ser)),
-            serial=ser,
-        ))
-
-        suspicious_apps, other_apps = split_suspicious(apps)
-
-        detailed_suspicious_apps = get_multiple_app_details(device, ser, suspicious_apps)
-        detailed_other_apps = get_multiple_app_details(device, ser, other_apps)
-
-        return scan_d, detailed_suspicious_apps, detailed_other_apps
-
-    except Exception as e:
-        template_d["error"] = str(e)
-        raise e
+    suspicious_apps, other_apps = split_suspicious(result.apps)
+    detailed_suspicious_apps = get_multiple_app_details(device, ser, suspicious_apps)
+    detailed_other_apps = get_multiple_app_details(device, ser, other_apps)
+    return result.scan, detailed_suspicious_apps, detailed_other_apps
 
 
 def _store_name(datatype):

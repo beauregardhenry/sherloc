@@ -20,7 +20,6 @@ def privacy():
     return render_template(
         "main.html",
         task="privacy",
-        device_primary_user=config.DEVICE_PRIMARY_USER,
         title=config.TITLE,
     )
 
