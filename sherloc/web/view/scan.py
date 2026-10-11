@@ -1,5 +1,4 @@
 import config
-import os
 from inputcheck import validate_serial
 from web import app
 from web.view.index import get_device
@@ -113,13 +112,6 @@ def scan():
         template_d["error"] = str(e)
         return render_template("main.html", **template_d), 201
     rooted, rooted_reason = result.rooted, result.rooted_reason
-
-    if device == "ios":
-        # The device info is in the database now; the dump file holds PII.
-        pii_fpath = sc.dump_path(ser, "Device_Info")
-        if os.path.exists(pii_fpath):
-            os.unlink(pii_fpath)
-        debug("iOS PII deleted.")
 
     currently_scanned = get_client_devices_from_db(session["clientid"])
     template_d.update(

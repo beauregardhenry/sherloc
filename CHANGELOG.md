@@ -34,6 +34,7 @@ Security in case of vulnerabilities.
 - `filelock` from the requirements. No code uses it since the consultation answers moved to SQLite
 
 ### Changed
+- The classic scan page no longer deletes an iPhone's device-info dump (`ios_info.xml`) right after a scan. It now matches the evidence workflow: the file stays with the rest of the client data, which "Delete client data" removes together (and which stays in memory in RAM-only mode)
 - Both scan pages find the device and save the scan through one module, `scanflow.py` (issue #20). The evidence workflow's copy also built a page dictionary it never returned and had an iOS pairing branch that could not fail; both are gone. `config.DEVICE_PRIMARY_USER` was passed to four pages and read by none; it is removed
 - The colour of an app row on the scan page is chosen by a template filter (`flag_class`) in the web layer. `blocklist.assign_class` and the scanner's `class_` column are gone
 - Sherloc needs Python 3.12 or newer. Python 3.10 stopped receiving security fixes on 2026-10-01. CI runs the tests on 3.12 and, in a second job, on 3.13; `sherloc.sh`, the Brewfile, `dev.sh` and mypy use 3.12, and `main.py` refuses to start on an older Python. `tests/test_python_version.py` keeps these in step. The Dependabot rule that held back pandas 3 is removed, since pandas 3 needs 3.11
