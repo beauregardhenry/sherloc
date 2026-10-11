@@ -152,6 +152,8 @@ APPROVED_INSTALLERS = {"com.android.vending",
 
 REPORT_PATH = REPORT_DIR
 PII_KEY_PATH = STATIC_DATA / "pii.key"
+# This installation's own client-ID words (see clientwords.py).
+CLIENT_WORDS_PATH = STATIC_DATA / "client-words.key"
 
 # SHA-256 of key files that were committed to the public repository before
 # they were untracked. Anyone can read those values, so a key file that still

@@ -2,6 +2,7 @@ app.log
 notes/
 sherloc/static_data/pii.key
 sherloc/static_data/flask.secret
+sherloc/static_data/client-words.key
 sherloc/static_data/*.old
 *.swp
 # Byte-compiled / optimized / DLL files

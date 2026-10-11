@@ -94,6 +94,8 @@ def isolated_database(tmp_path, monkeypatch):
 
     url = f"sqlite:///{tmp_path / 'isolated-fieldstudy.db'}"
     monkeypatch.setattr(config, "SQL_DB_PATH", url)
+    # A new client ID creates the installation's word list on first use.
+    monkeypatch.setattr(config, "CLIENT_WORDS_PATH", tmp_path / "client-words.key")
 
     # Flask-SQLAlchemy built its engine from config.SQL_DB_PATH when `web`
     # was imported. Swap that engine too, so the ORM (the intake form) writes

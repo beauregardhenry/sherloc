@@ -58,6 +58,8 @@ def test_a_client_id_is_four_random_words(app_db):
     words = cid.split("-")
     assert len(set(words)) == 4
     assert all(w in clientwords.WORDS for w in words)
+    # Only this installation's own words are used.
+    assert set(words) <= set(clientwords.installation_words(config.CLIENT_WORDS_PATH))
 
 
 def test_ids_carry_no_date_or_count(app_db):
@@ -75,14 +77,14 @@ def test_ids_differ_from_one_client_to_the_next(app_db):
 def test_an_id_already_in_use_is_drawn_again(app_db, monkeypatch):
     _intake("amber-otter-canyon-teapot")
     draws = iter([["amber", "otter", "canyon", "teapot"], ["maple", "otter", "canyon", "teapot"]])
-    monkeypatch.setattr(clientwords, "_draw", lambda n: next(draws))
+    monkeypatch.setattr(clientwords, "_draw", lambda n, pool: next(draws))
     assert phone_db.new_client_id() == "maple-otter-canyon-teapot"
 
 
 def test_an_id_used_only_by_a_scan_is_also_taken(app_db, monkeypatch):
     _scan("amber-otter-canyon-teapot")
     draws = iter([["amber", "otter", "canyon", "teapot"], ["maple", "otter", "canyon", "teapot"]])
-    monkeypatch.setattr(clientwords, "_draw", lambda n: next(draws))
+    monkeypatch.setattr(clientwords, "_draw", lambda n, pool: next(draws))
     assert phone_db.new_client_id() == "maple-otter-canyon-teapot"
 
 
@@ -197,3 +199,46 @@ def test_flag_colours_are_chosen_by_the_view():
     assert flag_class(["regex-spy"]) == "alert-info"
     assert flag_class(["dual-use"]) == "alert-warning"
     assert flag_class(["onstore-spyware"]) == "alert-primary"
+
+
+# --- this installation's own word list --------------------------------------
+
+
+def test_the_first_id_creates_this_installations_word_list(tmp_path):
+    path = tmp_path / "client-words.key"
+    words = clientwords.installation_words(path)
+    assert len(words) == clientwords.INSTALLATION_WORDS == 2048
+    assert len(set(words)) == len(words)
+    assert set(words) <= set(clientwords.WORDS)
+    assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_the_list_is_kept(tmp_path):
+    path = tmp_path / "client-words.key"
+    assert clientwords.installation_words(path) == clientwords.installation_words(path)
+
+
+def test_each_installation_gets_its_own_list(tmp_path):
+    a = clientwords.installation_words(tmp_path / "a.key")
+    b = clientwords.installation_words(tmp_path / "b.key")
+    assert set(a) != set(b)
+
+
+@pytest.mark.parametrize("content", ["", "amber\notter\n", "notaword\n" * 2048])
+def test_a_damaged_list_is_replaced(tmp_path, content):
+    path = tmp_path / "client-words.key"
+    path.write_text(content)
+    words = clientwords.installation_words(path)
+    assert len(set(words)) == 2048 and set(words) <= set(clientwords.WORDS)
+
+
+def test_the_list_is_not_committed():
+    import subprocess
+
+    root = config.THIS_DIR.parent
+    r = subprocess.run(["git", "check-ignore", "-q", "sherloc/static_data/client-words.key"], cwd=root)
+    assert r.returncode == 0
+
+
+def test_the_tests_never_touch_the_real_list():
+    assert config.CLIENT_WORDS_PATH != config.STATIC_DATA / "client-words.key"

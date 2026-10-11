@@ -25,7 +25,7 @@ def new_client_id():
             args=(cid, cid),
         ))
 
-    return clientwords.make_client_id(taken)
+    return clientwords.make_client_id(taken, clientwords.installation_words(config.CLIENT_WORDS_PATH))
 
 
 def make_dicts(cursor, row):

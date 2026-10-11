@@ -10,14 +10,18 @@ violence, injury, bodies, surveillance, alcohol, religion or politics were left
 out, and so were brand names and hard-to-spell words. tests/test_client_ids.py
 checks the list against a set of words that must never appear.
 
-The IDs are unpredictable because each word is drawn with the `secrets`
-module, not because the list is hidden: this repository is public. With
-2951 words and four distinct words per ID there are about
-7.6e+13 possible IDs.
+Each installation draws its own 2,048 of these words the first time it makes
+an ID and keeps them in static_data/client-words.key, readable by the owner
+only and never committed, like pii.key. The full list is public in this
+repository; which words an installation uses is not. The IDs are
+unpredictable either way, because each word is drawn with the `secrets`
+module. Four distinct words from 2,048 give about 1.7e13 possible IDs.
 """
 
+import os
 import secrets
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Sequence, Union
 
 _RANDOM = secrets.SystemRandom()
 
@@ -276,17 +280,39 @@ ziti zucchini
 )
 
 WORDS_PER_ID = 4
+INSTALLATION_WORDS = 2048
 
 
-def _draw(n: int) -> list[str]:
-    """`n` distinct words, chosen with the operating system's random source."""
-    return _RANDOM.sample(WORDS, n)
+def _draw(n: int, pool: Sequence[str]) -> list[str]:
+    """`n` distinct words from `pool`, chosen with the operating system's random source."""
+    return _RANDOM.sample(list(pool), n)
 
 
-def make_client_id(taken: Callable[[str], bool] = lambda cid: False) -> str:
-    """A new four-word ID for which `taken(id)` is False."""
+def installation_words(path: Union[str, Path]) -> tuple[str, ...]:
+    """This installation's own words, chosen and saved on first use.
+
+    A missing or damaged file (wrong count, repeats, words not in WORDS) is
+    replaced. Changing the list never changes IDs already given out.
+    """
+    path = Path(path)
+    known = set(WORDS)
+    if path.exists():
+        words = tuple(path.read_text().split())
+        if len(words) == INSTALLATION_WORDS and len(set(words)) == len(words) and set(words) <= known:
+            return words
+    words = tuple(sorted(_draw(INSTALLATION_WORDS, WORDS)))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write("\n".join(words) + "\n")
+    os.chmod(path, 0o600)
+    return words
+
+
+def make_client_id(taken: Callable[[str], bool] = lambda cid: False, pool: Sequence[str] = WORDS) -> str:
+    """A new four-word ID from `pool` for which `taken(id)` is False."""
     for _ in range(100):
-        cid = "-".join(_draw(WORDS_PER_ID))
+        cid = "-".join(_draw(WORDS_PER_ID, pool))
         if not taken(cid):
             return cid
     raise RuntimeError("Could not find an unused client ID.")
