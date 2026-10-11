@@ -47,7 +47,7 @@ def app_url(tmp_path, monkeypatch):
 
     from phone_scanner import db as phone_db
 
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     # The real app checks CSRF tokens, so the clicks here must pass that check.
     web.app.config["WTF_CSRF_ENABLED"] = True
     consultstore.save("notes", json.dumps({"consultant_notes": NOTE, "client_notes": "", "client_name": ""}))

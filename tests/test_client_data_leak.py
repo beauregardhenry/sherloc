@@ -30,7 +30,6 @@ def tree(tmp_path, monkeypatch, fake_adb):
     for name, key in (("DUMP_DIR", "dumps"), ("SCREENSHOT_DIR", "shots"), ("REPORT_DIR", "reports")):
         monkeypatch.setattr(config, name, dirs[key])
         monkeypatch.setattr(ec, name, dirs[key])
-    monkeypatch.setattr(config, "REPORT_PATH", dirs["reports"])
     monkeypatch.setattr(config, "CONSULT_DATA_DIR", dirs["consult"])
     monkeypatch.setattr(ec, "TMP_CONSULT_DATA_DIR", str(dirs["consult"]))
     db = dirs["data"] / "fieldstudy.db"

@@ -26,7 +26,6 @@ def data_dirs(tmp_path, monkeypatch):
     for name in ("DUMP_DIR", "SCREENSHOT_DIR", "REPORT_DIR"):
         dirs[name] = tmp_path / name
         monkeypatch.setattr(config, name, dirs[name])
-    monkeypatch.setattr(config, "REPORT_PATH", dirs["REPORT_DIR"])
     monkeypatch.setattr(config, "CONSULT_DATA_DIR", tmp_path / "consult")
     monkeypatch.setattr(config, "DB_DIR", tmp_path / "data")
     return tmp_path

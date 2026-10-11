@@ -21,7 +21,7 @@ EXTERNAL = re.compile(r"""<(?:script|link)\b[^>]*\b(?:src|href)=["']((?:https?:)
 @pytest.fixture
 def client():
     web.app.config.update(TESTING=True)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     c = web.app.test_client()
     with c.session_transaction() as s:
         s["clientid"] = "20261010_001"

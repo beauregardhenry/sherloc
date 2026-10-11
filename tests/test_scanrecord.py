@@ -108,7 +108,7 @@ def test_both_scan_paths_use_the_shared_record():
 def test_get_is_rooted_reads_the_stored_values(tmp_path, monkeypatch):
     from phone_scanner import db as phone_db
 
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     with web.app.app_context():
         phone_db.create_scan(_record(rooted=True, rooted_reason="Found 'su binary'."))
         assert phone_db.get_is_rooted(config.hmac_serial("ZY224F8TKG")) == (1, "Found 'su binary'.")

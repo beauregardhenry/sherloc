@@ -72,17 +72,6 @@ def thiscli(ser):
     return [config.ADB_PATH, "-s", validate_serial(ser)]
 
 
-def get_screen_res(ser):
-    out, err = run_capture(thiscli(ser) + ["shell", "dumpsys", "window"])
-    for line in out.splitlines():
-        if "mUnrestrictedScreen" in line:
-            m = re.match(r"mUnrestrictedScreen=\(0,0\) (?P<w>\d+)x(?P<h>\d+)", line.strip())
-            if m:
-                return int(m.group("w")), int(m.group("h"))
-            break
-    return -1, -1
-
-
 def open_activity(ser, activity_name):
     """
     Opens an activity
@@ -99,18 +88,6 @@ def open_activity(ser, activity_name):
     return True
 
 
-def tap(ser, xpercent, ypercent):
-    """
-    Tap at xpercent and ypercent from top left
-    """
-    w, h = get_screen_res(ser)
-    x = int(xpercent * w / 100)
-    y = int(ypercent * h / 100)
-    out, err = run_capture(thiscli(ser) + ["shell", "input", "tap", str(x), str(y)])
-    if err:
-        debug("ERROR (tap): {!r}".format(err))
-
-
 def keycode(ser, evt):
     cmds = {"home": "3", "back": "4", "menu": "82", "power": "26"}
     if evt not in cmds:
@@ -118,18 +95,6 @@ def keycode(ser, evt):
 
     key = cmds.get(evt)
     run_capture(thiscli(ser) + ["shell", "input", "keyevent", str(key)])
-
-
-def is_screen_on(ser):
-    out, err = run_capture(thiscli(ser) + ["shell", "dumpsys", "input_method"])
-    if err:
-        debug("ERROR (is_screen_on): {!r}".format(err))
-    states = [
-        re.sub(r".*mInteractive=", "", line).strip()
-        for line in out.splitlines()
-        if "mInteractive" in line
-    ]
-    return bool(states) and states[0] == "true"
 
 
 def take_screenshot(ser, fname=None):
@@ -172,7 +137,7 @@ def screenshot_img(fname):
     return "<img height='400px' src='/" + config.screenshot_path(fname) + "'/>"
 
 
-def add_image(img, nocache=False):
+def add_image(img):
     """An <img> for a file in webstatic/."""
     return (
         "<img height='400px' src='"
@@ -238,6 +203,3 @@ def do_privacy_check(ser, command, context):
     else:
         return "Command not supported; should be one of ['account', 'backup', 'gmap', 'gphotos'] (case in-sensitive)"
 
-
-if __name__ == "__main__":
-    take_screenshot(ser=None)

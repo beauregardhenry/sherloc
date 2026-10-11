@@ -61,7 +61,7 @@ class AppScan(object):
     def devices(self):
         raise Exception("Not implemented")
 
-    def get_system_apps(self, serialno, from_device: bool) -> list:
+    def get_system_apps(self, serialno, from_dump: bool) -> list:
         pass
 
     def get_apps(self, serialno: str, from_dump: bool) -> list:
@@ -231,16 +231,8 @@ class AppScan(object):
 
         return r[["title", "flags", "score", "html_flags"]]
 
-    def flag_apps(self, serialno):
-        installed_apps = self.get_apps(serialno, from_dump=False)
-        app_flags = blocklist.flag_apps(installed_apps)
-        return app_flags
-
     def uninstall(self, serial, appid):
         pass
-
-    def save(self, table, **kwargs):
-        return False
 
     def device_info(self, serial):
         return "Test Phone", {}
@@ -430,7 +422,7 @@ class AndroidScan(AppScan):
 
         # Then, get more details about permissions
         # This requires the phone to be connected
-        hf_recent, non_hf_recent, non_hf, stats = all_permissions(
+        hf_recent, non_hf_recent, _, stats = all_permissions(
             self.dump_path(serialno), appid, serialno
         )
         # FIXME: some appopps in non_hf_recent are not included in the
@@ -522,7 +514,7 @@ class IosScan(AppScan):
         self.serialno = None
         self.parse_dump = None
 
-    def setup(self, attempt_remount=False):
+    def setup(self):
         """FIXME: iOS setup."""
         return (True, "Follow trust dialog on iOS device to continue.")
 
@@ -643,23 +635,3 @@ class IosScan(AppScan):
         # read the Jailbroken-FS and Jailbroken-SSH dumps, is in commit 66a0d56.
         return (False, "Jailbreak and root checks are currently disabled for iOS devices.")
 
-
-class TestScan(AppScan):
-    def __init__(self):
-        super(TestScan, self).__init__("android", cli="cli")
-
-    def get_apps(self, serialno):
-        installed_apps = open(config.TEST_APP_LIST, "r").read().splitlines()
-        return installed_apps
-
-    def devices(self):
-        return ["testdevice1", "testdevice2"]
-
-    def get_system_apps(self, serialno, from_dump=False):
-        return self.get_apps(serialno, from_dump)[:10]
-
-    def get_offstore_apps(self, serialno, from_dump=False):
-        return self.get_apps(serialno)[-4:]
-
-    def uninstall(self, serial, appid):
-        return True

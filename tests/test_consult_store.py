@@ -185,7 +185,7 @@ def test_init_db_builds_the_schema_even_if_the_file_already_exists(legacy_dir):
     # Saving answers creates the database file before init_db runs.
     ec.save_data_as_json([], N.SCANS.value)
     assert _db_file().exists()
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     con = sqlite3.connect(_db_file())
     try:
         tables = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}

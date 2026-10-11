@@ -29,7 +29,7 @@ def client(monkeypatch):
     # The app creates the tables at start; a new client ID checks them.
     from phone_scanner import db as phone_db
 
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     calls = []
 
     def fake_scan(device, nickname, clientid):

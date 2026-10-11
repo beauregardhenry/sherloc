@@ -19,7 +19,6 @@ def empty(tmp_path, monkeypatch):
         d = tmp_path / name
         d.mkdir()
         monkeypatch.setattr(config, name, d)
-    monkeypatch.setattr(config, "REPORT_PATH", tmp_path / "REPORT_DIR")
     monkeypatch.setattr(config, "CONSULT_DATA_DIR", tmp_path / "consult")
     (tmp_path / "consult").mkdir()
     db = tmp_path / "fieldstudy.db"

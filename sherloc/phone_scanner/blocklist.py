@@ -147,7 +147,3 @@ def app_title_and_flag(apps, offstore_apps=None, system_apps=None):
 
     return ret
 
-
-if __name__ == "__main__":
-    apps = pd.DataFrame({"appId": ["com.TrackView", "com.apple.mobileme.fmf1"]})
-    print(app_title_and_flag(apps, system_apps=["com.apple.mobileme.fmf1"]))

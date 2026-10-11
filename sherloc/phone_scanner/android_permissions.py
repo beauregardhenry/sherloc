@@ -14,8 +14,6 @@ from inputcheck import validate_appid, validate_serial
 
 from .runcmd import run_command
 
-DUMPPKG = "dumppkg"
-
 
 def _parse_time(time_str):
     """
@@ -38,15 +36,6 @@ def _parse_time(time_str):
     }
     return datetime.timedelta(**time_params)
 
-
-s = """VIBRATE: allow; time=+29d3h41m32s800ms ago; duration=+1s13ms
-CAMERA: allow; time=+38d23h30m11s6ms ago; duration=+420ms
-RECORD_AUDIO: allow; time=+38d23h19m35s283ms ago; duration=+10s237ms
-WAKE_LOCK: allow; time=+16m12s788ms ago; duration=+10s67ms
-TOAST_WINDOW: allow; time=+38d23h22m57s645ms ago; duration=+4s2ms
-READ_EXTERNAL_STORAGE: allow; time=+2h7m13s715ms ago
-WRITE_EXTERNAL_STORAGE: allow; time=+2h7m13s715ms ago
-RUN_IN_BACKGROUND: allow; time=+15m2s867ms ago"""
 
 
 def recent_permissions_used(appid, serial):
@@ -184,38 +173,6 @@ def package_info(dumpf, appid):
         return [], {}
 
 
-def permissions_map():
-    groupcols = ["group", "group_package", "group_label", "group_description"]
-    pcols = ["permission", "package", "label", "description", "protectionLevel"]
-    sp = simpleparse(open("Pixel2.permissions", "r").read())
-    df = pd.DataFrame(columns=groupcols + pcols)
-    record = {}
-    ungrouped_d = dict.fromkeys(groupcols, "ungrouped")
-    for group in sp[1]:
-        record["group"] = group.split(":")[1]
-        if record["group"] == "":
-            for permission in sp[1][group]:
-                record["permission"] = permission.split(":")[1]
-                for permission_attr in sp[1][group][permission]:
-                    label, val = permission_attr.split(":")
-                    record[label.replace("+ ", "")] = val
-                df.loc[df.shape[0]] = {**record, **ungrouped_d}
-        else:
-            for group_attr in sp[1][group]:
-                if isinstance(group_attr, str):
-                    label, val = group_attr.split(":")
-                    record["group_" + label.replace("+ ", "")] = val
-                else:
-                    for permission in group_attr:
-                        record["permission"] = permission.split(":")[1]
-                        for permission_attr in group_attr[permission]:
-                            label, val = permission_attr.split(":")
-                            record[label.replace("+ ", "")] = val
-                        df.loc[df.shape[0]] = record
-    df.to_csv("static_data/android_permissions.csv")
-    return df
-
-
 def all_permissions(dumpf, appid, serial):
     """
     Returns a tuple of human-friendly permissions (including recently used), non human-friendly app ops,
@@ -301,74 +258,3 @@ def all_permissions(dumpf, appid, serial):
 
     return hf_recent_permissions, no_hf_recent_permissions, no_hf, {**stats, **pkg_info}
 
-
-if __name__ == "__main__":
-    import sys
-
-    print(
-        package_info(
-            "./phone_dumps/83c6500a47585595f72d654829cab29edd2c4f5253e6c05d5576cf04661fd6eb_android.txt",
-            "net.cybrook.trackview",
-        )
-    )
-    exit()
-
-    appid = sys.argv[1]
-    app_perms, pkg_info = package_info(appid)
-
-    print(app_perms, pkg_info)
-    exit()
-    recent_permissions = recent_permissions_used(appid)
-
-    permissions = pd.read_csv(config.ANDROID_PERMISSIONS)
-    app_permissions_tbl = permissions[
-        permissions["permission"].isin(app_perms)
-    ].reset_index(drop=True)
-    hf_app_permissions = list(
-        zip(app_permissions_tbl.permission, app_permissions_tbl.label)
-    )
-
-    # FIXME: delete 'null' labels from counting as human readable.
-    print("'{}' uses {} app permissions:".format(appid, len(app_perms)))
-    print(
-        "{} have human-readable names, and {} were recently used:".format(
-            app_permissions_tbl.shape[0], recent_permissions.shape[0]
-        )
-    )
-
-    app_permissions_tbl["permission_abbrv"] = app_permissions_tbl["permission"].apply(
-        lambda x: x.rsplit(".", n=1)[-1]
-    )
-
-    # TODO: really 'unknown'?
-    hf_recent_permissions = pd.merge(
-        recent_permissions,
-        app_permissions_tbl,
-        left_on="op",
-        right_on="permission_abbrv",
-        how="right",
-    ).fillna("unknown")
-
-    print(hf_recent_permissions[["label", "permission_abbrv", "timestamp"]])
-
-    no_hf_recent_permissions = recent_permissions[
-        ~recent_permissions["op"].isin(app_permissions_tbl["permission_abbrv"])
-    ]
-    print(
-        "\nCouldn't find human-friendly descriptions for {} recently used app operations:".format(
-            no_hf_recent_permissions.shape[0]
-        )
-    )
-
-    print(no_hf_recent_permissions[["op", "timestamp", "time_ago", "duration"]])
-
-    no_hf = set(app_perms) - set(app_permissions_tbl["permission"].tolist())
-    print(
-        "\nCouldn't find human-friendly descriptions for {} app permissions:".format(
-            len(no_hf)
-        )
-    )
-    for x in no_hf:
-        hf = x.split(".")[-1]
-        hf = hf[:1] + hf[1:].lower().replace("_", " ")
-        print("\t" + str(x) + " (" + str(hf) + ")")

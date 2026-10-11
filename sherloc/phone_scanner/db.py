@@ -43,7 +43,7 @@ def get_db():
     return db
 
 
-def init_db(app, sa, force=False):
+def init_db(app):
     """Create the tables. schema.sql only uses IF NOT EXISTS, so it is safe to
     run on every start, and it adds tables that a database from an earlier
     version does not have yet."""

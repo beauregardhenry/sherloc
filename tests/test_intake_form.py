@@ -20,7 +20,7 @@ from web.forms import ClientForm
 @pytest.fixture
 def client():
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     c = web.app.test_client()
     with c.session_transaction() as s:
         s["clientid"] = "20261010_007"

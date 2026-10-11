@@ -14,7 +14,7 @@ from web.forms import ClientForm
 
 def _db_with_forms(rows):
     web.app.config.update(TESTING=True)
-    phone_db.init_db(web.app, None)
+    phone_db.init_db(web.app)
     path = config.SQL_DB_PATH.replace("sqlite:///", "")
     con = sqlite3.connect(path)
     for concerns, vulns in rows:

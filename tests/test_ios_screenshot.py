@@ -61,7 +61,7 @@ def _call():
     from web import app
 
     with app.test_request_context("/"):
-        return privacy.iosScreenshot("00008030-001234567890802E", "ctx", nocache=True)
+        return privacy.iosScreenshot("00008030-001234567890802E", "ctx")
 
 
 def test_command_is_a_list_and_keeps_a_path_with_spaces_whole(env):
