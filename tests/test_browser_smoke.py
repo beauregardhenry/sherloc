@@ -15,11 +15,11 @@ import pytest
 
 pw = pytest.importorskip("playwright.sync_api")
 
-import web  # noqa: E402
-import web.view  # noqa: E402,F401
 import config  # noqa: E402
 import consultstore  # noqa: E402
 import evidence_collection as ec  # noqa: E402
+import web  # noqa: E402
+import web.view  # noqa: E402,F401
 
 NAME = "Example Client"
 NOTE = "BROWSER-SMOKE-NOTE-7731"
@@ -43,8 +43,9 @@ def app_url(tmp_path, monkeypatch):
     monkeypatch.setattr("web.view.evidence.create_printout", lambda ctx: real_create(ctx, out_file=str(out)))
     monkeypatch.setattr("web.view.evidence.send_from_directory", lambda _d, _f: web.view.evidence.send_file(str(out)))
 
-    from phone_scanner import db as phone_db
     from werkzeug.serving import make_server
+
+    from phone_scanner import db as phone_db
 
     phone_db.init_db(web.app, None)
     # The real app checks CSRF tokens, so the clicks here must pass that check.

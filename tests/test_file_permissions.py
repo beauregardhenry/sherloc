@@ -9,8 +9,8 @@ import stat
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
+import web  # noqa: F401  (import order: web first avoids a circular import)
 
 
 @pytest.fixture

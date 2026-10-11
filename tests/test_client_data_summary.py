@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import clientdata
 import config
+import web  # noqa: F401  (import order: web first avoids a circular import)
 from web import app
 
 SCHEMA = Path(config.THIS_DIR) / "web" / "schema.sql"

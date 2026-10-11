@@ -1,9 +1,11 @@
+import os
 import sqlite3
+from datetime import datetime as dt
+
+from flask import g
+
 import clientwords
 import config
-from flask import g
-from datetime import datetime as dt
-import os
 from debuglog import debug
 
 

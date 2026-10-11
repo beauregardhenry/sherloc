@@ -6,9 +6,9 @@ import sys
 import pandas as pd
 import pytest
 
+import config
 import web
 import web.view  # noqa: F401
-import config
 from phone_scanner import db as phone_db
 
 SER = "ZY22CLASSIC"

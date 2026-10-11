@@ -5,14 +5,14 @@ Must work completely from the dumps, no interaction with the device is required.
 import datetime
 import re
 
-import config
 import pandas as pd
 from rsonlite import simpleparse
 
+import config
+from debuglog import debug
 from inputcheck import validate_appid
 
 from .runcmd import run_command
-from debuglog import debug
 
 DUMPPKG = "dumppkg"
 

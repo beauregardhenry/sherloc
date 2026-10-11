@@ -4,33 +4,6 @@ import os
 import time
 from datetime import datetime
 
-import config
-from evidence_collection import (
-    TMP_CONSULT_DATA_DIR,
-    DEVICE_TYPE_CHOICES,
-    LEGAL_CHOICES,
-    PERSON_CHOICES,
-    PWD_CHOICES,
-    TWO_FACTOR_CHOICES,
-    YES_NO_UNSURE_CHOICES,
-    AccountCompromiseForm,
-    AccountInvestigation,
-    ConsultationData,
-    ConsultDataTypes,
-    ConsultNotesData,
-    HomepageNoteForm,
-    MultScreenshotEditForm,
-    TAQData,
-    TAQForm,
-    PdfUnavailable,
-    create_printout,
-    delete_client_data,
-    get_scan_by_ser,
-    get_ser_from_scan_obj,
-    load_json_data,
-    load_object_from_json,
-    save_data_as_json,
-)
 from flask import (
     flash,
     redirect,
@@ -41,12 +14,40 @@ from flask import (
     session,
     url_for,
 )
-from phone_scanner import AndroidScan, IosScan
+
+import config
 import consultstore
 import indicators
+from debuglog import debug, pdebug
+from evidence_collection import (
+    DEVICE_TYPE_CHOICES,
+    LEGAL_CHOICES,
+    PERSON_CHOICES,
+    PWD_CHOICES,
+    TMP_CONSULT_DATA_DIR,
+    TWO_FACTOR_CHOICES,
+    YES_NO_UNSURE_CHOICES,
+    AccountCompromiseForm,
+    AccountInvestigation,
+    ConsultationData,
+    ConsultDataTypes,
+    ConsultNotesData,
+    HomepageNoteForm,
+    MultScreenshotEditForm,
+    PdfUnavailable,
+    TAQData,
+    TAQForm,
+    create_printout,
+    delete_client_data,
+    get_scan_by_ser,
+    get_ser_from_scan_obj,
+    load_json_data,
+    load_object_from_json,
+    save_data_as_json,
+)
+from phone_scanner import AndroidScan, IosScan
 from takehome import create_takehome_pdf, neutral_filename
 from web import app
-from debuglog import debug, pdebug
 
 USE_PICKLE_FOR_SUMMARY = False
 USE_FAKE_DATA = True

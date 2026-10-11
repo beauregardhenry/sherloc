@@ -6,9 +6,10 @@ import sqlite3
 import time
 from datetime import datetime
 
-import config
 import pytest
+
 import clientwords
+import config
 import web
 import web.view
 from phone_scanner import blocklist

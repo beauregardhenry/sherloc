@@ -9,9 +9,9 @@ from datetime import date
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
 import indicators
+import web  # noqa: F401  (import order: web first avoids a circular import)
 
 IOC = [
     {"name": "Alpha", "names": ["Alpha Spy", "Alpha Tracker"], "packages": ["com.alpha.spy", "com.alpha.two"]},

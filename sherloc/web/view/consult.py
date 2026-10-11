@@ -1,11 +1,13 @@
-import intake_choices
-import config
 import json
-from web import app, sa
-from web.model import Client
-from web.forms import ClientForm
-from flask import render_template, request, session, redirect, url_for
+
+from flask import redirect, render_template, request, session, url_for
+
+import config
+import intake_choices
 from debuglog import debug
+from web import app, sa
+from web.forms import ClientForm
+from web.model import Client
 
 
 @app.route("/form/", methods=["GET", "POST"])

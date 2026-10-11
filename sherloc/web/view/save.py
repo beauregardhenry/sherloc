@@ -1,14 +1,15 @@
 from flask import request
+
 import config
+from debuglog import debug, warn
 from inputcheck import validate_appid, validate_serial
-from web import app
 from phone_scanner.db import (
+    get_device_from_db,
     get_serial_from_db,
     update_appinfo,
-    get_device_from_db,
 )
-from web.view.index import get_device
-from debuglog import debug, warn
+from scanflow import get_device
+from web import app
 
 
 @app.route("/delete/app/<scanid>", methods=["POST"])

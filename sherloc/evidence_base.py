@@ -1,7 +1,7 @@
 """Base classes and small shared types for the consultation data."""
-from pathlib import Path
 import json
 import subprocess
+from pathlib import Path
 
 
 # Helps create JSON encoding from nested classes

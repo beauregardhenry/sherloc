@@ -4,11 +4,10 @@ import time
 from flask import render_template
 
 import config
+from debuglog import debug
 from inputcheck import validate_path_part, validate_serial
-
 from phone_scanner.privacy_scan_android import do_privacy_check, screenshot_img
 from web import app
-from debuglog import debug
 
 
 @app.route("/privacy", methods=["GET"])

@@ -10,10 +10,11 @@ from pathlib import Path
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
 import evidence_collection as ec
-from phone_scanner import parse_dump, privacy_scan_android as psa
+import web  # noqa: F401  (import order: web first avoids a circular import)
+from phone_scanner import parse_dump
+from phone_scanner import privacy_scan_android as psa
 from web import app
 
 SCHEMA = Path(config.THIS_DIR) / "web" / "schema.sql"

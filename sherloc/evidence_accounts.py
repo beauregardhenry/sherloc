@@ -3,7 +3,14 @@ import os
 import re
 
 import config
-from evidence_base import DictInitClass, Dictable, Notes, Risk, RiskReport, ScreenshotInfo
+from evidence_base import (
+    Dictable,
+    DictInitClass,
+    Notes,
+    Risk,
+    RiskReport,
+    ScreenshotInfo,
+)
 
 
 class AccountSection(DictInitClass):

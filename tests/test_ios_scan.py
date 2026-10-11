@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
+import web  # noqa: F401  (import order: web first avoids a circular import)
 from phone_scanner import IosScan, parse_dump
 
 UDID = "00008030001a2c3e0a01802e"

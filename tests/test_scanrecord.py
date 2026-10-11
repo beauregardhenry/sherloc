@@ -6,9 +6,9 @@ the other as plain text).
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
 import scanrecord
+import web  # noqa: F401  (import order: web first avoids a circular import)
 
 
 def _record(**kw):

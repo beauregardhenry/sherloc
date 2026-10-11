@@ -1,9 +1,10 @@
-from flask import abort, request, render_template
-from web import app
-from web.view import get_device
+from flask import abort, render_template, request
+
 import config
-from inputcheck import validate_appid, validate_serial
 from debuglog import debug
+from inputcheck import validate_appid, validate_serial
+from scanflow import get_device
+from web import app
 
 
 @app.route("/details/app/<device>", methods=["GET"])

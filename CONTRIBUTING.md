@@ -30,6 +30,7 @@ To run the app itself, see the README.
 
 - Run `./dev.sh`. The suite includes checks that fail on:
   - a new undefined name, bare `except`, mutable default argument, `eval` or `shell=True`, or dead code: an unused import or variable, or commented-out code. Delete code instead of commenting it out; git keeps the history (`tests/test_lint_ratchet.py`; existing findings are listed in `tests/lint_baseline.json`, which should only get shorter)
+  - unsorted imports. `ruff check --select I001 --fix sherloc tests` sorts them (`tests/test_import_order.py`)
   - a place that writes a file or opens a database and is not listed in `tests/data_write_sites.json`
   - a public name removed from `evidence_collection`
   - a changed URL (`tests/routes_snapshot.txt`)

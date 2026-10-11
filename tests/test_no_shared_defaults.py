@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import evidence_collection as ec
+import web  # noqa: F401  (import order: web first avoids a circular import)
 
 SRC = Path(__file__).resolve().parent.parent / "sherloc"
 MUTABLE_CALLS = {"list", "dict", "set"}
