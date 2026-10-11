@@ -6,10 +6,7 @@ import re
 import sqlite3
 import subprocess
 import sys
-from collections import defaultdict
 from datetime import datetime
-from pprint import pprint
-from time import sleep
 
 import config
 import pandas as pd
@@ -23,7 +20,6 @@ from debuglog import debug, warn
 
 class AppScan(object):
     device_type = ""
-    # app_info_conn = dataset.connect(config.APP_INFO_SQLITE_FILE)
     app_info_conn = sqlite3.connect(
         config.APP_INFO_SQLITE_FILE.replace("sqlite:///", ""), check_same_thread=False
     )
@@ -137,7 +133,6 @@ class AppScan(object):
                 # AppleSmartBattery.
                 d["permissions"] = pd.Series(info.get("permissions", []), dtype=object)
                 d["title"] = pd.Series(info.get("title", ""))
-                #del info["permissions"]
 
             d = d.fillna("").to_dict(orient="index").get(0, {}) # what does this do?
 
@@ -225,15 +220,6 @@ class AppScan(object):
         pass
 
     def save(self, table, **kwargs):
-        # try:
-        #     tab = db.get_table(table)
-        #     kwargs['device'] = kwargs.get('device', self.device_type)
-        #     tab.insert(kwargs)
-        #     db.commit()
-        #     return True
-        # except Exception as ex:
-        #     print(">> Exception:", ex, file=sys.stderr)
-        #     return False
         return False
 
     def device_info(self, serial):
@@ -255,7 +241,6 @@ class AndroidScan(AppScan):
         self.serialno = None
         self.installed_apps = None
         self.dump_d = None
-        # self.setup()
 
     def setup(self):
         """Restart the adb server."""
@@ -370,10 +355,6 @@ class AndroidScan(AppScan):
         return offstore
 
     def devices(self):
-        # cmd = '{cli} devices | tail -n +2 | cut -f2'
-        # runcmd = catch_err(run_command(cmd), cmd=cmd).strip()
-        # cmd = '{cli} kill-server; {cli} start-server'
-        # s = catch_err(run_command(cmd), time=30, msg="ADB connection failed", cmd=cmd)
         cmd = [self.cli, "devices"]
         p = run_command(cmd)
         output = catch_err(p, cmd=" ".join(cmd))
@@ -399,9 +380,6 @@ class AndroidScan(AppScan):
                 conn_devices.append(device)
         return conn_devices
 
-    # def devices_info(self):
-    #     cmd = '{cli} devices -l'
-    #     return run_command(cmd).stdout.read().decode('utf-8')
 
     def _getprop(self, serial, prop):
         p = run_command([self.cli, "-s", serial, "shell", "getprop", prop])
@@ -416,18 +394,6 @@ class AndroidScan(AppScan):
         m["last_full_charge"] = datetime.now()
         return "{brand} {model} (running Android {version})".format(**m), m
 
-    # def dump_phone(self, serialno=None):
-    #     if not serialno:
-    #         serialno = self.devices()[0]
-    #     cmd = '{cli} -s {serial} shell dumpsys'
-    #     p = run_command(cmd, serial=serialno)
-    #     outfname = os.path.join(config.DUMP_DIR, '{}.txt.gz'.format(serialno))
-    #     # if p.returncode != 0:
-    #     #     print("Dump command failed")
-    #     #     return
-    #     with gzip.open(outfname, 'w') as f:
-    #         f.write(p.stdout.read())
-    #     print("Dump success! Written to={}".format(outfname))
 
     def uninstall(self, serial, appid):
         validate_appid(appid)
@@ -453,14 +419,8 @@ class AndroidScan(AppScan):
         # output.  maybe concat hf_recent with them?
         info["install_time"] = stats.get("firstInstallTime", "")
         info["last_updated"] = stats.get("lastUpdateTime", "")
-        # info['Last Used'] = stats['used']
 
-        # TODO: what is the difference between usedScr and used?  Does a
-        # background process count as used? Probably not since appOps
-        # permissions have been more recent than 'used' on some scans.
-        # info['Last Used Screen'] = stats['usedScr']
         info["app_version"] = stats.get("versionName", "")
-        # info['App Version Code'] = stats['versionCode']
 
         # hf_recent['label'] = hf_recent[['label',
         # 'timestamp']].apply(lambda x: ''.join(str(x), axis=1))
@@ -492,19 +452,11 @@ class AndroidScan(AppScan):
                 
         
 
-        #d["permissions"] = list(zip(hf_recent["label"].tolist(), hf_recent["timestamp"].tolist()))
  
-        # print("hf_recent['label']=", hf_recent['label'].tolist())
-        # print(~hf_recent['timestamp'].str.contains('unknown'))
         non_hf_recent.drop("appId", axis=1, inplace=True)
 
-        #d["permissions"] = hf_recent["label"].tolist()
         d["non_hf_permissions_html"] = non_hf_recent.to_html()
 
-        # hf_recent['label'] = hf_recent['label'].map(str) + " (last used by app: "+\
-        #        (hf_recent['timestamp'].map(str) if isinstance(hf_recent['timestamp'], datetime) else 'nooo') +")"
-        # d['recent_permissions'] = hf_recent['timestamp']
-        # print(d['recent_permissions'])
         return d, info
 
     def isrooted(self, serial):
@@ -554,35 +506,6 @@ class IosScan(AppScan):
 
     def setup(self, attempt_remount=False):
         """FIXME: iOS setup."""
-        # if config.PLATFORM == "linux" and attempt_remount:
-        #     # should show GUI prompt for password. sudo apt install policykit-1 if not there.
-        #     cmd = "pkexec '" + config.SCRIPT_DIR + "/ios_mount_linux.sh' mount"
-        #     # mountmsg = run_command(cmd).stderr.read().decode('utf-8')
-        #     if catch_err(run_command(cmd)) == -1:
-        #         return (
-        #             False,
-        #             "Couldn't detect device. See {}/ios_mount_linux.sh.".format(
-        #                 config.SCRIPT_DIR
-        #             ),
-        #         )
-        # cmd = "{}idevicepair pair".format(self.cli)
-        # pairmsg = run_command(cmd).stdout.read().decode("utf-8")
-        # if "No device found, is it plugged in?" in pairmsg:
-        #     return (False, pairmsg)
-        # elif "Please enter the passcode on the device and retry." in pairmsg:
-        #     return (
-        #         False,
-        #         "Please unlock your device and follow the trust dialog"
-        #         " (you will need to enter your passcode). Then try to scan again.",
-        #     )
-        # elif "SUCCESS: Paired with device" in pairmsg:
-        #     return (True, "Device successfully paired. Setup complete.")
-        # elif "said that the user denied the trust dialog." in pairmsg:
-        #     return (
-        #         False,
-        #         "The trust dialog was denied. Please unplug the device"
-        #         ", reconnect it, and scan again -- accept the trust dialog to proceed.",
-        #     )
         return (True, "Follow trust dialog on iOS device to continue.")
 
     # TODO: This might send titles out of order. Fix this to send both appid and
@@ -622,7 +545,6 @@ class IosScan(AppScan):
                 return False
             return re.match(r"[a-f0-9]+", x) is not None
 
-        # cmd = '{cli} --detect -t1 | tail -n 1'
         cmd = ["pymobiledevice3", "usbmux", "list"]
 
         self.serialno = None
@@ -655,9 +577,7 @@ class IosScan(AppScan):
             return ("", {})
 
     def _load_dump(self, serial) -> parse_dump.IosDump:
-        # hmac_serial = config.hmac_serial(serial)
         path = self.dump_path(serial, fkind="Dir")
-        # dumped = catch_err(run_command(cmd)).strip()
         dumpf = os.path.join(path, config.IOS_DUMPFILES["Apps"])
         dumpfinfo = os.path.join(path, config.IOS_DUMPFILES["Info"])
         self.parse_dump = parse_dump.IosDump(dumpf, finfo=dumpfinfo)
@@ -692,8 +612,6 @@ class IosScan(AppScan):
             return False
 
     def uninstall(self, serial, appid):
-        # cmd = '{cli} -i {serial} --uninstall_only --bundle_id {appid!r}'
-        # cmd = 'ideviceinstaller --udid {} --uninstall {appid!r}'.format(serial, appid)
         validate_appid(appid)
         validate_serial(serial)
         # `--udid` targets the device that was scanned.
@@ -703,121 +621,9 @@ class IosScan(AppScan):
         return ok
 
     def isrooted(self, serial):
-        # dict with 'True' and 'False' mapping to a list of reasons for root/no root
-        rooted = defaultdict(list)
-        # TODO This should be removed once the check is fixed
-        rooted_reason = "Jailbreak and root checks are currently disabled for iOS devices."
-        return (False, rooted_reason)
-        try:
-            with open(self.dump_path(serial, "Jailbroken-FS"), "r") as fh:
-                JAILBROKEN_LOG = fh.readlines()
-            if (
-                "Your device needs to be jailbroken and have the AFC2 service installed.\n"
-                in JAILBROKEN_LOG
-            ):
-                rooted["False"].append(
-                    "Filesystem is not rooted. *Highly unlikely* to be jailbroken."
-                )
-            elif "No such file or directory" in JAILBROKEN_LOG:
-                rooted["False"].append("Unable to check device.")
-            else:
-                rooted["True"].append(
-                    "Filesystem *might* be rooted. Conduct additional checks."
-                )
-        except FileNotFoundError:
-            debug("Couldn't find Jailbroken FS check log.")
-            # TODO: trigger error message? like
-            # TODO: show a try again, maybe it's not plugged in properly. still not working?
-            # this could be due to many many many reasons.
-            # return (True, ['FS check failed, jailbreak not necessarily occurring.'])
-
-        try:
-            with open(self.dump_path(serial, "Jailbroken-SSH"), "r") as fh:
-                JAILBROKEN_SSH_LOG = fh.readlines()
-            if "0\n" in JAILBROKEN_SSH_LOG:
-                rooted["True"].append("SSH is enabled.")
-        except FileNotFoundError:
-            # TODO: trigger error message? like
-            # TODO: show a try again, maybe it's not plugged in properly. still not working?
-            #  this could be due to many many many reasons.
-            debug("Couldn't find Jailbroken SSH check log.")
-
-        # if app["Path"].split("/")[-1] in ["Cydia.app"]
-        """ Summary of jailbroken detection: checks for commonly installed jailbreak apps,
-        tries to mount root filesystem (AFC2, by default on iOS 7 and lower,
-        tries to SSH into the phone (FIXME). iproxy 2222 22 `idevice_id -l` says
-        "waiting for connection" perpertually if not work. says "accepted connection" on next line if it does.
-        https://twitter.com/bellis1000/status/807527492810665984?lang=en
-        # add to jailbroken log
-        # FIXME: load from private data blocklist. More to be added.
-        """
-        # FIXME: NEED to apply first to df. self.installed_apps not sufficient.
-        #  dotapps.append(app["Path"].split("/")[-1])
-
-        apps_titles = self.parse_dump.installed_apps_titles()["title"].tolist()
-        # TODO: convert to set check
-        for app in [
-            "Cydia",
-            "blackra1n",
-            "Undecimus",
-            "FakeCarrier",
-            "Icy",
-            "IntelliScreen",
-            "MxTube",
-            "RockApp",
-            "SBSettings",
-            "WinterBoard",
-            "3uTools",
-            "Absinthe",
-            "backr00m",
-            "blackra1n",
-            "Corona",
-            "doubleH3lix",
-            "Electra",
-            "EtasonJB",
-            "evasi0n",
-            "evasi0n7",
-            "G0blin",
-            "Geeksn0w",
-            "greenpois0n",
-            "h3lix",
-            "Home Depot",
-            "ipwndfu",
-            "JailbreakMe",
-            "LiberiOS",
-            "LiberTV",
-            "limera1n",
-            "Meridian",
-            "p0sixspwn",
-            "Pangu",
-            "Pangu8",
-            "Pangu9",
-            "Phœnix",
-            "PPJailbreak",
-            "purplera1n",
-            "PwnageTool",
-            "redsn0w",
-            "RockyRacoon",
-            "Rocky Racoon",
-            "Saïgon",
-            "Seas0nPass",
-            "sn0wbreeze",
-            "Spirit",
-            "TaiG",
-            "unthredera1n",
-            "yalu",
-        ]:
-            if app in apps_titles:
-                rooted["True"].append("{} was found on the device.".format(app))
-
-        # if apps check passes
-        if not rooted:
-            rooted["False"].append("Did not find popular jailbreak apps installed.")
-            """ check for jailbroken status after attempts logged by ios_dump.sh """
-        if "True" in rooted:
-            return (True, rooted["True"])
-        else:
-            return (False, rooted["False"])
+        # The jailbreak check is disabled until it is fixed. The old check, which
+        # read the Jailbroken-FS and Jailbroken-SSH dumps, is in commit 66a0d56.
+        return (False, "Jailbreak and root checks are currently disabled for iOS devices.")
 
 
 class TestScan(AppScan):
@@ -825,7 +631,6 @@ class TestScan(AppScan):
         super(TestScan, self).__init__("android", cli="cli")
 
     def get_apps(self, serialno):
-        # assert serialno == 'testdevice1'
         installed_apps = open(config.TEST_APP_LIST, "r").read().splitlines()
         return installed_apps
 

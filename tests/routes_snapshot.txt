@@ -2,7 +2,6 @@
 /client-screenshots/<path:relpath> ['GET', 'HEAD', 'OPTIONS'] client_screenshot
 /delete/app/<scanid> ['OPTIONS', 'POST'] delete_app
 /details/app/<device> ['GET', 'HEAD', 'OPTIONS'] app_details
-/error ['GET', 'HEAD', 'OPTIONS'] get_nothing
 /evidence/account ['GET', 'HEAD', 'OPTIONS'] evidence_account_default
 /evidence/account/<int:id> ['GET', 'HEAD', 'OPTIONS', 'POST'] evidence_account
 /evidence/delete-data ['OPTIONS', 'POST'] evidence_delete_data
@@ -27,9 +26,6 @@
 /kill ['OPTIONS', 'POST'] killme
 /privacy ['GET', 'HEAD', 'OPTIONS'] privacy
 /privacy/<device>/<cmd>/<context>/<ser> ['GET', 'HEAD', 'OPTIONS'] privacy_scan
-/saveapps/<scanid> ['OPTIONS', 'POST'] record_applist
-/savescan/<scanid> ['OPTIONS', 'POST'] record_scanres
 /scan ['GET', 'HEAD', 'OPTIONS', 'POST'] scan
-/view_results ['GET', 'HEAD', 'OPTIONS', 'POST'] view_results
 /webstatic/<path:filename> ['GET', 'HEAD', 'OPTIONS'] static
 /webstatic/bootstrap/<path:filename> ['GET', 'HEAD', 'OPTIONS'] bootstrap.static

@@ -4,7 +4,6 @@
     <div class="container form-group">
         <table class="table table-bordered">
             <tbody>
-                <!-- <i class="material-icons">info</i> -->
 		<tr><td>AppId</td><td><code>{{ app.appId }}</code></td></tr>
 		{% if app.developer %}
 		<tr><td>Developer</td> <td><i>{{ app.developer }}</i> </td></tr>
@@ -26,10 +25,6 @@
             <li class="code">{{ perm | capitalize | replace('_', ' ') }}</li>
             {% endfor %}
         </ul>
-	<!-- label class="btn btn-danger">
-	     <button type="button" class="btn btn-danger"
-	     onclick='delete_app({{ app.appId|tojson }}, this)' disabled>Delete</button>
-	     </label -->
     </div>
 
     <div class="jumbotron" style="padding: 1em">

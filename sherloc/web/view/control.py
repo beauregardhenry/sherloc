@@ -2,7 +2,6 @@ import os
 import signal
 from threading import Timer
 
-from flask import request
 from web import app
 
 

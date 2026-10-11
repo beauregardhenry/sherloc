@@ -30,7 +30,7 @@ try:
             "source": "",
         }
     )
-except FileNotFoundError as e:
+except FileNotFoundError:
     # Exit with an error: a missing blocklist must not look like success.
     raise SystemExit(f"I can't find the blocklist file: {config.APP_FLAGS_FILE!r}.")
 
@@ -59,9 +59,6 @@ def dedup_app_flags(df):
 
 
 def _regex_blocklist(app):
-    # print("_regex_balcklist: {}".format(app))
-    # return ['regex-spy'] if (SPY_REGEX['pos'].search(app) and not SPY_REGEX['neg'].search(app)) \
-    #     else []
     return (
         SPY_REGEX["pos"].search(app) is not None
         and SPY_REGEX["neg"].search(app) is None
@@ -118,20 +115,12 @@ def flag_str(flags):
     )
 
 
-def store_str(st):
-    if st in ("playstore", "appstore"):
-        return "onstore"
-    else:
-        return "offstore"
-
-
 def app_title_and_flag(apps, offstore_apps=None, system_apps=None):
     """Gets app flags and title from app-flags.csv file."""
     if offstore_apps is None:
         offstore_apps = []
     if system_apps is None:
         system_apps = []
-    # print(apps)
     debug("Size of app-flags: {}".format(len(APP_FLAGS)))
     _td = dedup_app_flags(apps.merge(APP_FLAGS, on="appId", how="left")).set_index(
         "appId"
@@ -142,34 +131,18 @@ def app_title_and_flag(apps, offstore_apps=None, system_apps=None):
     _td.loc[offstore_apps, "flags"].apply(lambda x: x.append("offstore-app"))
     _td.loc[system_apps, "flags"].apply(lambda x: x.append("system-app"))
 
-    # print(apps, flagged_apps)
     spy_regex_app = (
         _td.index.map(_regex_blocklist).values
         | _td.title.fillna("").apply(_regex_blocklist).values
     )
     _td.loc[spy_regex_app, "flags"].apply(lambda x: x.extend(["regex-spy"]))
 
-    # Seperate kevin's list from app-flags, here is a dirty hack
-    # odds_ratio_apps = set(APP_FLAGS.query('source == "odds-ratio"').index)\
-    #                   .intersection(set(apps['appId']))
-    # _td.loc[odds_ratio_apps, 'flags'].apply(lambda x: set(x) | {'co-occurrence'})
 
     ret = _td[["title", "flags"]].reset_index()
 
     return ret
 
 
-# def flag_apps(apps, device=''):
-#     """Flag a list of apps based on the APP_FLAGS obtained from the csv file, or spy regex flags"""
-#     _td = APP_FLAGS.loc[set(apps) & set(APP_FLAGS.index)]
-#     flagged_apps = (_td['store'].apply(store_str) + '-' + _td['flag']).fillna('').apply(lambda x: [x] if x else [])
-#     # print(apps, flagged_apps)
-#     a = flagged_apps + flagged_apps.index.map(_regex_blocklist)
-#     return a
-
-
-# def flag_app(app, device=''):
-#     return flag_apps([app], device=device).iloc[0]
 if __name__ == "__main__":
     apps = pd.DataFrame({"appId": ["com.TrackView", "com.apple.mobileme.fmf1"]})
     print(app_title_and_flag(apps, system_apps=["com.apple.mobileme.fmf1"]))

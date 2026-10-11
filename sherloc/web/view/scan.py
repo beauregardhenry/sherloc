@@ -8,7 +8,6 @@ from flask import render_template, request, session, redirect, url_for
 from phone_scanner import blocklist, db
 from phone_scanner.db import (
     get_client_devices_from_db,
-    new_client_id,
     create_scan,
     create_mult_appinfo,
     first_element_or_none,
@@ -37,11 +36,9 @@ def scan():
     :param cientid: id of the cient
     :return: a flask view template
     """
-    # clientid = request.form.get('clientid', request.args.get('clientid'))
     if "clientid" not in session:
         return redirect(url_for("index"))
 
-    clientid = session["clientid"]
     device_primary_user = get_param("device_primary_user")
     device = get_param("device")
     action = get_param("action")
@@ -112,33 +109,7 @@ def scan():
         template_d["error"] = error
         return render_template("main.html", **template_d), 201
 
-    # clientid = new_client_id()
     debug(">>>scanning_device", device, ser, "<<<<<")
-
-    if device == "ios":
-        error = (
-            "If an iPhone is connected, open iTunes, click through the "
-            'connection dialog and wait for the "Trust this computer" '
-            "prompt to pop up in the iPhone, and then scan again."
-        )
-    else:
-        error = (
-            "If an Android device is connected, disconnect and reconnect "
-            "the device, make sure developer options is activated and USB "
-            "debugging is turned on on the device, and then scan again."
-        )
-    error += (
-        "{} <b>Please follow the <a href='/instruction' target='_blank'"
-        " rel='noopener'>setup instructions here,</a> if needed.</b>"
-    )
-
-    # if device == 'ios':
-    #     # go through pairing process and do not scan until it is successful.
-    #     isconnected, reason = sc.setup()
-    #     template_d["error"] = error.format(reason)
-    #     template_d["currently_scanned"] = currently_scanned
-    #     if not isconnected:
-    #         return render_template("main.html", **template_d), 201
 
     # TODO: model for 'devices scanned so far:' device_name_map['model']
     # and save it to scan_res along with device_primary_user.
@@ -205,8 +176,7 @@ def scan():
         pii_fpath = sc.dump_path(ser, "Device_Info")
         debug("Revelant info saved to db. Deleting {} now.".format(pii_fpath))
         if os.path.exists(pii_fpath):
-            cmd = os.unlink(pii_fpath)
-        # s = catch_err(run_command(cmd), msg="Delete pii failed", cmd=cmd)
+            os.unlink(pii_fpath)
         debug("iOS PII deleted.")
 
     debug("Creating appinfo...")
@@ -231,9 +201,6 @@ def scan():
             sysapps=set(),  # sc.get_system_apps(serialno=ser)),
             serial=ser,
             currently_scanned=currently_scanned,
-            # TODO: make this a map of model:link to display scan results for that
-            # scan.
-            error=config.error(),
         )
     )
     return render_template("main.html", **template_d), 200

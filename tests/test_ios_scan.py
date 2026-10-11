@@ -1,7 +1,6 @@
 """IosScan and IosDump against fake tools and a small synthetic dump."""
 
 import json
-import os
 
 import pytest
 

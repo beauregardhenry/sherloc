@@ -42,39 +42,7 @@ class InstallForm(FlaskForm):
     knew_installed = RadioField(InstallInfo().questions["knew_installed"], choices=YES_NO_UNSURE_CHOICES, default=YES_NO_DEFAULT)
     installed = RadioField(InstallInfo().questions["installed"], choices=YES_NO_UNSURE_CHOICES, default=YES_NO_DEFAULT)
     coerced = RadioField(InstallInfo().questions["coerced"], choices=YES_NO_UNSURE_CHOICES, default=YES_NO_DEFAULT)
-    #who = TextAreaField("If you were coerced, who coerced you?")
 
-class SpywareAppForm(FlaskForm):
-    title = HiddenField("App Name")
-    install_form = FormField(InstallForm)
-    app_name = HiddenField("App Name")
-    appId = HiddenField("App ID")
-    flags = HiddenField("Flags")
-    application_icon = HiddenField("App Icon")
-    app_website = HiddenField("App Website")
-    description = HiddenField("Description")
-    #descriptionHTML = HiddenField("HTML Description")
-    developerwebsite = HiddenField("Developer Website")
-    permissions = HiddenField("Permissions")
-    subclass = HiddenField("Subclass")
-    summary = HiddenField("Summary")
-    notes = FormField(NotesForm)
-
-class DualUseAppForm(FlaskForm):
-    title = HiddenField("App Name")
-    install_info = FormField(InstallForm)
-    permissions = FieldList(FormField(PermissionForm))
-    app_name = HiddenField("App Name")
-    appId = HiddenField("App ID")
-    flags = HiddenField("Flags")
-    application_icon = HiddenField("App Icon")
-    app_website = HiddenField("App Website")
-    description = HiddenField("Description")
-    #descriptionHTML = HiddenField("HTML Description")
-    developerwebsite = HiddenField("Developer Website")
-    subclass = HiddenField("Subclass")
-    summary = HiddenField("Summary")
-    notes = FormField(NotesForm)
 
 ## HELPER FORMS FOR ACCOUNTS
 class SuspiciousLoginsForm(FlaskForm):
@@ -110,29 +78,13 @@ class SecurityQForm(FlaskForm):
     know = RadioField(SecurityQuestions().questions["know"], choices=YES_NO_UNSURE_CHOICES, default=YES_NO_DEFAULT)
     which = TextAreaField(SecurityQuestions().questions["which"])
 
-class AccountInfoForm(FlaskForm):
-    username = TextAreaField("Username")
-    account_platform = TextAreaField("Platform")
-    suspicious_logins = FormField(SuspiciousLoginsForm)
-    password_check = FormField(PasswordForm)
-    recovery_settings = FormField(RecoveryForm)
-    two_factor_settings = FormField(TwoFactorForm)
-    security_questions = FormField(SecurityQForm)
-    notes = FormField(NotesForm)
 
 class AppSelectForm(FlaskForm):
     title = HiddenField("App Name")
     appId = HiddenField("App ID")
     flags = HiddenField("Flags")
     app_name = HiddenField("App Name")
-    #application_icon = HiddenField("App Icon")
     app_website = HiddenField("App Website")
-    #description = HiddenField("Description")
-    #descriptionHTML = HiddenField("HTML Description")
-    #developerwebsite = HiddenField("Developer Website")
-    #permission_info = HiddenField(FormField(PermissionForm))
-    #subclass = HiddenField("Subclass")
-    #summary = HiddenField("Summary")
     investigate = BooleanField("Check this app?")
 
 ## INDIVIDUAL PAGES
@@ -143,19 +95,6 @@ class StartForm(FlaskForm):
     submit = SubmitField("Scan Device")
     manualadd = SubmitField("Select apps manually")
 
-class ScanForm(FlaskForm):
-    title = "Scan Instructions"
-    submit = SubmitField("Scan")
-
-class SpywareForm(FlaskForm):
-    title = "Step 1: Spyware Check"
-    spyware_apps = FieldList(FormField(SpywareAppForm))
-    submit = SubmitField("Continue")
-
-class DualUseForm(FlaskForm):
-    title = "Step 2: Dual Use App Check"
-    dual_use_apps = FieldList(FormField(DualUseAppForm))
-    submit = SubmitField("Continue")
 
 class SingleAppCheckForm(FlaskForm):
     title = HiddenField("App Name")

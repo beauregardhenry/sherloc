@@ -4,7 +4,7 @@ import logging
 import os
 import config
 from flask import Flask, g, session, request
-from flask_sqlalchemy import model, SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from htmlclean import clean_description
 from web.security import register_request_guards
@@ -16,9 +16,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = config.SQL_DB_PATH
 # Echoed statements include client notes and device serials.
 app.config["SQLALCHEMY_ECHO"] = bool(int(os.getenv("SHERLOC_SQL_ECHO", "0")))
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.secret_key = config.FLASK_SECRET  # doesn't seem to be necessary
-app.config["SECRET_KEY"] = config.FLASK_SECRET  # doesn't seem to be necessary
-app.config["SESSION_TYPE"] = "filesystem"
+# Signs the session cookie and the CSRF tokens.
+app.config["SECRET_KEY"] = config.FLASK_SECRET
 sa = SQLAlchemy(app)
 Migrate(app, sa)
 
@@ -27,7 +26,7 @@ app.jinja_env.filters["clean_html"] = clean_description
 
 logger = logging.getLogger(__name__)
 
-import web.view
+import web.view  # noqa: F401 - registers the routes
 
 import clientdata
 import indicators
@@ -72,8 +71,7 @@ def do_not_store(response):
 @app.after_request
 def after_request(response):
     """Logging after every request."""
-    # This avoids the duplication of registry in the log,
-    # since that 500 is already logged via @app.errorhandler.
+    # Flask already logs an unhandled exception (a 500) with its traceback.
     if response.status_code != 500:
         ts = strftime("[%Y-%b-%d %H:%M]")
         logger.error(

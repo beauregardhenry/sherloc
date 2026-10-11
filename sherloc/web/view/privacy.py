@@ -1,24 +1,13 @@
-import hashlib
-import hmac
-import os
-import random
-import re
-import sqlite3
 import subprocess
-import sys
 import time
-from collections import defaultdict
-from datetime import datetime
 
-from flask import render_template, request, url_for
+from flask import render_template, url_for
 
 import config
 from inputcheck import validate_path_part, validate_serial
 
-#from phone_scanner import iosScreenshot
-from phone_scanner.privacy_scan_android import do_privacy_check, take_screenshot
+from phone_scanner.privacy_scan_android import do_privacy_check
 from web import app
-from web.view.index import get_device
 from debuglog import debug
 
 

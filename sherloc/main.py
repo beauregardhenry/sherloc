@@ -43,5 +43,3 @@ if __name__ == "__main__":
     Timer(1, open_browser).start()
     app.run(host=HOST, port=PORT, debug=config.DEBUG, use_reloader=config.DEBUG)
 
-    # Use this to delete client data on exit
-    #atexit.register(delete_client_data)

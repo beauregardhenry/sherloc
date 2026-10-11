@@ -218,8 +218,6 @@ class TAQData(Dictable):
         self.marked_done = marked_done
         self.devices = TAQDevices(devices)
         self.accounts = TAQAccounts(accounts)
-        #if self.accounts.pwd_comp_which.strip() == "":
-        #    self.accounts.pwd_comp_which = "[Not provided]"
         self.sharing = TAQSharing(sharing)
         if self.sharing.phone_plan_admin == []:
             self.sharing.phone_plan_admin = ""

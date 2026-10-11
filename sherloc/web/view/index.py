@@ -3,11 +3,6 @@ from phone_scanner import AndroidScan, IosScan, TestScan
 from phone_scanner.db import new_client_id
 from web import app
 
-# FIXME: why are we scanning devices before people clicked on scan now?
-#android = AndroidScan()
-#ios = IosScan()
-#test = TestScan()
-
 
 # all in all, this particular section has a terrible code smell...
 def get_device(k):
@@ -20,8 +15,6 @@ def get_device(k):
 
 @app.route("/", methods=["GET"])
 def index():
-    # clientid = request.form.get('clientid', request.args.get('clientid'))
-    # if not clientid: # if not coming from notes
 
     newid = request.args.get("newid")
     # if it's a new day (see app.permenant_session_lifetime),

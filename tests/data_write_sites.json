@@ -18,7 +18,6 @@
   "phone_scanner/data_process.py::create_app_flags_file::to_csv": "tool",
   "phone_scanner/data_process.py::create_app_info_dict::connect": "tool",
   "phone_scanner/data_process.py::join_csv_files::to_csv": "tool",
-  "phone_scanner/db.py::create_report::to_csv": "client-data",
   "phone_scanner/db.py::get_db::connect": "client-data",
   "phone_scanner/db.py::init_db::makedirs": "client-data",
   "phone_scanner/isdi_summarize.py::__init__::connect": "tool",
@@ -26,6 +25,5 @@
   "phone_scanner/parse_dump.py::<module>::to_csv": "tool",
   "phone_scanner/parse_dump.py::check_unseen_permissions::open": "app-data",
   "phone_scanner/parse_dump.py::load_file::open": "client-data",
-  "phone_scanner/privacy_scan_android.py::take_screenshot::open": "client-data",
-  "scripts/blacklist-flags-odds.py::<module>::to_csv": "tool"
+  "phone_scanner/privacy_scan_android.py::take_screenshot::open": "client-data"
 }

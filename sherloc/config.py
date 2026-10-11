@@ -4,10 +4,8 @@ import logging
 import logging.handlers as handlers
 import os
 import secrets
-import shlex
 from datetime import datetime
 from pathlib import Path
-from sys import platform
 
 from inputcheck import validate_path_part
 
@@ -90,7 +88,6 @@ IOS_DUMPFILES = {
 }
 
 TEST_APP_LIST = "static_data/android.test.apps_list"
-# TITLE = "Anti-IPS: Stop Intimate Partner Surveillance"
 
 TITLE = {"title": "Sherloc{}".format(" (test)" if TEST else "")}
 
@@ -106,7 +103,6 @@ IOC_SOURCE_FILE = "static_data/app-flags-source.json"
 
 # An absolute path, so it does not depend on the working directory.
 SQL_DB_PATH = f"sqlite:///{DB_DIR / 'fieldstudy.db'}"
-# SQL_DB_CONSULT_PATH = 'sqlite:///data/consultnotes.db' + ("~test" if TEST else "")
 
 
 def set_test_mode(test):
@@ -134,32 +130,15 @@ STATIC_DATA = THIS_DIR / "static_data"
 
 # TODO: We should get rid of this, ADB_PATH is very confusing
 ANDROID_HOME = os.getenv("ANDROID_HOME", "")
-PLATFORM = (
-    "darwin"
-    if platform == "darwin"
-    else (
-        "linux"
-        if platform.startswith("linux")
-        else "win32" if platform == "win32" else None
-    )
-)
 
 # The path of the adb program. It is passed as one argument, never through a shell.
 ADB_PATH = os.path.join(ANDROID_HOME, "adb")
 
-# LIBIMOBILEDEVICE_PATH = shlex.quote(str(STATIC_DATA / ("libimobiledevice-" + PLATFORM)))
 LIBIMOBILEDEVICE_PATH = ""
-# MOBILEDEVICE_PATH = 'mobiledevice'
-# MOBILEDEVICE_PATH = os.path.join(THISDIR, "mdf")  #'python2 -m MobileDevice'
-if PLATFORM:
-    MOBILEDEVICE_PATH = shlex.quote(str(STATIC_DATA / ("ios-deploy-" + PLATFORM)))
-else:
-    MOBILEDEVICE_PATH = shlex.quote(str(STATIC_DATA / ("ios-deploy-none")))
 
 SCRIPT_DIR = THIS_DIR / "scripts"
 
 DATE_STR = "%Y-%m-%d %I:%M %p"
-ERROR_LOG = []
 
 APPROVED_INSTALLERS = {"com.android.vending", 
                        "com.sec.android.preloadinstaller", 
@@ -258,22 +237,6 @@ def hmac_serial(ser: str) -> str:
     hser = hmac.new(__getattr__("PII_KEY"), ser.encode("utf8"), digestmod=hashlib.sha256).hexdigest()
     return f"HSN_{hser}"
 
-
-def add_to_error(*args):
-    global ERROR_LOG
-    m = "\n".join(str(e) for e in args)
-    print(m)
-    ERROR_LOG.append(m)
-
-
-def error():
-    global ERROR_LOG
-    e = ""
-    if len(ERROR_LOG) > 0:
-        e, ERROR_LOG = ERROR_LOG[0], ERROR_LOG[1:]
-
-        print(f"ERROR: {e}")
-    return e.replace("\n", "<br/>")
 
 def create_screenshot_fname(context, serial="misc"):
     """Return a new screenshot path, creating its directory.

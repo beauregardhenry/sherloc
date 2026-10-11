@@ -1,11 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-<script src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
-<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
-<script src="{{ url_for('static', filename='myjscript.js') }}?3"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.6.2/fetch.min.js"></script>
-
 {% block content %}
 
 <div class="container">
@@ -43,14 +38,6 @@
                                     <li><i>Device nickname:</i> {{screenshot.device_nickname}}</li>
                                     <li><i>Device serial:</i> {{screenshot.device_serial}}</li>
                                     <li><i>Filename:</i> {{screenshot.fname}}</li>
-                                    {#
-                                    <li><i>Metadata:</i>
-                                        <ul>
-                                        {% for k, v in screenshot.metadata.items() %}
-                                        <li>{{k}} = {{v}}</li>
-                                        {% endfor %}
-                                        </ul>
-                                    </li>#}
                                 </ul>
                             </td>
                         </tr>

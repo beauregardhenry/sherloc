@@ -1,14 +1,12 @@
 """Whole-consultation data classes. The domain classes live in the evidence_* modules;
 they are re-exported here so `from evidence_model import X` keeps working."""
 from evidence_base import (  # noqa: F401
-    Pages,
     EvidenceDataEncoder,
     Dictable,
     DictInitClass,
     Risk,
     RiskReport,
     Notes,
-    RiskFactor,
     ScreenshotInfo,
 )
 from evidence_accounts import (  # noqa: F401

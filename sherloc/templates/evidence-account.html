@@ -2,14 +2,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% from "_formhelpers.html" import render_select, render_multiselect, render_text_field %}
 
-<script src="{{ url_for('static', filename='jquery-3.3.1.min.js') }}"></script>
-<script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
-<script src="{{ url_for('static', filename='myjscript.js') }}?3"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/3.6.2/fetch.min.js"></script>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-
 {% block content %}
-
 
 <div class="container">
     <div class="row">
@@ -39,8 +32,6 @@
                     <br/><br/>
                     {{ form.hidden_tag() }}
                     <div class="content">
-
-
 
                     <details>
                         <summary>
@@ -231,7 +222,6 @@
                             </div>
                         </div>
                     </details>
-
 
                         <h3>{{form.notes.label}}</h3>
                         {{form.notes.hidden_tag()}}
