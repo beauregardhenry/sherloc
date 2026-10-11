@@ -7,6 +7,7 @@ import sqlite3
 import subprocess
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 
@@ -19,11 +20,29 @@ from .android_permissions import all_permissions
 from .runcmd import catch_err, run_checked, run_command
 
 
+def read_app_info(sql: str, params: tuple, columns: list) -> pd.DataFrame:
+    """Rows from static_data/app-info.db, or none if it is not installed.
+
+    The database holds Play Store titles and descriptions. It is built from
+    crawls (data_process.py) and is not in the repository, so a fresh
+    installation has none. It is opened read-only, so a missing file is not
+    created as an empty one.
+    """
+    path = Path(config.APP_INFO_SQLITE_FILE.replace("sqlite:///", "", 1)).absolute()
+    if not path.is_file():
+        return pd.DataFrame(columns=columns)
+    con = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+    try:
+        return pd.read_sql(sql, con, params=params)
+    except pd.errors.DatabaseError as ex:
+        warn(f"app-info.db could not be read: {ex}")
+        return pd.DataFrame(columns=columns)
+    finally:
+        con.close()
+
+
 class AppScan(object):
     device_type = ""
-    app_info_conn = sqlite3.connect(
-        config.APP_INFO_SQLITE_FILE.replace("sqlite:///", ""), check_same_thread=False
-    )
 
     def __init__(self, dev_type, cli):
         assert (
@@ -92,8 +111,10 @@ class AppScan(object):
         try:
             # Read the database and get info about this app
             # TODO: Stop using the database
-            d = pd.read_sql(
-                "select * from apps where appid=?", self.app_info_conn, params=(appid,)
+            d = read_app_info(
+                "select * from apps where appid=?",
+                (appid,),
+                ["appid", "title", "description", "permissions"],
             )
 
             # Ensure the permissions attribute is a list
@@ -181,15 +202,13 @@ class AppScan(object):
         )
         r["title"] = r.title.fillna("")
         if self.device_type == "android":
-            td = pd.read_sql(
+            td = read_app_info(
                 "select appid as appId, title from apps where appid in (?{})".format(
                     ", ?" * (len(installed_apps) - 1)
                 ),
-                self.app_info_conn,
-                params=(installed_apps),
-                index_col="appId",
-            )
-            td.index.rename("appId", inplace=True)
+                tuple(installed_apps),
+                ["appId", "title"],
+            ).set_index("appId")
         elif self.device_type == "ios":
             td = self.get_app_titles(serialno)
 
@@ -412,7 +431,7 @@ class AndroidScan(AppScan):
         # Then, get more details about permissions
         # This requires the phone to be connected
         hf_recent, non_hf_recent, non_hf, stats = all_permissions(
-            self.dump_path(serialno), appid
+            self.dump_path(serialno), appid, serialno
         )
         # FIXME: some appopps in non_hf_recent are not included in the
         # output.  maybe concat hf_recent with them?

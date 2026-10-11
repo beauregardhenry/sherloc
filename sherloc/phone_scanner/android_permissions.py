@@ -10,7 +10,7 @@ from rsonlite import simpleparse
 
 import config
 from debuglog import debug
-from inputcheck import validate_appid
+from inputcheck import validate_appid, validate_serial
 
 from .runcmd import run_command
 
@@ -49,11 +49,14 @@ WRITE_EXTERNAL_STORAGE: allow; time=+2h7m13s715ms ago
 RUN_IN_BACKGROUND: allow; time=+15m2s867ms ago"""
 
 
-def recent_permissions_used(appid):
+def recent_permissions_used(appid, serial):
+    """The app's recent app ops, read with adb from the phone being scanned."""
     cols = ["appId", "op", "mode", "timestamp", "time_ago", "duration"]
     df = pd.DataFrame([], columns=cols)
     validate_appid(appid)
-    cmd = [config.ADB_PATH, "shell", "appops", "get", appid]
+    validate_serial(serial)
+    # -s: without it adb refuses to run when more than one phone is attached.
+    cmd = [config.ADB_PATH, "-s", serial, "shell", "appops", "get", appid]
     recently_used = run_command(cmd).stdout.read().decode("utf-8")
 
     if "No operations." in recently_used:
@@ -70,7 +73,8 @@ def recent_permissions_used(appid):
         record = {c: "" for c in cols}
         record["op"] = t[0].strip()
         record["mode"] = t[1].strip()
-        if len(permission_attrs) == 2:
+        # "OP: mode; time=+16m12s ago; duration=+10s": the duration is optional.
+        if len(permission_attrs) >= 2:
             tt = permission_attrs[1].split("=")
             if len(tt) != 2:
                 continue
@@ -142,7 +146,7 @@ def package_info(dumpf, appid):
 
     except AttributeError:
         debug(package_dump)
-        return []
+        return [], {}
 
     try:
         # I have no idea what this does.
@@ -212,7 +216,7 @@ def permissions_map():
     return df
 
 
-def all_permissions(dumpf, appid):
+def all_permissions(dumpf, appid, serial):
     """
     Returns a tuple of human-friendly permissions (including recently used), non human-friendly app ops,
     non human-friendly permissions, and summary stats.
@@ -242,7 +246,7 @@ def all_permissions(dumpf, appid):
     ### Now, compare this list with the recently used permissions.
 
     # Use adb to get the recently used permissions, sorted by time ago (descending)
-    recent_permissions = recent_permissions_used(appid)
+    recent_permissions = recent_permissions_used(appid, serial)
 
     # Create a dataframe with the recently-used permissions
     # and the information we have about them in our static list.

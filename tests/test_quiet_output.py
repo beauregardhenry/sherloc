@@ -108,7 +108,7 @@ def test_reading_an_ios_dump_prints_no_app_ids(tmp_path, capfd):
 
 def test_permission_lookup_prints_no_raw_device_output(fake_adb, capfd):
     fake_adb.respond([{"match": "appops get", "stdout": "CAMERA: allow; time=+1m1s1ms ago; duration=+1s1ms\n"}])
-    perms.recent_permissions_used(APP)
+    perms.recent_permissions_used(APP, "R58M123ABCD")
     _assert_clean(capfd, APP, "CAMERA")
 
 

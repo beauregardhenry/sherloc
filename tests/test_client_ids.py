@@ -200,6 +200,8 @@ def test_flag_colours_are_chosen_by_the_view():
     assert flag_class(["regex-spy"]) == "alert-info"
     assert flag_class(["dual-use"]) == "alert-warning"
     assert flag_class(["onstore-spyware"]) == "alert-primary"
+    # The flag app-flags.csv actually uses for spyware.
+    assert flag_class(["spyware"]) == "alert-primary"
 
 
 # --- this installation's own word list --------------------------------------

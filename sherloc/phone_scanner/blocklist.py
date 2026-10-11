@@ -53,7 +53,8 @@ def dedup_app_flags(df):
         .agg(
             {
                 "title": lambda x: " -+- ".join(set(x)),
-                "flag": list,
+                # Apps not in the list have no flag; leave their list empty.
+                "flag": lambda x: [f for f in x if f],
             }
         )
         .reset_index()
@@ -72,6 +73,8 @@ def score(flags):
     weight = {
         "onstore-dual-use": 0.8,
         "dual-use": 0.8,
+        # The flag app-flags.csv gives its 594 spyware apps.
+        "spyware": 1.0,
         "onstore-spyware": 1.0,
         "offstore-spyware": 1.0,
         "offstore-app": 0.8,

@@ -101,16 +101,25 @@ APPOPS = (
 def test_recent_permissions_used_reads_appops_output(fake_adb):
     adb = fake_adb
     adb.respond([{"match": "appops get com.spy.app", "stdout": APPOPS}])
-    df = perms.recent_permissions_used("com.spy.app")
+    df = perms.recent_permissions_used("com.spy.app", "R58M123ABCD")
     assert set(df["op"]) == {"CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE"}
     assert set(df["mode"]) == {"allow"}
     assert df.loc[df["op"] == "CAMERA", "duration"].item() == "+420ms"
-    assert ["shell", "appops", "get", "com.spy.app"] in adb.calls
+    assert ["-s", "R58M123ABCD", "shell", "appops", "get", "com.spy.app"] in adb.calls
+
+
+def test_an_app_op_with_a_duration_still_gets_its_time(fake_adb):
+    # The time was read only from lines without a duration.
+    fake_adb.respond([{"match": "appops get com.spy.app", "stdout": APPOPS}])
+    df = perms.recent_permissions_used("com.spy.app", "R58M123ABCD").set_index("op")
+    assert df.loc["CAMERA", "time_ago"] == "+38d23h30m11s6ms ago"
+    assert df.loc["CAMERA", "timestamp"] != ""
+    assert df.loc["READ_EXTERNAL_STORAGE", "timestamp"] != ""
 
 
 def test_recent_permissions_used_is_empty_when_the_app_has_none(fake_adb):
     fake_adb.respond([{"match": "appops", "stdout": "No operations.\n"}])
-    assert perms.recent_permissions_used("com.spy.app").empty
+    assert perms.recent_permissions_used("com.spy.app", "R58M123ABCD").empty
 
 
 def test_package_info_reads_only_the_requested_package(tmp_path):
@@ -139,7 +148,7 @@ def test_recent_permissions_never_run_text_from_the_app_id(fake_adb, tmp_path, a
     marker = tmp_path / "pwned"
     adb = fake_adb
     with pytest.raises(ValueError):
-        perms.recent_permissions_used(appid.format(marker=marker))
+        perms.recent_permissions_used(appid.format(marker=marker), "R58M123ABCD")
     assert not marker.exists()
     assert adb.calls == []
 
