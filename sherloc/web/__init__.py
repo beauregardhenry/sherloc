@@ -4,6 +4,7 @@ import logging
 import os
 import config
 from flask import Flask, g, session, request
+from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from htmlclean import clean_description
@@ -19,6 +20,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Signs the session cookie and the CSRF tokens.
 app.config["SECRET_KEY"] = config.FLASK_SECRET
 sa = SQLAlchemy(app)
+# The evidence pages use Flask-Bootstrap's base template. Serve its jQuery and
+# Bootstrap from the package instead of a CDN, so the pages work offline and no
+# outside server sees when a consultation is running.
+app.config["BOOTSTRAP_SERVE_LOCAL"] = True
+Bootstrap(app)
 Migrate(app, sa)
 
 register_request_guards(app)

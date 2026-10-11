@@ -39,15 +39,12 @@ from flask import (
     send_from_directory,
     url_for,
 )
-from flask_bootstrap import Bootstrap
 from phone_scanner import AndroidScan, IosScan
 import consultstore
 import indicators
 from takehome import create_takehome_pdf, neutral_filename
 from web import app
 from debuglog import debug, pdebug
-
-bootstrap = Bootstrap(app)
 
 USE_PICKLE_FOR_SUMMARY = False
 USE_FAKE_DATA = True
