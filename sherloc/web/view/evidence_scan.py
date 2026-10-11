@@ -26,6 +26,7 @@ from flask import (
     url_for,
 )
 from web import app
+from web.view.index import current_client_id
 from debuglog import debug, pdebug
 
 
@@ -87,7 +88,7 @@ def evidence_scan_start(device_type, device_nickname, force_rescan):
                             return redirect(url_for('evidence_scan_select', ser=hmac_ser, show_rescan=True))
 
                 # Perform the scan
-                scan_data, suspicious_apps_dict, other_apps_dict = get_scan_data(clean_data["device_type"], clean_data["device_nickname"])
+                scan_data, suspicious_apps_dict, other_apps_dict = get_scan_data(clean_data["device_type"], clean_data["device_nickname"], current_client_id())
 
                 # Fill in the /investigate/ marker for suspicious apps
                 for i in range(len(suspicious_apps_dict)):

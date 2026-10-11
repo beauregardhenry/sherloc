@@ -13,14 +13,21 @@ def get_device(k):
     if k == "test":
         return TestScan()
 
+def current_client_id():
+    """The client ID of this consultation, created on first use.
+
+    The session ends at midnight (see web/__init__.py), and "Delete client
+    data" clears it, so the next client gets a new ID.
+    """
+    if "clientid" not in session:
+        session["clientid"] = new_client_id()
+    return session["clientid"]
+
+
 @app.route("/", methods=["GET"])
 def index():
+    if request.args.get("newid") is not None:
+        session.pop("clientid", None)
+    current_client_id()
 
-    newid = request.args.get("newid")
-    # if it's a new day (see app.permenant_session_lifetime),
-    # or the client devices are all scanned (newid),
-    # ask the DB for a new client ID (additional checks in DB).
-    if "clientid" not in session or (newid is not None):
-        session["clientid"] = new_client_id()
-    
     return redirect(url_for('evidence_home'))

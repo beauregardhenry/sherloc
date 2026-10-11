@@ -37,6 +37,7 @@ from flask import (
     request,
     send_file,
     send_from_directory,
+    session,
     url_for,
 )
 from phone_scanner import AndroidScan, IosScan
@@ -391,6 +392,8 @@ def evidence_takehome():
 def evidence_delete_data():
 
     delete_client_data()
+    # The consultation is over: the next client gets a new ID.
+    session.pop("clientid", None)
     flash("Client data deleted successfully.", "success")
     return redirect(url_for('evidence_home'))
 

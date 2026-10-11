@@ -26,12 +26,16 @@ def _app(appid, title, flags):
 @pytest.fixture
 def client(monkeypatch):
     web.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+    # The app creates the tables at start; a new client ID checks them.
+    from phone_scanner import db as phone_db
+
+    phone_db.init_db(web.app, None)
     calls = []
 
-    def fake_scan(device, nickname):
+    def fake_scan(device, nickname, clientid):
         calls.append((device, nickname))
         record = scanrecord.build_scan_record(
-            clientid="1", ser=SER, device=device, device_owner=nickname,
+            clientid=clientid, ser=SER, device=device, device_owner=nickname,
             device_name_map={"model": "Pixel 7", "version": "14", "brand": "Google"},
             rooted=False, rooted_reason="No indicators.", include_raw_serial=True,
         )
@@ -92,7 +96,7 @@ def test_a_forced_rescan_scans_again_and_replaces_the_old_scan(client):
 
 
 def test_a_scan_error_is_shown_and_returns_to_the_start(client, monkeypatch):
-    def broken(device, nickname):
+    def broken(device, nickname, clientid):
         raise RuntimeError("adb went away")
 
     monkeypatch.setattr("web.view.evidence_scan.get_scan_data", broken)
@@ -140,7 +144,7 @@ def test_unselecting_an_app_removes_it(client):
 
 
 def test_a_scan_with_no_apps_still_shows_its_page(client, monkeypatch):
-    def no_apps(device, nickname):
+    def no_apps(device, nickname, clientid):
         record = scanrecord.build_scan_record(
             clientid="1", ser=SER, device=device, device_owner=nickname,
             device_name_map={}, rooted=False, rooted_reason="", include_raw_serial=True)

@@ -1,12 +1,14 @@
 """Client IDs, intake-form timestamps and the "devices scanned for this
 client" list (issue #21)."""
 
+import re
 import sqlite3
 import time
 from datetime import datetime
 
 import config
 import pytest
+import clientwords
 import web
 import web.view
 from phone_scanner import blocklist
@@ -19,10 +21,6 @@ def app_db():
     phone_db.init_db(web.app, None)
     with web.app.app_context():
         yield
-
-
-def _today():
-    return datetime.now().strftime("%Y%m%d")  # noqa: DTZ005 - client IDs use local dates
 
 
 def _execute(sql, args=()):
@@ -51,40 +49,100 @@ def _scan(clientid, serial="HSN_x", model="Pixel 7", owner="me"):
     )
 
 
-def test_the_first_client_of_the_day_is_001(app_db):
-    assert phone_db.new_client_id() == f"{_today()}_001"
+WORD_ID = re.compile(r"^[a-z]{3,9}(-[a-z]{3,9}){3}$")
 
 
-def test_the_next_client_follows_the_highest_number_today(app_db):
-    _intake(f"{_today()}_002")
-    _intake(f"{_today()}_010")
-    assert phone_db.new_client_id() == f"{_today()}_011"
+def test_a_client_id_is_four_random_words(app_db):
+    cid = phone_db.new_client_id()
+    assert WORD_ID.match(cid), cid
+    words = cid.split("-")
+    assert len(set(words)) == 4
+    assert all(w in clientwords.WORDS for w in words)
 
 
-def test_an_id_in_another_format_does_not_break_it(app_db):
-    # It used to split on "_" and fail on anything else.
-    _intake("walk-in")
-    _intake(f"{_today()}_003")
-    assert phone_db.new_client_id() == f"{_today()}_004"
+def test_ids_carry_no_date_or_count(app_db):
+    # The old IDs (20261010_003) told anyone who saw one the day of the
+    # consultation and how many clients came before.
+    cid = phone_db.new_client_id()
+    assert not re.search(r"\d", cid)
 
 
-def test_yesterdays_clients_do_not_count_whatever_the_timestamp(app_db):
-    # Rows saved in UTC could look like today in local time, and the next ID
-    # then carried yesterday's date.
-    _intake("20000101_007", created_at="9999-01-01 00:00:00")
-    assert phone_db.new_client_id() == f"{_today()}_001"
+def test_ids_differ_from_one_client_to_the_next(app_db):
+    ids = {phone_db.new_client_id() for _ in range(200)}
+    assert len(ids) == 200
 
 
-def test_todays_client_is_counted_even_with_an_old_timestamp(app_db):
-    # The reverse: a UTC timestamp before local midnight hid today's client,
-    # and the next client got the same ID.
-    _intake(f"{_today()}_001", created_at="2000-01-01 00:00:00")
-    assert phone_db.new_client_id() == f"{_today()}_002"
+def test_an_id_already_in_use_is_drawn_again(app_db, monkeypatch):
+    _intake("amber-otter-canyon-teapot")
+    draws = iter([["amber", "otter", "canyon", "teapot"], ["maple", "otter", "canyon", "teapot"]])
+    monkeypatch.setattr(clientwords, "_draw", lambda n: next(draws))
+    assert phone_db.new_client_id() == "maple-otter-canyon-teapot"
 
 
-def test_a_client_with_scans_but_no_intake_form_is_counted(app_db):
-    _scan(f"{_today()}_001")
-    assert phone_db.new_client_id() == f"{_today()}_002"
+def test_an_id_used_only_by_a_scan_is_also_taken(app_db, monkeypatch):
+    _scan("amber-otter-canyon-teapot")
+    draws = iter([["amber", "otter", "canyon", "teapot"], ["maple", "otter", "canyon", "teapot"]])
+    monkeypatch.setattr(clientwords, "_draw", lambda n: next(draws))
+    assert phone_db.new_client_id() == "maple-otter-canyon-teapot"
+
+
+def test_the_word_list_is_large_and_clean():
+    words = clientwords.WORDS
+    assert len(words) >= 2900
+    assert len(set(words)) == len(words)
+    assert all(re.fullmatch(r"[a-z]{3,9}", w) for w in words)
+
+
+# Words that must never appear in an ID someone else might see on a screen or
+# a piece of paper. Not exhaustive; it guards against careless additions.
+NEVER = {"abuse", "spy", "track", "stalk", "watch", "monitor", "camera", "gun", "knife", "rope", "chain",
+         "kill", "dead", "blood", "hurt", "fear", "trap", "cage", "lock", "hammer", "arrow", "wolf",
+         "drug", "beer", "wine", "date", "kiss", "naked", "police", "court", "jail", "victim", "escape"}
+
+
+def test_the_word_list_avoids_alarming_words():
+    assert NEVER.isdisjoint(clientwords.WORDS)
+
+
+def test_a_new_client_session_gets_a_word_id(app_db):
+    c = web.app.test_client()
+    c.get("/")
+    with c.session_transaction() as s:
+        assert WORD_ID.match(s["clientid"])
+
+
+def test_deleting_client_data_starts_a_new_client(app_db, monkeypatch):
+    monkeypatch.setattr("web.view.evidence.delete_client_data", lambda: None)
+    c = web.app.test_client()
+    c.get("/")
+    with c.session_transaction() as s:
+        first = s["clientid"]
+    c.post("/evidence/delete-data")
+    c.get("/")
+    with c.session_transaction() as s:
+        assert s["clientid"] != first
+
+
+def test_evidence_scans_are_saved_under_the_session_client(app_db, monkeypatch):
+    # They were all saved under client ID "1".
+    import evidence_collection as ec
+    import scanflow
+
+    seen = {}
+
+    def fake_run(sc, **kw):
+        seen.update(kw)
+        raise scanflow.ScanFailed("stop")
+
+    monkeypatch.setattr(scanflow, "run_device_scan", fake_run)
+    monkeypatch.setattr(ec, "get_scan_obj", lambda device, nickname: object())
+    monkeypatch.setattr(ec, "get_ser_from_scan_obj", lambda sc: "ZY1")
+    c = web.app.test_client()
+    c.get("/")
+    with c.session_transaction() as s:
+        cid = s["clientid"]
+    c.post("/evidence/scan", data={"device_type": "android", "device_nickname": "phone", "submit": "y"})
+    assert seen.get("clientid") == cid
 
 
 @pytest.fixture
