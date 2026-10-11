@@ -8,8 +8,9 @@ temporary database (conftest.isolated_database); the first test checks that.
 import json
 import sqlite3
 
-import config
 import pytest
+
+import config
 import web
 import web.view
 from phone_scanner import db as phone_db

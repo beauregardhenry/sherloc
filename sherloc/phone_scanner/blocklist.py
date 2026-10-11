@@ -13,8 +13,10 @@ Flags added to them are from the following four classes
 """
 
 import re
-import config
+
 import pandas as pd
+
+import config
 from debuglog import debug
 
 try:

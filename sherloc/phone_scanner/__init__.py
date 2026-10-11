@@ -8,14 +8,15 @@ import subprocess
 import sys
 from datetime import datetime
 
-import config
 import pandas as pd
+
+import config
+from debuglog import debug, warn
+from inputcheck import validate_appid, validate_serial
 
 from . import blocklist, parse_dump
 from .android_permissions import all_permissions
 from .runcmd import catch_err, run_checked, run_command
-from inputcheck import validate_appid, validate_serial
-from debuglog import debug, warn
 
 
 class AppScan(object):

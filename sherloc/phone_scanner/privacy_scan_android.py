@@ -38,8 +38,8 @@ from subprocess import TimeoutExpired
 from flask import url_for
 
 import config
-from inputcheck import validate_serial
 from debuglog import debug
+from inputcheck import validate_serial
 
 from .runcmd import run_command
 

@@ -16,9 +16,10 @@ scripts, the X-CSRFToken header.
 
 from urllib.parse import urlsplit
 
-import config
 from flask import abort, request
 from flask_wtf.csrf import CSRFError, CSRFProtect
+
+import config
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 # Values a browser sends when the request came from the app itself, or from the

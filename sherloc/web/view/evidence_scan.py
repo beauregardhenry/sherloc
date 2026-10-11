@@ -1,7 +1,17 @@
 """Routes for scanning a device and investigating its apps (evidence workflow)."""
 import traceback
 
+from flask import (
+    abort,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+
 import config
+from debuglog import debug, pdebug
 from evidence_collection import (
     AppInvestigationForm,
     AppSelectPageForm,
@@ -17,18 +27,8 @@ from evidence_collection import (
     save_data_as_json,
     update_scan_by_ser,
 )
-from flask import (
-    abort,
-    flash,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
 from web import app
 from web.view.index import current_client_id
-from debuglog import debug, pdebug
-
 
 USE_PICKLE_FOR_SUMMARY = False
 USE_FAKE_DATA = True

@@ -1,0 +1,8 @@
+# The app runs from sherloc/ (config, web, phone_scanner...) and the tests
+# import `tests.*`, so both folders hold first-party modules.
+src = ["sherloc", "."]
+
+[lint]
+# Import order is checked by tests/test_import_order.py. The serious rules
+# run in isolation in tests/test_lint_ratchet.py.
+extend-select = ["I001"]

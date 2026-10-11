@@ -7,11 +7,11 @@ import sys
 import pandas as pd
 import pytest
 
-import web
-import web.view  # noqa: F401
 import config
 import evidence_collection as ec
 import scanflow
+import web
+import web.view  # noqa: F401
 from phone_scanner import db as phone_db
 
 SER = "ZY22SHARED"

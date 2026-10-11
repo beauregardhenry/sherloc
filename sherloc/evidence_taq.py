@@ -1,5 +1,5 @@
 """Technology assessment questionnaire (TAQ) answers."""
-from evidence_base import DictInitClass, Dictable, Risk, RiskReport
+from evidence_base import Dictable, DictInitClass, Risk, RiskReport
 
 
 class TAQDevices(DictInitClass):

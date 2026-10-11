@@ -11,8 +11,9 @@ import subprocess
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import evidence_collection as ec
+import web  # noqa: F401  (import order: web first avoids a circular import)
+
 try:
     import pdfrender
 except (ImportError, OSError):  # no Pango here; the tests that need it are marked `pdf`

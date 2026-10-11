@@ -3,8 +3,9 @@
 # field to the order list in web/forms/client.py. CREATE TABLE IF NOT EXISTS does
 # not add a column to an existing database; that needs an ALTER TABLE.
 
-from web import sa
 from wtforms.validators import Email, InputRequired
+
+from web import sa
 
 
 class Client(sa.Model):

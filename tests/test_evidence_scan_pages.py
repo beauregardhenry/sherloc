@@ -8,11 +8,11 @@ leads) runs as in the app.
 
 import pytest
 
-import web
-import web.view  # noqa: F401
 import config
 import evidence_collection as ec
 import scanrecord
+import web
+import web.view  # noqa: F401
 
 SER = "ZY22TESTSER"
 HSER = config.hmac_serial(SER)

@@ -1,5 +1,12 @@
 """Apps found on a device and the scan that found them."""
-from evidence_base import DictInitClass, Dictable, Notes, Risk, RiskReport, ScreenshotInfo
+from evidence_base import (
+    Dictable,
+    DictInitClass,
+    Notes,
+    Risk,
+    RiskReport,
+    ScreenshotInfo,
+)
 
 
 class InstallInfo(DictInitClass):

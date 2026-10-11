@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
+import config
 import web
 import web.view  # noqa: F401
-import config
 from phone_scanner import db as phone_db
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "sherloc" / "templates"

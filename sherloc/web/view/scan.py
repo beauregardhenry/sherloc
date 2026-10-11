@@ -1,15 +1,17 @@
+from flask import redirect, render_template, request, session, url_for
+
 import config
+import scanflow
+from debuglog import debug
 from inputcheck import validate_serial
-from web import app
-from web.view.index import get_device
-from flask import render_template, request, session, redirect, url_for
 from phone_scanner import blocklist
 from phone_scanner.db import (
     get_client_devices_from_db,
 )
-from debuglog import debug
-import scanflow
+from scanflow import get_device
 from scanrecord import rooted_label
+from web import app
+
 
 @app.template_filter("flag_class")
 def flag_class(flags):

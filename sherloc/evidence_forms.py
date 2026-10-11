@@ -14,12 +14,33 @@ from wtforms import (
 from wtforms.validators import InputRequired
 
 from evidence_choices import (
-    YES_NO_DEFAULT, PERSON_DEFAULT, LEGAL_DEFAULT, TWO_FACTOR_DEFAULT, YES_NO_UNSURE_CHOICES, YES_NO_CHOICES, PERSON_CHOICES, PWD_CHOICES, LEGAL_CHOICES, DEVICE_TYPE_CHOICES, TWO_FACTOR_CHOICES,
+    DEVICE_TYPE_CHOICES,
+    LEGAL_CHOICES,
+    LEGAL_DEFAULT,
+    PERSON_CHOICES,
+    PERSON_DEFAULT,
+    PWD_CHOICES,
+    TWO_FACTOR_CHOICES,
+    TWO_FACTOR_DEFAULT,
+    YES_NO_CHOICES,
+    YES_NO_DEFAULT,
+    YES_NO_UNSURE_CHOICES,
 )
 from evidence_model import (
-    SuspiciousLogins, PasswordCheck, RecoverySettings, TwoFactorSettings, SecurityQuestions, InstallInfo, PermissionInfo, TAQDevices, TAQAccounts, TAQSharing, TAQSmarthome, TAQKids, TAQLegal,
+    InstallInfo,
+    PasswordCheck,
+    PermissionInfo,
+    RecoverySettings,
+    SecurityQuestions,
+    SuspiciousLogins,
+    TAQAccounts,
+    TAQDevices,
+    TAQKids,
+    TAQLegal,
+    TAQSharing,
+    TAQSmarthome,
+    TwoFactorSettings,
 )
-
 
 ########################
 ###### FORMS ###########

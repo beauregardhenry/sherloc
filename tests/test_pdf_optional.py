@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
+import evidence_collection as ec
 import web
 import web.view  # noqa: F401
-import evidence_collection as ec
 from phone_scanner import db as phone_db
 
 ROOT = Path(__file__).resolve().parent.parent

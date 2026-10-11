@@ -1,40 +1,39 @@
 """Whole-consultation data classes. The domain classes live in the evidence_* modules;
 they are re-exported here so `from evidence_model import X` keeps working."""
-from evidence_base import (  # noqa: F401
-    EvidenceDataEncoder,
-    Dictable,
-    DictInitClass,
-    Risk,
-    RiskReport,
-    Notes,
-    ScreenshotInfo,
-)
 from evidence_accounts import (  # noqa: F401
+    AccountInvestigation,
     AccountSection,
-    SuspiciousLogins,
     PasswordCheck,
     RecoverySettings,
-    TwoFactorSettings,
     SecurityQuestions,
-    AccountInvestigation,
+    SuspiciousLogins,
+    TwoFactorSettings,
     get_all_screenshot_files,
 )
 from evidence_apps import (  # noqa: F401
+    AppInfo,
     InstallInfo,
     PermissionInfo,
-    AppInfo,
     ScanData,
 )
+from evidence_base import (  # noqa: F401
+    Dictable,
+    DictInitClass,
+    EvidenceDataEncoder,
+    Notes,
+    Risk,
+    RiskReport,
+    ScreenshotInfo,
+)
 from evidence_taq import (  # noqa: F401
-    TAQDevices,
     TAQAccounts,
-    TAQSharing,
-    TAQSmarthome,
+    TAQData,
+    TAQDevices,
     TAQKids,
     TAQLegal,
-    TAQData,
+    TAQSharing,
+    TAQSmarthome,
 )
-
 
 ### REAL CLASSES
 

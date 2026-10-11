@@ -1,18 +1,11 @@
 from flask import redirect, request, session, url_for
-from phone_scanner import AndroidScan, IosScan, TestScan
+
 from phone_scanner.db import new_client_id
+from scanflow import get_device  # noqa: F401 - re-exported by web.view
 from web import app
 
 
 # all in all, this particular section has a terrible code smell...
-def get_device(k):
-    if k == "android":
-        return AndroidScan()
-    if k == "ios":
-        return IosScan()
-    if k == "test":
-        return TestScan()
-
 def current_client_id():
     """The client ID of this consultation, created on first use.
 

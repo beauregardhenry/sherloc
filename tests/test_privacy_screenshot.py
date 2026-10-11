@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
+import config
 import web
 import web.view  # noqa: F401
-import config
 from phone_scanner import privacy_scan_android as psa
 
 URL = "/privacy/android/screenshot/ctx/ZY224F8TKG"

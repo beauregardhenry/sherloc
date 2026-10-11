@@ -1,11 +1,11 @@
+from wtforms import TextAreaField
+from wtforms.fields import SelectMultipleField
+from wtforms.validators import InputRequired, Optional
+from wtforms.widgets import CheckboxInput, ListWidget
 from wtforms_alchemy import ModelForm
 
 import intake_choices
 from web.model import Client
-from wtforms.fields import SelectMultipleField
-from wtforms.widgets import CheckboxInput, ListWidget
-from wtforms import TextAreaField
-from wtforms.validators import InputRequired, Optional
 
 
 class ClientForm(ModelForm):

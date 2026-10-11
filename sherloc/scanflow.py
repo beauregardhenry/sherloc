@@ -12,8 +12,20 @@ from typing import Any, Optional
 import config
 from debuglog import debug, warn
 from inputcheck import validate_serial
-from phone_scanner import db
+from phone_scanner import AndroidScan, IosScan, TestScan, db
 from scanrecord import build_scan_record
+
+
+def get_device(k: str) -> Any:
+    """The scanner for a device type, or None for an unknown type."""
+    if k == "android":
+        return AndroidScan()
+    if k == "ios":
+        return IosScan()
+    if k == "test":
+        return TestScan()
+    return None
+
 
 NO_APPS = (
     "The scanning failed. This could be due to many reasons. Try rerunning the"

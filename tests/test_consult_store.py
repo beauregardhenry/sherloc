@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-import web  # noqa: F401  (import order: web first avoids a circular import)
 import config
 import evidence_collection as ec
+import web  # noqa: F401  (import order: web first avoids a circular import)
 from phone_scanner import db as phone_db
 
 N = ec.ConsultDataTypes

@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta
-from time import strftime
 import logging
 import os
-import config
-from flask import Flask, g, session, request
+from datetime import datetime, timedelta
+from time import strftime
+
+from flask import Flask, g, request, session
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
+
+import config
 from htmlclean import clean_description
 from web.security import register_request_guards
 
@@ -30,10 +32,9 @@ app.jinja_env.filters["clean_html"] = clean_description
 
 logger = logging.getLogger(__name__)
 
-import web.view  # noqa: F401 - registers the routes
-
 import clientdata
 import indicators
+import web.view  # noqa: F401 - registers the routes
 
 
 @app.context_processor
