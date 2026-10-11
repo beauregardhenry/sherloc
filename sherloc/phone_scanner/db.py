@@ -193,8 +193,3 @@ def get_serial_from_db(scanid):
         return ""
 
 
-def first_element_or_none(l):
-    if l and len(l) > 0:
-        return l[0]
-
-

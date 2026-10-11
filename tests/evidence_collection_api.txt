@@ -74,11 +74,8 @@ YES_NO_CHOICES value
 YES_NO_DEFAULT value
 YES_NO_UNSURE_CHOICES value
 config module
-create_mult_appinfo function
 create_printout function
-create_scan function
 delete_client_data function
-first_element_or_none function
 get_all_screenshot_files function
 get_app_details function
 get_data_filename function

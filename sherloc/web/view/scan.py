@@ -1,19 +1,16 @@
-import json
 import config
 import os
 from inputcheck import validate_serial
 from web import app
 from web.view.index import get_device
 from flask import render_template, request, session, redirect, url_for
-from phone_scanner import blocklist, db
+from phone_scanner import blocklist
 from phone_scanner.db import (
     get_client_devices_from_db,
-    create_scan,
-    create_mult_appinfo,
-    first_element_or_none,
 )
-from debuglog import debug, warn
-from scanrecord import build_scan_record, rooted_label
+from debuglog import debug
+import scanflow
+from scanrecord import rooted_label
 
 @app.template_filter("flag_class")
 def flag_class(flags):
@@ -62,7 +59,6 @@ def scan():
         task="home",
         title=config.TITLE,
         device=device,
-        device_primary_user=config.DEVICE_PRIMARY_USER,  # TODO: Why is this sent
         device_primary_user_sel=device_primary_user,
         apps={},
         currently_scanned=currently_scanned,
@@ -88,104 +84,42 @@ def scan():
         template_d["error"] = "Please give the device a nickname."
         return render_template("main.html", **template_d), 201
 
-    if not ser:
-        ser = first_element_or_none(sc.devices())
-    if ser:
-        try:
-            validate_serial(ser)
-        except ValueError:
-            template_d["error"] = "The device reported a serial number that Sherloc cannot use."
-            return render_template("main.html", **template_d), 201
-
-    debug("Devices: {}".format(ser))
-    if not ser:
-        # FIXME: add pkexec scripts/ios_mount_linux.sh workflow for iOS if
-        # needed.
-        error = (
-            "<b>A device wasn't detected. Please follow the "
-            "<a href='/instruction' target='_blank' rel='noopener'>"
-            "setup instructions here.</a></b>"
-        )
-        template_d["error"] = error
+    try:
+        ser = scanflow.find_serial(sc, ser)
+    except scanflow.ScanFailed as e:
+        if str(e) == scanflow.NO_DEVICE:
+            # FIXME: add pkexec scripts/ios_mount_linux.sh workflow for iOS if needed.
+            template_d["error"] = (
+                "<b>A device wasn't detected. Please follow the "
+                "<a href='/instruction' target='_blank' rel='noopener'>"
+                "setup instructions here.</a></b>"
+            )
+        else:
+            template_d["error"] = str(e)
         return render_template("main.html", **template_d), 201
 
     debug(">>>scanning_device", device, ser, "<<<<<")
 
-    # TODO: model for 'devices scanned so far:' device_name_map['model']
-    # and save it to scan_res along with device_primary_user.
-    device_name_print, device_name_map = "<NOT FOUND>", {}
-    if from_dump:
-        # The database holds only the pseudonymized serial.
-        d = db.get_device_info(config.hmac_serial(ser))
-        if d:
-            debug(d)
-            device_name_print = f"{d['device_model']} ({d['device_primary_user']})"
-            device_name_map = d
-        else:
-            debug("ERROR: Could not find device info:", d)
-    else:
-        device_name_print, device_name_map = sc.device_info(serial=ser)
-
-    # Finds all the apps in the device
-    # @apps have appid, title, flags, TODO: add icon
-    apps = (
-        sc.find_spyapps(serialno=ser, from_dump=from_dump)
-        .fillna("")
-        .to_dict(orient="index")
-    )
-    if len(apps) <= 0:
-        warn("The scanning failed for some reason.")
-        error = (
-            "The scanning failed. This could be due to many reasons. Try"
-            " rerunning the scan from the beginning. If the problem persists,"
-            " please report it in the file. <code>report_failed.md</code> in the<code>"
-            "phone_scanner/</code> directory. Checn the phone manually. Sorry for"
-            " the inconvenience."
+    try:
+        result = scanflow.run_device_scan(
+            sc,
+            device=device,
+            ser=ser,
+            device_owner=device_owner,
+            clientid=session["clientid"],
+            from_dump=from_dump,
         )
-        template_d["error"] = error
+    except scanflow.ScanFailed as e:
+        template_d["error"] = str(e)
         return render_template("main.html", **template_d), 201
-
-    debug(f"Getting from dump: {from_dump}")
-    if from_dump:
-        rooted, rooted_reason = db.get_is_rooted(config.hmac_serial(ser))
-    else:
-        rooted, rooted_reason = sc.isrooted(ser)
-    scan_d = build_scan_record(
-        clientid=session["clientid"],
-        ser=ser,
-        device=device,
-        device_owner=device_owner,
-        device_name_map=device_name_map,
-        rooted=rooted,
-        rooted_reason=rooted_reason,
-    )
-
-    # TODO: here, adjust client session.
-    if from_dump:
-        scanid = db.get_most_recent_scan_id(config.hmac_serial(ser))
-        if scanid == -1:
-            template_d["error"] = (
-                "The serial number provided does not have a scan yet, "
-                "and you want to read from the dump. Please connect the device and scan first."
-            )
-            return render_template("main.html", **template_d), 201
-    else:
-        scanid = create_scan(scan_d)
+    rooted, rooted_reason = result.rooted, result.rooted_reason
 
     if device == "ios":
+        # The device info is in the database now; the dump file holds PII.
         pii_fpath = sc.dump_path(ser, "Device_Info")
-        debug("Revelant info saved to db. Deleting {} now.".format(pii_fpath))
         if os.path.exists(pii_fpath):
             os.unlink(pii_fpath)
         debug("iOS PII deleted.")
-
-    debug("Creating appinfo...")
-    create_mult_appinfo(
-        [
-            (scanid, appid, json.dumps(info["flags"]), "", "<new>")
-            for appid, info in apps.items()
-        ]
-    )
 
     currently_scanned = get_client_devices_from_db(session["clientid"])
     template_d.update(
@@ -195,9 +129,9 @@ def scan():
                 if rooted
                 else rooted_label(rooted, rooted_reason)
             ),
-            device_name=device_name_print,
-            apps=apps,
-            scanid=scanid,
+            device_name=result.device_name,
+            apps=result.apps,
+            scanid=result.scanid,
             sysapps=set(),  # sc.get_system_apps(serialno=ser)),
             serial=ser,
             currently_scanned=currently_scanned,
